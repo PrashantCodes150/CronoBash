@@ -2,7 +2,7 @@
 
 FocusArena is a production-ready, full-stack web application built to gamify academic and professional productivity. It merges the discipline of deep focus sprints with the high-stakes matching system of competitive gaming. 
 
-Users can create profiles, log deep-work timer sessions (monitored via simulated face-tracking webcam checks), join study rooms, stake test tokens in money challenge rooms, track lifetime study stats and badges, and follow live study streams.
+
 
 ---
 
