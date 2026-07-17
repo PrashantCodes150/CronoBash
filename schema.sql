@@ -144,19 +144,9 @@ create policy "Owners can delete their rooms"
 -- ==========================================
 alter table public.room_members enable row level security;
 
-create policy "Room members are viewable by room members"
+create policy "Room members are viewable by everyone"
     on public.room_members for select
-    using (
-        user_id = auth.uid()
-        or exists (
-            select 1 from public.rooms
-            where id = room_id
-              and (
-                owner_id = auth.uid()
-                or type in ('public', 'money')
-              )
-        )
-    );
+    using (true);
 
 create policy "Users can join rooms"
     on public.room_members for insert
