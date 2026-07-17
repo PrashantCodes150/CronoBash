@@ -23,7 +23,7 @@ function StudySessionContent() {
   const router = useRouter();
   const roomId = searchParams.get('roomId');
   
-  const { user } = useAuth();
+  const { user, refreshProfile, refreshWallet } = useAuth();
   
   // Timer & Session state
   const [isActive, setIsActive] = useState(false);
@@ -97,6 +97,19 @@ function StudySessionContent() {
     };
   }, []);
 
+  // Redirect to login if user not logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+      }
+    };
+    if (!user) {
+      checkUser();
+    }
+  }, [user, router]);
+
   // Initialize MediaPipe Gaze Tracking
   const initializeFaceMesh = () => {
     const FaceMesh = (window as any).FaceMesh;
@@ -146,7 +159,7 @@ function StudySessionContent() {
           // Combined: Center (screen) or Down (paper/book) are both focused
           if (dir === 'Center' || dir === 'Down') {
             setIsFocused(true);
-            setFocusScore(prev => Math.min(100, parseFloat((prev + 0.3).toFixed(2))));
+            setFocusScore(prev => Math.min(100, parseFloat((prev + 0.15).toFixed(2))));
           } else {
             setIsFocused(prev => {
               if (prev) {
@@ -195,6 +208,37 @@ function StudySessionContent() {
 
     if (user) {
       try {
+        // Ensure user profile exists in public.users to prevent foreign key check failures!
+        const { data: profileCheck } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!profileCheck) {
+          // Auto-recover profile row
+          await supabase.from('users').insert({
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Contestant',
+            email: user.email || '',
+            daily_goal_minutes: 120
+          });
+        }
+
+        // Ensure wallet exists
+        const { data: walletCheck } = await supabase
+          .from('wallets')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!walletCheck) {
+          await supabase.from('wallets').insert({
+            user_id: user.id,
+            balance: 1000
+          });
+        }
+
         const { data, error } = await supabase
           .from('study_sessions')
           .insert({
@@ -212,9 +256,11 @@ function StudySessionContent() {
 
         if (!error && data) {
           setSessionId(data.id);
+        } else if (error) {
+          console.error("Failed to create study session row:", error.message);
         }
       } catch (e) {
-        console.error(e);
+        console.error("Error creating study session:", e);
       }
     }
 
@@ -236,6 +282,7 @@ function StudySessionContent() {
 
     if (sessionId && user) {
       try {
+        // Await the session update so it isn't aborted during navigation
         await supabase
           .from('study_sessions')
           .update({
@@ -271,6 +318,10 @@ function StudySessionContent() {
           }
         }
 
+        // Refresh global state so headers and profile display the new balances/hours immediately
+        await refreshWallet();
+        await refreshProfile();
+
         confetti({
           particleCount: 150,
           spread: 80,
@@ -278,17 +329,18 @@ function StudySessionContent() {
         });
 
       } catch (e) {
-        console.error(e);
+        console.error("Failed to save end session stats:", e);
       }
     }
 
+    // Short timeout to let the confetti effect execute before route changes
     setTimeout(() => {
       if (roomId) {
         router.push(`/rooms/${roomId}`);
       } else {
         router.push('/dashboard');
       }
-    }, 2500);
+    }, 2000);
   };
 
   const syncSessionProgress = async () => {
@@ -323,7 +375,7 @@ function StudySessionContent() {
           return nextSec;
         });
 
-        if (isFocused) {
+        if (isFocused && focusScore >= 75) {
           setFocusSeconds(prev => prev + 1);
           if (gazeDirection === 'Center') {
             setScreenFocusSeconds(prev => prev + 1);
