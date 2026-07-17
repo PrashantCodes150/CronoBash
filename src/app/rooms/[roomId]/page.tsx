@@ -9,7 +9,7 @@ export default function RoomDetail() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.roomId as string;
-  const { user } = useAuth();
+  const { user, refreshWallet, refreshProfile } = useAuth();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
@@ -220,10 +220,85 @@ export default function RoomDetail() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [alertMsg, setAlertMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
   const formatSeconds = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
     return `${h}h ${m}m`;
+  };
+
+  const handleJoinRoom = async () => {
+    if (!user || !room) return;
+    setJoining(true);
+    setAlertMsg(null);
+
+    try {
+      if (room.type === 'money') {
+        const { data: joinRes, error: rpcError } = await supabase
+          .rpc('join_money_room', { p_user_id: user.id, p_room_id: room.id });
+
+        if (rpcError || (joinRes && joinRes.error)) {
+          const errMsg = rpcError?.message || joinRes?.error || 'Staking transaction failed.';
+          setAlertMsg({ type: 'error', text: errMsg });
+          setJoining(false);
+          return;
+        }
+
+        await refreshWallet();
+        await refreshProfile();
+      } else {
+        const { error: joinError } = await supabase
+          .from('room_members')
+          .insert({
+            room_id: room.id,
+            user_id: user.id,
+            total_focus_seconds_today: 0
+          });
+
+        if (joinError && !joinError.message.includes('duplicate key')) {
+          setAlertMsg({ type: 'error', text: 'Could not register room join state.' });
+          setJoining(false);
+          return;
+        }
+      }
+
+      setAlertMsg({ type: 'success', text: 'Successfully joined study room!' });
+      await loadRoomMembers();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleLeaveRoom = async () => {
+    if (!user || !room) return;
+    setLeaving(true);
+    setAlertMsg(null);
+
+    try {
+      const { error } = await supabase
+        .from('room_members')
+        .delete()
+        .eq('room_id', room.id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        setAlertMsg({ type: 'error', text: 'Failed to leave the room.' });
+      } else {
+        setAlertMsg({ type: 'success', text: 'You left the room.' });
+        await loadRoomMembers();
+        await refreshWallet();
+        await refreshProfile();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLeaving(false);
+    }
   };
 
   if (loading) {
@@ -417,13 +492,48 @@ export default function RoomDetail() {
               </div>
             </div>
 
-            <button
-              onClick={() => router.push(`/study?roomId=${roomId}`)}
-              className="w-full bg-primary-container text-on-primary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-primary-fixed transition-all hover:scale-[1.02] glow-primary flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined">play_arrow</span>
-              Launch Study Sprint
-            </button>
+            {alertMsg && (
+              <div className={`p-3 rounded-lg text-xs font-mono border ${
+                alertMsg.type === 'success' 
+                  ? 'bg-primary-container/10 border-primary-container text-primary-fixed' 
+                  : 'bg-error/10 border-error text-error'
+              }`}>
+                {alertMsg.text}
+              </div>
+            )}
+
+            {members.some(m => m.user_id === user?.id) ? (
+              <div className="space-y-3">
+                <button
+                  onClick={() => router.push(`/study?roomId=${roomId}`)}
+                  className="w-full bg-primary-container text-on-primary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-primary-fixed transition-all hover:scale-[1.02] glow-primary flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+                >
+                  <span className="material-symbols-outlined">play_arrow</span>
+                  Launch Study Sprint
+                </button>
+                <button
+                  disabled={leaving}
+                  onClick={handleLeaveRoom}
+                  className="w-full bg-surface-container-high border border-outline-variant text-on-surface hover:text-error hover:border-error font-label-mono text-[10px] font-bold py-2 rounded-lg transition-colors cursor-pointer uppercase tracking-wider"
+                >
+                  {leaving ? 'Leaving...' : 'Leave Room'}
+                </button>
+              </div>
+            ) : (
+              <button
+                disabled={joining}
+                onClick={handleJoinRoom}
+                className="w-full bg-secondary-container text-on-secondary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-secondary-fixed transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+              >
+                <span className="material-symbols-outlined">group_add</span>
+                {joining 
+                  ? 'Joining...' 
+                  : isMoneyRoom 
+                    ? `Stake ${room.entry_fee} TKN & Join` 
+                    : 'Join Room'
+                }
+              </button>
+            )}
           </div>
 
           {/* Invitation block */}
