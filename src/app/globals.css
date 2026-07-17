@@ -195,3 +195,92 @@ body {
   background-color: #313540; /* surface-variant */
   border-radius: 10px;
 }
+
+/* Claymorphism Panel Styles */
+.clay-card {
+  background: rgba(23, 27, 38, 0.6);
+  backdrop-filter: blur(25px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.4), 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.05), 
+    inset -4px -4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.clay-card-success {
+  background: rgba(0, 255, 163, 0.08);
+  backdrop-filter: blur(25px);
+  border-radius: 24px;
+  border: 1.5px solid rgba(0, 255, 163, 0.25);
+  box-shadow: 
+    0 16px 40px rgba(0, 255, 163, 0.08), 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.08), 
+    inset -4px -4px 10px rgba(0, 255, 163, 0.1);
+}
+
+.clay-card-error {
+  background: rgba(255, 0, 85, 0.08);
+  backdrop-filter: blur(25px);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255, 0, 85, 0.25);
+  box-shadow: 
+    0 16px 40px rgba(255, 0, 85, 0.08), 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.08), 
+    inset -4px -4px 10px rgba(255, 0, 85, 0.1);
+}
+
+/* Background animated fluid blobs */
+.fluid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.12;
+  animation: floatAround 30s infinite alternate ease-in-out;
+  pointer-events: none;
+}
+
+.blob-1 {
+  width: 450px;
+  height: 450px;
+  background: #00ffa3;
+  top: -100px;
+  left: -100px;
+  animation-duration: 25s;
+}
+
+.blob-2 {
+  width: 500px;
+  height: 500px;
+  background: #7047eb;
+  bottom: -100px;
+  right: -100px;
+  animation-duration: 32s;
+  animation-delay: -5s;
+}
+
+.blob-3 {
+  width: 350px;
+  height: 350px;
+  background: #00c2ff;
+  top: 40%;
+  left: 45%;
+  animation-duration: 40s;
+  animation-delay: -10s;
+}
+
+@keyframes floatAround {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(120px, 90px) scale(1.1) rotate(120deg);
+  }
+  66% {
+    transform: translate(-80px, 140px) scale(0.95) rotate(240deg);
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(360deg);
+  }
+}
+
