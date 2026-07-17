@@ -51,6 +51,18 @@ function StudySessionContent() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState('default');
+  const [decayMultiplier, setDecayMultiplier] = useState(1.0);
+  const [recoveryMultiplier, setRecoveryMultiplier] = useState(1.0);
+  const [gazeSensitivity, setGazeSensitivity] = useState(1.0);
+
+  // Web Audio Synthesizer states
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const synthNodesRef = useRef<any[]>([]);
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const [selectedAmbient, setSelectedAmbient] = useState<'drone' | 'synth' | 'rain'>('drone');
+
+  // Particle Canvas Ref
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
   const [chartData, setChartData] = useState<ChartPoint[]>([
     { time: '0:00', level: 0 } // Starts at 0
@@ -97,6 +109,197 @@ function StudySessionContent() {
       }
     };
   }, []);
+
+  const startAmbientSynth = (type?: 'drone' | 'synth' | 'rain') => {
+    if (typeof window === 'undefined') return;
+    
+    const activeType = type || selectedAmbient;
+    
+    // Create AudioContext if it doesn't exist
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    
+    const ctx = audioCtxRef.current;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    
+    // Stop any existing nodes first
+    stopAmbientSynth();
+    
+    if (activeType === 'drone') {
+      // Cosmic Drone: Detuned sawtooth waves
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(65.41, ctx.currentTime);
+      
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(65.81, ctx.currentTime);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(150, ctx.currentTime);
+      
+      gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+      
+      osc1.connect(gain1);
+      osc2.connect(gain1);
+      gain1.connect(filter);
+      filter.connect(ctx.destination);
+      
+      osc1.start();
+      osc2.start();
+      
+      synthNodesRef.current = [osc1, osc2, gain1, filter];
+    } else if (activeType === 'synth') {
+      // Zen Chords: sine sweeps
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(130.81, ctx.currentTime);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      
+      osc.connect(gain);
+      gain.connect(filter);
+      filter.connect(ctx.destination);
+      
+      osc.start();
+      
+      const interval = setInterval(() => {
+        if (ctx.state === 'closed') return;
+        const freqs = [130.81, 164.81, 196.00, 261.63];
+        const nextFreq = freqs[Math.floor(Math.random() * freqs.length)];
+        osc.frequency.setValueAtTime(nextFreq, ctx.currentTime);
+      }, 3000);
+      
+      synthNodesRef.current = [osc, gain, filter, { stop: () => clearInterval(interval) }];
+    } else if (activeType === 'rain') {
+      // Rain: filtered noise
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(800, ctx.currentTime);
+      filter.Q.setValueAtTime(0.8, ctx.currentTime);
+      
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      
+      whiteNoise.start();
+      
+      synthNodesRef.current = [whiteNoise, filter, gain];
+    }
+    
+    setAmbientPlaying(true);
+  };
+
+  const stopAmbientSynth = () => {
+    if (synthNodesRef.current.length > 0) {
+      synthNodesRef.current.forEach(node => {
+        try {
+          if (node.stop) node.stop();
+          else if (node.disconnect) node.disconnect();
+        } catch (e) {}
+      });
+      synthNodesRef.current = [];
+    }
+    setAmbientPlaying(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAmbientSynth();
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close();
+      }
+    };
+  }, []);
+
+  // Gaze Particle VFX Effect
+  useEffect(() => {
+    if (!canvasRef.current || !isFocused || !isActive) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    let animationId: number;
+    let particles: Array<{ x: number, y: number, vx: number, vy: number, size: number, alpha: number }> = [];
+    
+    const colors = {
+      default: '#00ffa3',
+      cyberpunk: '#ff007f',
+      glacier: '#00d2ff',
+      volcano: '#ff0000'
+    };
+    const activeColor = colors[selectedTheme as keyof typeof colors] || colors.default;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (particles.length < 30) {
+        particles.push({
+          x: canvas.width / 2 + (Math.random() * 40 - 20),
+          y: canvas.height / 2 + (Math.random() * 40 - 20),
+          vx: Math.random() * 1.5 - 0.75,
+          vy: Math.random() * 1.5 - 0.75,
+          size: Math.random() * 2 + 1,
+          alpha: 1.0
+        });
+      }
+      
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.015;
+        
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = activeColor;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = activeColor;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        if (p.alpha <= 0) {
+          particles.splice(idx, 1);
+        }
+      });
+      
+      animationId = requestAnimationFrame(render);
+    };
+    
+    render();
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [isFocused, isActive, selectedTheme]);
 
   // Redirect to login if user not logged in
   useEffect(() => {
@@ -147,11 +350,15 @@ function StudySessionContent() {
 
           let dir = 'Center';
 
-          if (hGaze < calibThresholds.left) {
+          const leftBound = calibThresholds.left * gazeSensitivity;
+          const rightBound = calibThresholds.right * gazeSensitivity;
+          const downBound = calibThresholds.down * (2 - gazeSensitivity);
+
+          if (hGaze < leftBound) {
             dir = 'Left';
-          } else if (hGaze > calibThresholds.right) {
+          } else if (hGaze > rightBound) {
             dir = 'Right';
-          } else if (vGaze > calibThresholds.down) {
+          } else if (vGaze > downBound) {
             dir = 'Down';
           }
 
@@ -160,7 +367,7 @@ function StudySessionContent() {
           // Combined: Center (screen) or Down (paper/book) are both focused
           if (dir === 'Center' || dir === 'Down') {
             setIsFocused(true);
-            setFocusScore(prev => Math.min(100, parseFloat((prev + 0.15).toFixed(2))));
+            setFocusScore(prev => Math.min(100, parseFloat((prev + (0.15 * recoveryMultiplier)).toFixed(2))));
           } else {
             setIsFocused(prev => {
               if (prev) {
@@ -168,7 +375,7 @@ function StudySessionContent() {
               }
               return false;
             });
-            setFocusScore(prev => Math.max(0, prev - 8)); // Drop faster
+            setFocusScore(prev => Math.max(0, prev - (8 * decayMultiplier))); // Scaled lookaway penalty
           }
         }
       } else {
@@ -685,6 +892,15 @@ function StudySessionContent() {
                   className="w-full h-full object-cover scale-x-[-1]"
                 />
                 
+                {isPro && isFocused && isActive && (
+                  <canvas 
+                    ref={canvasRef}
+                    width={320}
+                    height={220}
+                    className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  />
+                )}
+                
                 {/* Bounding trackers corner overlay */}
                 {cameraActive && isActive && (
                   <div className={`absolute inset-8 border-2 rounded transition-all duration-300 pointer-events-none ${
@@ -745,6 +961,131 @@ function StudySessionContent() {
                     {t.name}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Pro Ambient Synthesizer (Only unlocked for PRO) */}
+            <div className="clay-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-label-mono text-[10px] text-on-surface uppercase font-bold">Premium Soundscape Synthesizer</span>
+                {isPro ? (
+                  <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">PRO UNLOCKED</span>
+                ) : (
+                  <span className="text-[7px] bg-surface-variant border border-outline-variant text-on-surface-variant px-1 py-0.5 rounded font-bold uppercase">PRO ONLY</span>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                {[
+                  { id: 'drone', name: 'Cyber Drone' },
+                  { id: 'synth', name: 'Zen Chords' },
+                  { id: 'rain', name: 'Rainfall' }
+                ].map(s => (
+                  <button
+                    key={s.id}
+                    disabled={!isPro}
+                    onClick={() => {
+                      setSelectedAmbient(s.id as any);
+                      if (ambientPlaying) {
+                        startAmbientSynth(s.id as any);
+                      }
+                    }}
+                    className={`flex-1 px-1.5 py-1 rounded text-[9px] font-bold font-label-mono uppercase transition-all cursor-pointer border ${
+                      selectedAmbient === s.id
+                        ? 'bg-secondary-container text-on-secondary border-secondary-container'
+                        : 'bg-surface-container-high text-on-surface border-outline-variant'
+                    } ${!isPro ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="pt-1">
+                {ambientPlaying ? (
+                  <button
+                    disabled={!isPro}
+                    onClick={stopAmbientSynth}
+                    className="w-full bg-error-container/20 border border-error text-error font-label-mono text-[9px] font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer uppercase"
+                  >
+                    <span className="material-symbols-outlined text-xs">volume_off</span>
+                    Mute Synthesizer
+                  </button>
+                ) : (
+                  <button
+                    disabled={!isPro}
+                    onClick={() => startAmbientSynth()}
+                    className="w-full bg-primary-container text-on-primary font-label-mono text-[9px] font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer uppercase shadow-[0_0_10px_rgba(0,255,163,0.15)]"
+                  >
+                    <span className="material-symbols-outlined text-xs">volume_up</span>
+                    Play Soundscape
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Pro Fine-Grained Sensitivity Sliders (Only unlocked for PRO) */}
+            <div className="clay-card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-label-mono text-[10px] text-on-surface uppercase font-bold">Precision Calibration Controls</span>
+                {isPro ? (
+                  <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">PRO UNLOCKED</span>
+                ) : (
+                  <span className="text-[7px] bg-surface-variant border border-outline-variant text-on-surface-variant px-1 py-0.5 rounded font-bold uppercase">PRO ONLY</span>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between font-mono text-[9px] text-on-surface-variant">
+                    <span>Gaze Sensitivity (FOV Width)</span>
+                    <span className="font-bold text-on-surface">{gazeSensitivity.toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.1"
+                    disabled={!isPro}
+                    value={gazeSensitivity}
+                    onChange={(e) => setGazeSensitivity(parseFloat(e.target.value))}
+                    className="w-full accent-primary-container disabled:opacity-30 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between font-mono text-[9px] text-on-surface-variant">
+                    <span>Lookaway Penalty multiplier</span>
+                    <span className="font-bold text-on-surface">{decayMultiplier.toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    disabled={!isPro}
+                    value={decayMultiplier}
+                    onChange={(e) => setDecayMultiplier(parseFloat(e.target.value))}
+                    className="w-full accent-primary-container disabled:opacity-30 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between font-mono text-[9px] text-on-surface-variant">
+                    <span>Score Recovery Speed</span>
+                    <span className="font-bold text-on-surface">{recoveryMultiplier.toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    disabled={!isPro}
+                    value={recoveryMultiplier}
+                    onChange={(e) => setRecoveryMultiplier(parseFloat(e.target.value))}
+                    className="w-full accent-primary-container disabled:opacity-30 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           </div>
