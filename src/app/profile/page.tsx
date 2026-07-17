@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function ProfilePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   
   const [lifetimeSeconds, setLifetimeSeconds] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
@@ -13,6 +13,84 @@ export default function ProfilePage() {
   const [streakDays, setStreakDays] = useState(0);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Edit profile states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [editGoal, setEditGoal] = useState(120);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Profile Webcam & Gallery upload states
+  const [profileWebcamActive, setProfileWebcamActive] = useState(false);
+  const profileVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startProfileWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (profileVideoRef.current) {
+        profileVideoRef.current.srcObject = stream;
+        setProfileWebcamActive(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const captureProfileSnapshot = () => {
+    if (profileVideoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(profileVideoRef.current, -160, 0, 160, 160);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setEditAvatar(dataUrl);
+        stopProfileWebcam();
+      }
+    }
+  };
+
+  const stopProfileWebcam = () => {
+    if (profileVideoRef.current && profileVideoRef.current.srcObject) {
+      const stream = profileVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      profileVideoRef.current.srcObject = null;
+    }
+    setProfileWebcamActive(false);
+  };
+
+  // Cleanup profile webcam
+  useEffect(() => {
+    return () => {
+      if (profileVideoRef.current && profileVideoRef.current.srcObject) {
+        const stream = profileVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Initialize edit fields when profile loads
+  useEffect(() => {
+    if (profile) {
+      setEditName(profile.name || '');
+      setEditAvatar(profile.avatar_url || '');
+      setEditGoal(profile.daily_goal_minutes || 120);
+    }
+  }, [profile]);
 
   // Fetch statistics from Supabase
   const loadProfileStats = async () => {
@@ -95,6 +173,34 @@ export default function ProfilePage() {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setSavingProfile(true);
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: editName.trim(),
+          avatar_url: editAvatar.trim() || null,
+          daily_goal_minutes: editGoal
+        })
+        .eq('id', user.id);
+
+      if (!error) {
+        await refreshProfile();
+        setEditModalOpen(false);
+      } else {
+        alert('Update failed: ' + error.message);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadProfileStats();
@@ -121,6 +227,14 @@ export default function ProfilePage() {
     { id: '4', title: 'Consecutive Grind', desc: 'Reach a study streak of 10 days.', icon: 'local_fire_department', unlocked: streakDays >= 10 }
   ];
 
+  const PRESET_AVATARS = [
+    'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=neon-ninja',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=code-warrior',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=focus-master',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=arena-pro'
+  ];
+
   return (
     <div className="space-y-6">
       {/* Title */}
@@ -139,6 +253,17 @@ export default function ProfilePage() {
           <div className="card-base p-6 md:p-8 relative overflow-hidden group border-l-2 border-primary-fixed bg-grid-pattern">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             
+            {/* Edit Profile trigger button */}
+            <div className="absolute top-4 right-4 z-20">
+              <button 
+                onClick={() => setEditModalOpen(true)}
+                className="flex items-center gap-1.5 bg-surface-container-high hover:bg-surface-container hover:text-primary-fixed border border-outline-variant hover:border-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-xs">edit</span>
+                Edit Profile
+              </button>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
               <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary-container bg-surface-variant shrink-0">
                 <img 
@@ -242,6 +367,139 @@ export default function ProfilePage() {
         </div>
 
       </div>
+
+      {/* Edit Profile Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container border border-outline-variant rounded-2xl p-6 w-full max-w-md shadow-2xl relative space-y-6">
+            <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30">
+              <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider">Configure Rig Profile</h3>
+              <button 
+                onClick={() => setEditModalOpen(false)}
+                className="text-on-surface-variant hover:text-primary-fixed cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProfile} className="space-y-4 font-mono text-xs">
+              <div>
+                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-1">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-background border border-outline-variant rounded-lg p-2.5 text-on-surface focus:outline-none focus:border-primary-fixed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-1.5">Avatar Source</label>
+                <div className="flex gap-2 mb-2">
+                  <label className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">photo_library</span>
+                    Gallery Upload
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleProfileFileChange} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={profileWebcamActive ? stopProfileWebcam : startProfileWebcam}
+                    className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-xs">videocam</span>
+                    {profileWebcamActive ? 'Stop Camera' : 'Camera Snap'}
+                  </button>
+                </div>
+
+                {profileWebcamActive && (
+                  <div className="relative mt-2 w-full h-36 bg-black rounded-lg overflow-hidden border border-outline-variant flex flex-col justify-end p-2">
+                    <video 
+                      ref={profileVideoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                    />
+                    <div className="relative z-10 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={captureProfileSnapshot}
+                        className="bg-primary-container text-on-primary text-[8px] font-bold px-2.5 py-1 rounded hover:bg-primary-fixed cursor-pointer"
+                      >
+                        Snap Pic
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <label className="block text-on-surface-variant text-[8px] uppercase font-bold mb-1 mt-3">Custom Image URL / Base64 Data</label>
+                <input
+                  type="text"
+                  value={editAvatar}
+                  onChange={(e) => setEditAvatar(e.target.value)}
+                  placeholder="https://image-link.com/avatar.png"
+                  className="w-full bg-background border border-outline-variant rounded-lg p-2 text-[10px] text-on-surface focus:outline-none focus:border-primary-fixed"
+                />
+              </div>
+
+              {/* Preset avatar select shortcuts */}
+              <div>
+                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-2">Preset Cyber Avatars</label>
+                <div className="flex gap-2">
+                  {PRESET_AVATARS.map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setEditAvatar(url)}
+                      className={`w-10 h-10 rounded-lg overflow-hidden border shrink-0 hover:scale-105 transition-transform cursor-pointer ${
+                        editAvatar === url ? 'border-primary-fixed bg-primary-container/15' : 'border-outline-variant bg-surface-container-high'
+                      }`}
+                    >
+                      <img src={url} alt="Preset option" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-1">Daily Study Target (Minutes)</label>
+                <input
+                  type="number"
+                  min={30}
+                  max={600}
+                  value={editGoal}
+                  onChange={(e) => setEditGoal(parseInt(e.target.value))}
+                  className="w-full bg-background border border-outline-variant rounded-lg p-2.5 text-on-surface focus:outline-none focus:border-primary-fixed"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="flex-1 bg-surface-container-high border border-outline-variant text-on-surface py-2 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="flex-1 bg-primary-container text-on-primary font-bold py-2 rounded-lg hover:bg-primary-fixed transition-colors cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.15)]"
+                >
+                  {savingProfile ? 'Saving Spec...' : 'Update Rig'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
