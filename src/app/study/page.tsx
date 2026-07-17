@@ -647,7 +647,8 @@ function StudySessionContent() {
   };
 
   const activeColors = themeColors[selectedTheme] || themeColors.default;
-  const isPro = user?.user_metadata?.is_pro === true;
+  const ENABLE_GOPRO = false; // Set to true when GoPro is ready to launch
+  const isPro = ENABLE_GOPRO && (user?.user_metadata?.is_pro === true);
 
   const formatTimer = (totalSecs: number) => {
     const hrs = Math.floor(totalSecs / 3600).toString().padStart(2, '0');
