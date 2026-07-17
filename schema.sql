@@ -1002,3 +1002,48 @@ end;
 $$ language plpgsql security definer;
 
 
+-- ==========================================
+-- 10. NOTIFICATIONS TABLE
+-- ==========================================
+create table public.notifications (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid references public.users(id) on delete cascade not null,
+    title text not null,
+    message text not null,
+    type text not null default 'info', -- 'info', 'achievement', 'transaction', 'challenge'
+    is_read boolean not null default false,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.notifications enable row level security;
+
+create policy "Users can view their own notifications"
+    on public.notifications for select
+    using (auth.uid() = user_id);
+
+create policy "Users can update their own notifications"
+    on public.notifications for update
+    using (auth.uid() = user_id);
+
+
+-- Trigger: Create notification on transaction insertion
+create or replace function public.handle_new_transaction_notification()
+returns trigger as $$
+begin
+    insert into public.notifications (user_id, title, message, type)
+    values (
+        new.user_id,
+        'Transaction Posted',
+        'A new transaction of type ' || new.type || ' (' || new.amount || ' TKN) was posted to your wallet: "' || coalesce(new.description, '') || '".',
+        'transaction'
+    );
+    return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger tr_transaction_notification
+    after insert on public.transactions
+    for each row
+    execute function public.handle_new_transaction_notification();
+
+

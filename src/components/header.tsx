@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
@@ -19,7 +19,72 @@ export default function Header() {
   const [buying, setBuying] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
+  // Notifications states
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
   const isPro = user?.user_metadata?.is_pro === true;
+
+  const loadNotifications = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!error && data) {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.is_read).length);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (!error) {
+        loadNotifications();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    loadNotifications();
+
+    const notificationsChannel = supabase
+      .channel(`user-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          loadNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notificationsChannel);
+    };
+  }, [user]);
 
   const handleBuyPro = async () => {
     if (!user || !wallet) return;
@@ -128,11 +193,73 @@ export default function Header() {
           )}
 
           {/* Notification Button */}
-          <button className="text-on-surface-variant hover:text-primary-fixed transition-colors relative cursor-pointer">
-            <span className="material-symbols-outlined text-[22px]">notifications</span>
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error animate-ping"></span>
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error"></span>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="text-on-surface-variant hover:text-primary-fixed transition-colors relative cursor-pointer focus:outline-none"
+            >
+              <span className="material-symbols-outlined text-[22px]">notifications</span>
+              {unreadCount > 0 && (
+                <>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error animate-ping"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error"></span>
+                </>
+              )}
+            </button>
+
+            {notificationsOpen && (
+              <>
+                {/* Click outside to close */}
+                <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)}></div>
+                
+                <div className="absolute right-0 mt-3 w-80 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/30 text-xs font-mono">
+                    <span className="font-bold text-on-surface uppercase tracking-tight">System Alerts</span>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-primary-fixed hover:underline text-[9px] uppercase font-bold cursor-pointer"
+                      >
+                        Clear unread
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2 pr-0.5">
+                    {notifications.length === 0 ? (
+                      <p className="text-[10px] text-on-surface-variant font-mono text-center py-6 uppercase tracking-tight">No notifications yet</p>
+                    ) : (
+                      notifications.map(n => (
+                        <div 
+                          key={n.id}
+                          className={`p-2.5 rounded-lg border text-[10px] font-mono transition-colors text-left ${
+                            n.is_read 
+                              ? 'bg-surface-container-low/40 border-outline-variant/10 text-on-surface-variant'
+                              : 'bg-primary-container/5 border-primary-container/20 text-on-surface'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <span className={`font-bold uppercase tracking-tight text-[9px] ${
+                              n.type === 'transaction' ? 'text-primary-fixed' : n.type === 'achievement' ? 'text-yellow-400' : 'text-on-surface'
+                            }`}>
+                              {n.title}
+                            </span>
+                            {!n.is_read && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0"></span>
+                            )}
+                          </div>
+                          <p className="mt-1 leading-normal break-words">{n.message}</p>
+                          <p className="text-[8px] text-on-surface-variant/60 text-right mt-1.5">
+                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Settings shortcut */}
           <button onClick={() => router.push('/settings')} className="text-on-surface-variant hover:text-primary-fixed transition-colors cursor-pointer">
