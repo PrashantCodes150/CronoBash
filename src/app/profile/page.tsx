@@ -273,9 +273,16 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-1 select-none text-center sm:text-left">
-                <h3 className="font-display text-xl font-bold text-on-surface uppercase tracking-tight">
-                  {profile?.name || 'Arena Fighter'}
-                </h3>
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <h3 className="font-display text-xl font-bold text-on-surface uppercase tracking-tight">
+                    {profile?.name || 'Arena Fighter'}
+                  </h3>
+                  {user?.user_metadata?.is_pro === true && (
+                    <span className="text-[9px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-2 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)] shrink-0">
+                      PRO MEMBER
+                    </span>
+                  )}
+                </div>
                 <p className="font-label-mono text-xs text-on-surface-variant">{profile?.email}</p>
                 <div className="flex flex-wrap gap-2 pt-2 justify-center sm:justify-start">
                   <span className="font-label-mono text-[9px] font-bold bg-primary-container/15 text-primary-fixed px-2 py-0.5 rounded border border-primary-container/30">
@@ -356,7 +363,14 @@ export default function ProfilePage() {
                       <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant bg-surface-variant shrink-0">
                         <img alt={u.name} className="w-full h-full object-cover" src={u.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'} />
                       </div>
-                      <span className="truncate max-w-[120px]">{u.name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate max-w-[100px]">{u.name}</span>
+                        {u.is_pro && (
+                          <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)] shrink-0">
+                            PRO
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span>{u.hours} hrs</span>
                   </div>

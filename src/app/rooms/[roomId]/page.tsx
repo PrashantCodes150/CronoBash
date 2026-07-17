@@ -60,7 +60,8 @@ export default function RoomDetail() {
             id: row.user_id,
             name: row.user_name,
             avatar_url: row.avatar_url,
-            email: ''
+            email: '',
+            is_pro: row.is_pro
           }
         }));
         setMembers(formatted);
@@ -87,7 +88,7 @@ export default function RoomDetail() {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*, users:user_id(name, avatar_url)')
+        .select('*, users:user_id(name, avatar_url, is_pro)')
         .eq('room_id', roomId)
         .order('created_at', { ascending: true })
         .limit(50);
@@ -129,6 +130,7 @@ export default function RoomDetail() {
 
       if (!error) {
         setNewMessage('');
+        await loadRoomMessages();
       }
     } catch (e) {
       console.error(e);
@@ -184,7 +186,7 @@ export default function RoomDetail() {
         async (payload) => {
           const { data: userData } = await supabase
             .from('users')
-            .select('name, avatar_url')
+            .select('name, avatar_url, is_pro')
             .eq('id', payload.new.user_id)
             .single();
 
@@ -406,9 +408,16 @@ export default function RoomDetail() {
                             <div className="w-9 h-9 rounded-full overflow-hidden border border-outline-variant bg-surface-variant shrink-0">
                               <img alt={name} className="w-full h-full object-cover" src={avatar} />
                             </div>
-                            <span className={`font-mono text-xs ${isCurrentUser ? 'text-primary-fixed font-bold' : 'text-on-surface'}`}>
-                              {name} {isCurrentUser && '(You)'}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-mono text-xs ${isCurrentUser ? 'text-primary-fixed font-bold' : 'text-on-surface'}`}>
+                                {name} {isCurrentUser && '(You)'}
+                              </span>
+                              {mbr.users?.is_pro && (
+                                <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">
+                                  PRO
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="py-4 text-right font-bold text-on-surface-variant">
@@ -587,7 +596,14 @@ export default function RoomDetail() {
                           <div className={`max-w-[75%] rounded-lg p-2 ${
                             isMe ? 'bg-primary-container text-on-primary border border-primary-container/40' : 'bg-surface-container-high border border-outline-variant text-on-surface'
                           }`}>
-                            <p className="font-bold text-[8px] opacity-70 mb-0.5 truncate">{msg.users?.name || 'Contestant'}</p>
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <span className="font-bold text-[8px] opacity-70 truncate max-w-[80px]">{msg.users?.name || 'Contestant'}</span>
+                              {msg.users?.is_pro && (
+                                <span className="text-[6px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-0.5 rounded font-black tracking-tighter uppercase shrink-0">
+                                  PRO
+                                </span>
+                              )}
+                            </div>
                             <p className="break-words leading-tight">{msg.message_text}</p>
                           </div>
                         </div>

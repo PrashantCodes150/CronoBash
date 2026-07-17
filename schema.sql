@@ -16,6 +16,7 @@ create table public.users (
     email text not null,
     avatar_url text,
     daily_goal_minutes integer not null default 120,
+    is_pro boolean not null default false,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -491,7 +492,8 @@ returns table (
     user_name text,
     avatar_url text,
     focus_seconds_today integer,
-    joined_at timestamp with time zone
+    joined_at timestamp with time zone,
+    is_pro boolean
 ) as $$
 begin
     return query
@@ -501,7 +503,8 @@ begin
         u.name as user_name,
         u.avatar_url,
         rm.total_focus_seconds_today as focus_seconds_today,
-        rm.joined_at
+        rm.joined_at,
+        u.is_pro
     from public.room_members rm
     join public.users u on u.id = rm.user_id
     where rm.room_id = p_room_id

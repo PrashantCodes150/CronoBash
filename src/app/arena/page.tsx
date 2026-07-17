@@ -51,7 +51,7 @@ export default function ArenaPage() {
         const userIds = sorted.map(([id]) => id);
         const { data: usersData } = await supabase
           .from('users')
-          .select('id, name, avatar_url')
+          .select('id, name, avatar_url, is_pro')
           .in('id', userIds);
 
         if (usersData) {
@@ -59,6 +59,7 @@ export default function ArenaPage() {
           setTopPerformers(sorted.map(([id, seconds], idx) => ({
             rank: idx + 1,
             name: userMap.get(id)?.name || 'Anonymous',
+            is_pro: userMap.get(id)?.is_pro || false,
             hours: (seconds / 3600).toFixed(1)
           })));
         }
@@ -180,7 +181,14 @@ export default function ArenaPage() {
                   <li key={p.rank} className="flex items-center justify-between p-2 bg-surface-container/50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <span className={`font-display text-sm font-bold ${p.rank === 1 ? 'text-primary-fixed' : 'text-on-surface-variant'}`}>#{p.rank}</span>
-                      <span className="font-bold text-on-surface">{p.name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-on-surface">{p.name}</span>
+                        {p.is_pro && (
+                          <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">
+                            PRO
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span className="text-on-surface-variant">{p.hours}h studied</span>
                   </li>

@@ -59,6 +59,14 @@ export default function Header() {
 
       if (metadataError) throw new Error("User metadata subscription config failed.");
 
+      // 3.5. Update public users table to make it public and visible to other users!
+      const { error: profileUpdateError } = await supabase
+        .from('users')
+        .update({ is_pro: true })
+        .eq('id', user.id);
+
+      if (profileUpdateError) throw new Error("Public profile sync config failed.");
+
       // 4. Refresh wallet and local state
       await refreshWallet();
       await refreshProfile();

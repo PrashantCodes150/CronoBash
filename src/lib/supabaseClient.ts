@@ -16,6 +16,7 @@ export interface UserProfile {
   email: string;
   avatar_url: string | null;
   daily_goal_minutes: number;
+  is_pro?: boolean;
   created_at: string;
 }
 
