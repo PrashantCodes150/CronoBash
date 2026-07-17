@@ -147,12 +147,15 @@ alter table public.room_members enable row level security;
 create policy "Room members are viewable by room members"
     on public.room_members for select
     using (
-        exists (
-            select 1 from public.room_members rm
-            where rm.room_id = room_members.room_id
-              and rm.user_id = auth.uid()
+        user_id = auth.uid()
+        or exists (
+            select 1 from public.rooms
+            where id = room_id
+              and (
+                owner_id = auth.uid()
+                or type in ('public', 'money')
+              )
         )
-        or room_members.user_id = auth.uid()
     );
 
 create policy "Users can join rooms"
