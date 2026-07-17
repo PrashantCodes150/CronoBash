@@ -50,6 +50,7 @@ function StudySessionContent() {
   const [gazeDirection, setGazeDirection] = useState('Calibrating');
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
+  const [selectedTheme, setSelectedTheme] = useState('default');
   
   const [chartData, setChartData] = useState<ChartPoint[]>([
     { time: '0:00', level: 0 } // Starts at 0
@@ -295,7 +296,8 @@ function StudySessionContent() {
           })
           .eq('id', sessionId);
 
-        const rewardTokens = Math.round(focusSeconds / 120);
+        const rewardMultiplier = user?.user_metadata?.is_pro === true ? 2 : 1;
+        const rewardTokens = Math.round(focusSeconds / 120) * rewardMultiplier;
         if (rewardTokens > 0) {
           const { data: walletData } = await supabase
             .from('wallets')
@@ -313,7 +315,7 @@ function StudySessionContent() {
               user_id: user.id,
               type: 'winning',
               amount: rewardTokens,
-              description: `Focus reward: screen ${screenFocusSeconds}s, paper ${paperFocusSeconds}s`
+              description: `Focus reward${rewardMultiplier > 1 ? ' (2x PRO Multiplier)' : ''}: screen ${screenFocusSeconds}s, paper ${paperFocusSeconds}s`
             });
           }
         }
@@ -430,6 +432,16 @@ function StudySessionContent() {
     }
   };
 
+  const themeColors: Record<string, { b1: string, b2: string, b3: string }> = {
+    default: { b1: '#00ffa3', b2: '#00c2ff', b3: '#9e00ff' },
+    cyberpunk: { b1: '#ff007f', b2: '#ffea00', b3: '#00f6ff' },
+    glacier: { b1: '#00d2ff', b2: '#ffffff', b3: '#003cff' },
+    volcano: { b1: '#ff0000', b2: '#ff7b00', b3: '#550000' }
+  };
+
+  const activeColors = themeColors[selectedTheme] || themeColors.default;
+  const isPro = user?.user_metadata?.is_pro === true;
+
   const formatTimer = (totalSecs: number) => {
     const hrs = Math.floor(totalSecs / 3600).toString().padStart(2, '0');
     const mins = Math.floor((totalSecs % 3600) / 60).toString().padStart(2, '0');
@@ -442,9 +454,9 @@ function StudySessionContent() {
       
       {/* Background animated fluid blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="fluid-blob blob-1"></div>
-        <div className="fluid-blob blob-2"></div>
-        <div className="fluid-blob blob-3"></div>
+        <div className="fluid-blob blob-1" style={{ backgroundColor: activeColors.b1 }}></div>
+        <div className="fluid-blob blob-2" style={{ backgroundColor: activeColors.b2 }}></div>
+        <div className="fluid-blob blob-3" style={{ backgroundColor: activeColors.b3 }}></div>
       </div>
 
       {/* Calibration Overlay */}
@@ -699,6 +711,41 @@ function StudySessionContent() {
               >
                 Recalibrate
               </button>
+            </div>
+
+            {/* Pro Theme Selector (Only unlocked for PRO) */}
+            <div className="clay-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-label-mono text-[10px] text-on-surface uppercase font-bold">Rig Aesthetic Theme</span>
+                {isPro ? (
+                  <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">PRO UNLOCKED</span>
+                ) : (
+                  <span className="text-[7px] bg-surface-variant border border-outline-variant text-on-surface-variant px-1 py-0.5 rounded font-bold uppercase">PRO ONLY</span>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'default', name: 'Default', disabled: false },
+                  { id: 'cyberpunk', name: 'Cyberpunk', disabled: !isPro },
+                  { id: 'glacier', name: 'Glacier', disabled: !isPro },
+                  { id: 'volcano', name: 'Volcano', disabled: !isPro }
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    disabled={t.disabled}
+                    onClick={() => setSelectedTheme(t.id)}
+                    className={`px-2 py-1.5 rounded text-[10px] font-bold font-label-mono uppercase transition-all flex items-center justify-center gap-1 cursor-pointer border ${
+                      selectedTheme === t.id
+                        ? 'bg-primary-container text-on-primary border-primary-container'
+                        : 'bg-surface-container-high text-on-surface border-outline-variant hover:border-outline'
+                    } ${t.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    {t.disabled && <span className="material-symbols-outlined text-[10px]">lock</span>}
+                    {t.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

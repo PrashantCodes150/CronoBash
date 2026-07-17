@@ -4,13 +4,79 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
+import { supabase } from '@/lib/supabaseClient';
+import confetti from 'canvas-confetti';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { profile, wallet, signOut } = useAuth();
+  const { user, profile, wallet, signOut, refreshWallet, refreshProfile } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Pro Modal states
+  const [proModalOpen, setProModalOpen] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
+  const isPro = user?.user_metadata?.is_pro === true;
+
+  const handleBuyPro = async () => {
+    if (!user || !wallet) return;
+    if (wallet.balance < 500) {
+      setPurchaseError("Insufficient TKN. Study more sessions to accumulate 500 TKN!");
+      return;
+    }
+
+    setBuying(true);
+    setPurchaseError(null);
+
+    try {
+      // 1. Deduct 500 tokens from wallet
+      const { error: walletError } = await supabase
+        .from('wallets')
+        .update({ balance: wallet.balance - 500 })
+        .eq('user_id', user.id);
+
+      if (walletError) throw new Error("Wallet transaction failed.");
+
+      // 2. Insert debit transaction
+      const { error: txnError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'purchase',
+          amount: 500,
+          description: 'Rig Upgrade: PRO FOCUS MODE Unlocked'
+        });
+
+      if (txnError) throw new Error("Transaction log registration failed.");
+
+      // 3. Update auth user metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { is_pro: true }
+      });
+
+      if (metadataError) throw new Error("User metadata subscription config failed.");
+
+      // 4. Refresh wallet and local state
+      await refreshWallet();
+      await refreshProfile();
+      
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.4 }
+      });
+
+      setProModalOpen(false);
+    } catch (e: any) {
+      console.error(e);
+      setPurchaseError(e.message || "An unexpected error occurred.");
+    } finally {
+      setBuying(false);
+    }
+  };
 
   // Hidden on root landing and auth pages for layout simplicity
   const authRoutes = ['/', '/login', '/signup', '/onboarding'];
@@ -37,9 +103,21 @@ export default function Header() {
           </Link>
 
           {/* Go Pro trigger */}
-          <button className="bg-primary-container/10 border border-primary-container/40 text-primary-fixed hover:bg-primary-container hover:text-on-primary transition-all px-4 py-1.5 rounded-lg font-label-mono text-xs font-bold cursor-pointer">
-            Go Pro
-          </button>
+          {isPro ? (
+            <button 
+              onClick={() => setProModalOpen(true)}
+              className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black transition-all px-4 py-1.5 rounded-lg font-label-mono text-xs font-bold cursor-pointer uppercase tracking-wider shadow-[0_0_10px_rgba(234,179,8,0.2)]"
+            >
+              ★ PRO ACTIVE
+            </button>
+          ) : (
+            <button 
+              onClick={() => setProModalOpen(true)}
+              className="bg-primary-container/10 border border-primary-container/40 text-primary-fixed hover:bg-primary-container hover:text-on-primary transition-all px-4 py-1.5 rounded-lg font-label-mono text-xs font-bold cursor-pointer"
+            >
+              Go Pro
+            </button>
+          )}
 
           {/* Notification Button */}
           <button className="text-on-surface-variant hover:text-primary-fixed transition-colors relative cursor-pointer">
@@ -73,7 +151,14 @@ export default function Header() {
                 
                 <div className="absolute right-0 mt-2 w-56 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-3 py-2 border-b border-outline-variant/30 text-xs font-mono">
-                    <p className="font-bold text-on-surface truncate">{profile?.name || 'Arena Fighter'}</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-on-surface truncate">{profile?.name || 'Arena Fighter'}</span>
+                      {isPro && (
+                        <span className="text-[8px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">
+                          PRO
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{profile?.email}</p>
                   </div>
                   <ul className="py-1 text-xs font-label-mono uppercase font-bold text-on-surface-variant space-y-1">
@@ -197,6 +282,100 @@ export default function Header() {
                 Logout
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Go Pro Checkout Modal */}
+      {proModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200" onClick={() => setProModalOpen(false)}>
+          <div className="clay-card max-w-md w-full p-6 space-y-6 relative overflow-hidden border-t-2 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)]" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Close Button */}
+            <button 
+              onClick={() => setProModalOpen(false)}
+              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            {/* Header info */}
+            <div className="text-center space-y-2">
+              <span className="font-label-mono text-[9px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-3 py-1 rounded-full uppercase font-black tracking-widest inline-block shadow-[0_0_8px_rgba(234,179,8,0.3)]">
+                RIG CONSOLE UPGRADE
+              </span>
+              <h3 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight mt-1">
+                Go Pro Study Mode
+              </h3>
+              <p className="text-xs text-on-surface-variant max-w-xs mx-auto leading-relaxed">
+                Supercharge your cognitive tracking system and unlock ultimate study reward multipliers.
+              </p>
+            </div>
+
+            {/* Features list */}
+            <div className="space-y-3 py-2">
+              <div className="flex items-start gap-3 bg-surface-container/50 p-3 rounded-lg border border-outline-variant/30">
+                <span className="material-symbols-outlined text-yellow-400 shrink-0 mt-0.5">diamond</span>
+                <div>
+                  <h4 className="font-label-mono text-xs font-bold text-on-surface uppercase">2x Sprints Payout Multipliers</h4>
+                  <p className="text-[10px] text-on-surface-variant mt-0.5 leading-normal">
+                    Receive double tokens for every focus second completed. Accelerate your wallet winnings!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-surface-container/50 p-3 rounded-lg border border-outline-variant/30">
+                <span className="material-symbols-outlined text-primary-fixed shrink-0 mt-0.5">palette</span>
+                <div>
+                  <h4 className="font-label-mono text-xs font-bold text-on-surface uppercase">Premium Background Themes</h4>
+                  <p className="text-[10px] text-on-surface-variant mt-0.5 leading-normal">
+                    Customize your Study page layout with Cyber Neon, Frozen Ice, Sunset Glow, or Volcanic Fire.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-surface-container/50 p-3 rounded-lg border border-outline-variant/30">
+                <span className="material-symbols-outlined text-secondary-fixed shrink-0 mt-0.5">workspace_premium</span>
+                <div>
+                  <h4 className="font-label-mono text-xs font-bold text-on-surface uppercase">Glowing PRO Badge</h4>
+                  <p className="text-[10px] text-on-surface-variant mt-0.5 leading-normal">
+                    Unlock a premium gold stars title next to your profile on dashboards, rooms, and leaderboards.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Error alerts */}
+            {purchaseError && (
+              <div className="p-3 bg-error-container/10 border border-error text-error text-xs font-mono rounded-lg">
+                {purchaseError}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="space-y-2.5 pt-2">
+              {isPro ? (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-label-mono text-xs font-bold py-3.5 rounded-xl text-center uppercase tracking-wider">
+                  ✓ You are already a PRO Member
+                </div>
+              ) : (
+                <button
+                  disabled={buying}
+                  onClick={handleBuyPro}
+                  className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:bg-surface-variant text-black font-label-mono text-xs font-black py-4 rounded-xl transition-all hover:scale-[1.01] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+                >
+                  <span className="material-symbols-outlined text-base">shopping_cart</span>
+                  {buying ? 'Upgrading Rig...' : 'Unlock Pro Mode for 500 TKN'}
+                </button>
+              )}
+
+              <button
+                onClick={() => setProModalOpen(false)}
+                className="w-full bg-surface-container-high hover:bg-surface-container border border-outline-variant text-on-surface-variant hover:text-on-surface font-label-mono text-xs font-bold py-3 rounded-lg transition-colors cursor-pointer uppercase tracking-wider"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+
           </div>
         </div>
       )}

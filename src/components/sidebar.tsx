@@ -8,7 +8,7 @@ import { useAuth } from './auth-context';
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   const links = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
@@ -88,9 +88,16 @@ export default function Sidebar() {
               />
             </div>
             <div className="min-w-0">
-              <p className="font-label-mono text-label-mono text-on-surface font-bold truncate max-w-[130px]">
-                {profile?.name || 'Arena Fighter'}
-              </p>
+              <div className="flex items-center gap-1">
+                <span className="font-label-mono text-label-mono text-on-surface font-bold truncate max-w-[100px]">
+                  {profile?.name || 'Arena Fighter'}
+                </span>
+                {user?.user_metadata?.is_pro === true && (
+                  <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shrink-0 shadow-[0_0_5px_rgba(234,179,8,0.2)]">
+                    PRO
+                  </span>
+                )}
+              </div>
               <p className="font-label-mono text-[10px] text-on-surface-variant">
                 Target: {profile?.daily_goal_minutes || 120} min
               </p>
