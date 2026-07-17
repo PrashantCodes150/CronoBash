@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -20,6 +20,68 @@ export default function ProfilePage() {
   const [editAvatar, setEditAvatar] = useState('');
   const [editGoal, setEditGoal] = useState(120);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Profile Webcam & Gallery upload states
+  const [profileWebcamActive, setProfileWebcamActive] = useState(false);
+  const profileVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startProfileWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (profileVideoRef.current) {
+        profileVideoRef.current.srcObject = stream;
+        setProfileWebcamActive(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const captureProfileSnapshot = () => {
+    if (profileVideoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(profileVideoRef.current, -160, 0, 160, 160);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setEditAvatar(dataUrl);
+        stopProfileWebcam();
+      }
+    }
+  };
+
+  const stopProfileWebcam = () => {
+    if (profileVideoRef.current && profileVideoRef.current.srcObject) {
+      const stream = profileVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      profileVideoRef.current.srcObject = null;
+    }
+    setProfileWebcamActive(false);
+  };
+
+  // Cleanup profile webcam
+  useEffect(() => {
+    return () => {
+      if (profileVideoRef.current && profileVideoRef.current.srcObject) {
+        const stream = profileVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   // Initialize edit fields when profile loads
   useEffect(() => {
@@ -333,13 +395,57 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-1">Custom Image URL</label>
+                <label className="block text-on-surface-variant text-[9px] uppercase font-bold mb-1.5">Avatar Source</label>
+                <div className="flex gap-2 mb-2">
+                  <label className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">photo_library</span>
+                    Gallery Upload
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleProfileFileChange} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={profileWebcamActive ? stopProfileWebcam : startProfileWebcam}
+                    className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-xs">videocam</span>
+                    {profileWebcamActive ? 'Stop Camera' : 'Camera Snap'}
+                  </button>
+                </div>
+
+                {profileWebcamActive && (
+                  <div className="relative mt-2 w-full h-36 bg-black rounded-lg overflow-hidden border border-outline-variant flex flex-col justify-end p-2">
+                    <video 
+                      ref={profileVideoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                    />
+                    <div className="relative z-10 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={captureProfileSnapshot}
+                        className="bg-primary-container text-on-primary text-[8px] font-bold px-2.5 py-1 rounded hover:bg-primary-fixed cursor-pointer"
+                      >
+                        Snap Pic
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <label className="block text-on-surface-variant text-[8px] uppercase font-bold mb-1 mt-3">Custom Image URL / Base64 Data</label>
                 <input
                   type="text"
                   value={editAvatar}
                   onChange={(e) => setEditAvatar(e.target.value)}
                   placeholder="https://image-link.com/avatar.png"
-                  className="w-full bg-background border border-outline-variant rounded-lg p-2.5 text-on-surface focus:outline-none focus:border-primary-fixed"
+                  className="w-full bg-background border border-outline-variant rounded-lg p-2 text-[10px] text-on-surface focus:outline-none focus:border-primary-fixed"
                 />
               </div>
 

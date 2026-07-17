@@ -13,6 +13,69 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Avatar states
+  const [avatar, setAvatar] = useState('https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight');
+  const [webcamActive, setWebcamActive] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setWebcamActive(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const captureSnapshot = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoRef.current, -160, 0, 160, 160);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setAvatar(dataUrl);
+        stopWebcam();
+      }
+    }
+  };
+
+  const stopWebcam = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setWebcamActive(false);
+  };
+
+  // Cleanup webcam stream
+  useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
   const subjectsList = [
     { name: 'Mathematics', icon: 'functions' },
     { name: 'Engineering', icon: 'construction' },
@@ -44,7 +107,8 @@ export default function OnboardingPage() {
       const { error } = await supabase
         .from('users')
         .update({
-          daily_goal_minutes: dailyGoal
+          daily_goal_minutes: dailyGoal,
+          avatar_url: avatar
         })
         .eq('id', user.id);
 
@@ -94,6 +158,72 @@ export default function OnboardingPage() {
         </div>
 
         <form onSubmit={handleOnboardingSubmit} className="space-y-8">
+          
+          {/* Avatar Setup Option */}
+          <div className="space-y-4 border-b border-outline-variant/30 pb-6">
+            <label className="block font-label-mono text-xs text-on-surface-variant uppercase font-bold">
+              Contestant Avatar Rig
+            </label>
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              {/* Avatar Preview */}
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary-container bg-surface-container-low shrink-0 relative">
+                <img 
+                  alt="User avatar" 
+                  className="w-full h-full object-cover" 
+                  src={avatar} 
+                />
+              </div>
+
+              <div className="flex-grow space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {/* Select File (Gallery) */}
+                  <label className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[10px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">photo_library</span>
+                    Gallery Upload
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* Toggle Camera */}
+                  <button
+                    type="button"
+                    onClick={webcamActive ? stopWebcam : startWebcam}
+                    className="bg-surface-container-high hover:bg-surface border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[10px] font-bold px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">videocam</span>
+                    {webcamActive ? 'Stop Camera' : 'Camera Snap'}
+                  </button>
+                </div>
+
+                {/* Webcam Preview and capture triggers */}
+                {webcamActive && (
+                  <div className="relative mt-2 w-44 h-36 bg-black rounded-lg overflow-hidden border border-outline-variant flex flex-col justify-end p-2">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                    />
+                    <div className="relative z-10 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={captureSnapshot}
+                        className="bg-primary-container text-on-primary text-[8px] font-bold px-2 py-1 rounded hover:bg-primary-fixed cursor-pointer"
+                      >
+                        Snap Pic
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Daily Goal minutes selector */}
           <div className="space-y-3">
             <label className="block font-label-mono text-xs text-on-surface-variant uppercase">
