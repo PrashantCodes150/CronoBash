@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-context';
 import { supabase } from '@/lib/supabaseClient';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface ChartPoint {
   time: string;
@@ -52,6 +52,9 @@ function StudySessionContent() {
   
   const [chartData, setChartData] = useState<ChartPoint[]>([
     { time: '0:00', level: 0 } // Starts at 0
+  ]);
+  const [streakChartData, setStreakChartData] = useState<any[]>([
+    { time: '0:00', streak: 0 }
   ]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -142,7 +145,7 @@ function StudySessionContent() {
           // Combined: Center (screen) or Down (paper/book) are both focused
           if (dir === 'Center' || dir === 'Down') {
             setIsFocused(true);
-            setFocusScore(prev => Math.min(100, prev + 1));
+            setFocusScore(prev => Math.min(100, parseFloat((prev + 0.3).toFixed(2))));
           } else {
             setIsFocused(prev => {
               if (prev) {
@@ -150,7 +153,7 @@ function StudySessionContent() {
               }
               return false;
             });
-            setFocusScore(prev => Math.max(0, prev - 2));
+            setFocusScore(prev => Math.max(0, prev - 8)); // Drop faster
           }
         }
       } else {
@@ -161,7 +164,7 @@ function StudySessionContent() {
           }
           return false;
         });
-        setFocusScore(prev => Math.max(0, prev - 3));
+        setFocusScore(prev => Math.max(0, prev - 10)); // Major penalty
       }
     });
 
@@ -311,6 +314,7 @@ function StudySessionContent() {
           if (nextSec % 10 === 0) {
             const minStr = `${Math.floor(nextSec / 60)}:${(nextSec % 60).toString().padStart(2, '0')}`;
             setChartData(c => [...c, { time: minStr, level: isFocused ? focusScore : 0 }]);
+            setStreakChartData(s => [...s, { time: minStr, streak: isFocused ? currentStreak : 0 }]);
           }
           return nextSec;
         });
@@ -338,7 +342,7 @@ function StudySessionContent() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isActive, isFocused, focusScore, longestStreak, gazeDirection]);
+  }, [isActive, isFocused, focusScore, longestStreak, gazeDirection, currentStreak]);
 
   // Debounced DB Sync Loop
   useEffect(() => {
@@ -474,23 +478,23 @@ function StudySessionContent() {
                 {!sessionId ? (
                   <button
                     onClick={handleStartSession}
-                    className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-xs font-bold px-8 py-3.5 rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.25)] cursor-pointer"
+                    className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-xs font-bold px-8 py-3.5 rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.25)] cursor-pointer uppercase tracking-wider"
                   >
-                    Start Run
+                    Start Your Focus
                   </button>
                 ) : (
                   <>
                     <button
                       onClick={handleTogglePause}
-                      className="bg-surface-container-high border border-outline-variant text-on-surface font-label-mono text-xs font-bold px-6 py-3 rounded-lg cursor-pointer"
+                      className="bg-surface-container-high border border-outline-variant text-on-surface font-label-mono text-xs font-bold px-6 py-3 rounded-lg cursor-pointer uppercase tracking-wider"
                     >
                       {isActive ? 'Pause' : 'Resume'}
                     </button>
                     <button
                       onClick={handleEndSession}
-                      className="bg-surface-container-high border border-error text-on-surface font-label-mono text-xs font-bold px-6 py-3 rounded-lg cursor-pointer"
+                      className="bg-surface-container-high border border-error text-error font-label-mono text-xs font-bold px-6 py-3 rounded-lg cursor-pointer uppercase tracking-wider"
                     >
-                      Finish Run
+                      End Focus
                     </button>
                   </>
                 )}
@@ -500,38 +504,91 @@ function StudySessionContent() {
             {/* Run summary stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs">
               <div className="clay-card p-4 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                <span className="text-on-surface-variant uppercase">Attention Ratio</span>
+                <span className="text-on-surface-variant uppercase font-bold text-[9px]">Attention Ratio</span>
                 <span className="font-display text-2xl font-black text-primary-fixed mt-2">
                   {seconds > 0 ? Math.round((focusSeconds / seconds) * 100) : 0}%
                 </span>
               </div>
               <div className="clay-card p-4 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                <span className="text-on-surface-variant uppercase">Focus Time</span>
+                <span className="text-on-surface-variant uppercase font-bold text-[9px]">Focus Time</span>
                 <span className="font-display text-2xl font-black text-on-surface mt-2">{Math.floor(focusSeconds / 60)}m {focusSeconds % 60}s</span>
               </div>
               <div className="clay-card p-4 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                <span className="text-on-surface-variant uppercase">Longest Streak</span>
+                <span className="text-on-surface-variant uppercase font-bold text-[9px]">Longest Streak</span>
                 <span className="font-display text-2xl font-black text-secondary-fixed mt-2">{longestStreak}s</span>
               </div>
               <div className="clay-card p-4 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                <span className="text-on-surface-variant uppercase">Interruptions</span>
+                <span className="text-on-surface-variant uppercase font-bold text-[9px]">Interruptions</span>
                 <span className="font-display text-2xl font-black text-error mt-2">{interruptions}</span>
               </div>
             </div>
 
-            {/* Focus level line chart */}
-            <div className="clay-card p-6 space-y-4 hover:scale-[1.01] transition-transform">
-              <h3 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Session focus level index</h3>
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <XAxis dataKey="time" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#849588" fontSize={9} domain={[0, 100]} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '9px' }} />
-                    <Line type="monotone" dataKey="level" stroke="#00FFA3" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Chart 1: Focus Level Index */}
+              <div className="clay-card p-6 space-y-4 hover:scale-[1.01] transition-transform">
+                <h3 className="font-display text-[10px] font-bold text-on-surface uppercase tracking-wider">Session Focus Level Index</h3>
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                      <XAxis dataKey="time" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#849588" fontSize={9} domain={[0, 100]} tickLine={false} axisLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '9px' }} />
+                      <Line type="monotone" dataKey="level" stroke="#00FFA3" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
+
+              {/* Chart 2: Focus Streak Timeline */}
+              <div className="clay-card p-6 space-y-4 hover:scale-[1.01] transition-transform">
+                <h3 className="font-display text-[10px] font-bold text-on-surface uppercase tracking-wider">Focus Streak Timeline</h3>
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={streakChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                      <XAxis dataKey="time" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '9px' }} />
+                      <defs>
+                        <linearGradient id="colorStreak" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ccbdff" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#ccbdff" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="streak" stroke="#ccbdff" fillOpacity={1} fill="url(#colorStreak)" strokeWidth={1.5} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 3: Focus Allocation */}
+              <div className="clay-card p-6 space-y-4 md:col-span-2 hover:scale-[1.01] transition-transform">
+                <h3 className="font-display text-[10px] font-bold text-on-surface uppercase tracking-wider">Screen vs Paper Focus Allocation (Seconds)</h3>
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { name: 'Screen Focus', seconds: screenFocusSeconds },
+                      { name: 'Paper Focus', seconds: paperFocusSeconds }
+                    ]} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="name" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '9px' }} />
+                      <Bar dataKey="seconds" radius={[10, 10, 0, 0]}>
+                        {
+                          [
+                            { fill: '#00FFA3' },
+                            { fill: '#00C2FF' }
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))
+                        }
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
             </div>
           </div>
 
