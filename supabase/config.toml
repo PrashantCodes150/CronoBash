@@ -1,0 +1,10 @@
+[cli]
+version = ">= 1.0.0"
+
+[functions.settle-money-rooms]
+verifyJwt = false
+importMap = "./import_map.json"
+
+[functions.reset-daily-focus]
+verifyJwt = false
+importMap = "./import_map.json"
