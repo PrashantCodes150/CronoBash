@@ -81,22 +81,6 @@ function HeroScene() {
   );
 }
 
-// ─── 3D: Spinning torus ring divider ─────────────────────────────────────────
-function TorusRing() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.rotation.z = state.clock.elapsedTime * 0.18;
-  });
-  return (
-    <Float speed={1.2} floatIntensity={0.4}>
-      <mesh ref={ref} rotation={[0.5, 0, 0]}>
-        <torusGeometry args={[2.2, 0.07, 32, 200]} />
-        <meshStandardMaterial color="#00FFA3" emissive="#00FFA3" emissiveIntensity={0.7} transparent opacity={0.55} />
-      </mesh>
-    </Float>
-  );
-}
 
 // ─── Scroll-triggered reveal wrapper ─────────────────────────────────────────
 function Reveal({ children, delay = 0, className = '' }: {
@@ -205,9 +189,7 @@ export default function LandingPage() {
       {/* ── Navbar ─────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-background/70 backdrop-blur-lg border-b border-outline-variant/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary-container/20 border border-primary-container flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary-container text-lg font-bold">bolt</span>
-          </div>
+          <img src="/logo.png" alt="FocusArena Logo" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-display text-xl font-black text-primary-fixed tracking-tighter">FocusArena</span>
         </div>
         <div className="hidden md:flex space-x-8">
@@ -237,13 +219,8 @@ export default function LandingPage() {
         {/* Radial dark vignette */}
         <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.75)_100%)]" />
 
-        {/* Hero text */}
-        <div className="relative z-20 text-center max-w-4xl mx-auto px-6 pt-20 space-y-8">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-            className="inline-flex items-center space-x-2 bg-surface-container-high/50 backdrop-blur px-4 py-1.5 rounded-full border border-primary-container/30">
-            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse" />
-            <span className="font-mono text-xs text-primary-fixed-dim uppercase tracking-widest">System Status: Optimal</span>
-          </motion.div>
+        {/* Hero text — sits inside the section, centered */}
+        <div className="relative z-20 text-center max-w-4xl mx-auto px-6 pt-20 pb-28 space-y-8">
 
           <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.1 }}
             className="font-display text-5xl md:text-7xl font-black text-on-surface leading-tight">
@@ -266,15 +243,39 @@ export default function LandingPage() {
             </Link>
           </motion.div>
 
-          {/* Scroll cue arrow */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-            <span className="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Scroll to explore</span>
-            <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
-              <span className="material-symbols-outlined text-primary-fixed text-xl">arrow_downward</span>
-            </motion.div>
+          {/* Live animated metric pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="flex flex-wrap items-center justify-center gap-3 pt-2"
+          >
+            {[
+              { icon: 'people', label: '12,841 students online', color: 'text-primary-fixed' },
+              { icon: 'timer', label: '4.2M focus minutes', color: 'text-secondary-fixed' },
+              { icon: 'emoji_events', label: '850 live lobbies', color: 'text-yellow-400' },
+            ].map((pill) => (
+              <div key={pill.label} className="flex items-center gap-1.5 bg-surface-container/50 backdrop-blur border border-outline-variant/40 px-3 py-1.5 rounded-full">
+                <span className={`material-symbols-outlined text-sm ${pill.color}`}>{pill.icon}</span>
+                <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider">{pill.label}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse ml-1" />
+              </div>
+            ))}
           </motion.div>
         </div>
+
+        {/* Scroll cue — anchored to section bottom, outside content stack */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 pointer-events-none"
+        >
+          <span className="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Scroll to explore</span>
+          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
+            <span className="material-symbols-outlined text-primary-fixed text-xl">arrow_downward</span>
+          </motion.div>
+        </motion.div>
       </motion.section>
 
       {/* ── Stats Bar ──────────────────────────────────── */}
@@ -301,15 +302,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 3D Torus Ring Divider ─────────────────────── */}
-      <div className="h-52 relative overflow-hidden my-4">
-        <Canvas camera={{ position: [0, 0, 5], fov: 50 }} gl={{ alpha: true }}>
-          <Suspense fallback={null}>
-            <ambientLight intensity={0.4} />
-            <pointLight position={[5, 5, 5]} intensity={2.5} color="#00FFA3" />
-            <TorusRing />
-          </Suspense>
-        </Canvas>
+      {/* ── Section Divider ───────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-4">
+        <div className="h-px bg-gradient-to-r from-transparent via-primary-container/40 to-transparent" />
       </div>
 
       {/* ── Workflow ───────────────────────────────────── */}
@@ -371,7 +366,7 @@ export default function LandingPage() {
       {/* ── Footer ─────────────────────────────────────── */}
       <footer className="w-full py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest border-t border-outline-variant text-xs text-on-surface-variant font-mono">
         <div className="flex items-center gap-2 mb-4 md:mb-0">
-          <span className="material-symbols-outlined text-primary-container text-sm">bolt</span>
+          <img src="/logo.png" alt="FocusArena" className="w-6 h-6 rounded object-cover" />
           <span className="font-display text-md font-black text-primary-fixed">FocusArena</span>
         </div>
         <div className="flex gap-6 mb-4 md:mb-0">
