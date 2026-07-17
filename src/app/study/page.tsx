@@ -27,6 +27,7 @@ function StudySessionContent() {
   
   // Timer & Session state
   const [isActive, setIsActive] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -185,34 +186,36 @@ function StudySessionContent() {
   };
 
   const handleStartSession = async () => {
-    if (!user) return;
     setIsActive(true);
+    setSessionStarted(true);
     
     // Set initial mode change log
     const initialLog: ModeLog = { timestamp: new Date().toISOString(), mode: 'screen' };
     setModeChanges([initialLog]);
 
-    try {
-      const { data, error } = await supabase
-        .from('study_sessions')
-        .insert({
-          user_id: user.id,
-          room_id: roomId || null,
-          start_time: new Date().toISOString(),
-          focus_seconds: 0,
-          total_seconds: 0,
-          mode_changes: [initialLog],
-          screen_focus_seconds: 0,
-          paper_focus_seconds: 0
-        })
-        .select()
-        .single();
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from('study_sessions')
+          .insert({
+            user_id: user.id,
+            room_id: roomId || null,
+            start_time: new Date().toISOString(),
+            focus_seconds: 0,
+            total_seconds: 0,
+            mode_changes: [initialLog],
+            screen_focus_seconds: 0,
+            paper_focus_seconds: 0
+          })
+          .select()
+          .single();
 
-      if (!error && data) {
-        setSessionId(data.id);
+        if (!error && data) {
+          setSessionId(data.id);
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
 
     if (!cameraActive) {
@@ -226,6 +229,7 @@ function StudySessionContent() {
 
   const handleEndSession = async () => {
     setIsActive(false);
+    setSessionStarted(false);
     if (cameraInstRef.current) {
       cameraInstRef.current.stop();
     }
@@ -475,7 +479,7 @@ function StudySessionContent() {
               </div>
 
               <div className="flex gap-4">
-                {!sessionId ? (
+                {!sessionStarted ? (
                   <button
                     onClick={handleStartSession}
                     className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-xs font-bold px-8 py-3.5 rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.25)] cursor-pointer uppercase tracking-wider"
