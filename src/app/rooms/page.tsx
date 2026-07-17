@@ -120,9 +120,52 @@ export default function RoomsLobby() {
     setCreating(true);
     setAlertMsg(null);
 
-    const tagsArray = newRoomTags.split(',').map(t => t.trim());
+    const tagsArray = newRoomTags.split(',').map(t => t.trim()).filter(Boolean);
 
     try {
+      // Ensure user profile exists in public.users to prevent foreign key fkey violations!
+      const { data: profileCheck } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profileCheck) {
+        await supabase.from('users').insert({
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Contestant',
+          email: user.email || '',
+          daily_goal_minutes: 120
+        });
+      }
+
+      const { data: walletCheck } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!walletCheck) {
+        await supabase.from('wallets').insert({
+          user_id: user.id,
+          balance: 1000
+        });
+      }
+
+      // If money room, verify stakes token balance
+      if (newRoomType === 'money') {
+        const { data: currentWallet } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', user.id)
+          .single();
+        if (currentWallet && currentWallet.balance < newRoomFee) {
+          setAlertMsg({ type: 'error', text: `Insufficient TKN balance to stake for creating this room (requires ${newRoomFee} TKN).` });
+          setCreating(false);
+          return;
+        }
+      }
+
       const { data: newRoom, error: roomError } = await supabase
         .from('rooms')
         .insert({
@@ -140,24 +183,38 @@ export default function RoomsLobby() {
         .single();
 
       if (roomError || !newRoom) {
-        setAlertMsg({ type: 'error', text: 'Error generating new study room instance.' });
+        setAlertMsg({ type: 'error', text: roomError?.message || 'Error generating new study room instance.' });
         setCreating(false);
         return;
       }
 
-      // Add owner as first member
-      await supabase.from('room_members').insert({
-        room_id: newRoom.id,
-        user_id: user.id,
-        total_focus_seconds_today: 0
-      });
+      // Add owner as member (stake fee for money rooms)
+      if (newRoomType === 'money') {
+        const { data: joinRes, error: joinError } = await supabase
+          .rpc('join_money_room', { p_user_id: user.id, p_room_id: newRoom.id });
+        if (joinError || (joinRes && joinRes.error)) {
+          setAlertMsg({ type: 'error', text: joinError?.message || joinRes?.error || 'Staking entry fee for owner failed.' });
+          // Cleanup orphaned room
+          await supabase.from('rooms').delete().eq('id', newRoom.id);
+          setCreating(false);
+          return;
+        }
+        await refreshWallet();
+      } else {
+        await supabase.from('room_members').insert({
+          room_id: newRoom.id,
+          user_id: user.id,
+          total_focus_seconds_today: 0
+        });
+      }
 
       setIsModalOpen(false);
       setNewRoomName('');
       setNewRoomDescription('');
       router.push(`/rooms/${newRoom.id}`);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setAlertMsg({ type: 'error', text: e.message || 'An unexpected error occurred.' });
     } finally {
       setCreating(false);
     }
