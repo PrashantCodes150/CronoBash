@@ -820,10 +820,42 @@ function StudySessionContent() {
             } catch (e) {}
           }
         })
+        .on('broadcast', { event: 'peer-joined' }, async ({ payload }) => {
+          const { senderId } = payload;
+          if (senderId === user.id) return;
+          console.log("WebRTC: Peer joined signaling channel:", senderId);
+          
+          // The peer with the lexicographically smaller ID acts as the WebRTC initiator!
+          const isInitiator = user.id.localeCompare(senderId) < 0;
+          if (isInitiator) {
+            try {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              channel.send({
+                type: 'broadcast',
+                event: 'webrtc-signal',
+                payload: { senderId: user.id, sdp: offer }
+              });
+              console.log("WebRTC: SDP Offer sent to new peer by initiator:", user.id);
+            } catch (err) {
+              console.error("WebRTC error creating offer on peer join:", err);
+            }
+          }
+        })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             console.log("WebRTC: Subscribed to signaling.");
-            // Wait 3 seconds to let both sides stabilize, then check if we should create offer
+            
+            // Broadcast peer-joined to announce our presence so the initiator knows to send offer
+            setTimeout(() => {
+              channel.send({
+                type: 'broadcast',
+                event: 'peer-joined',
+                payload: { senderId: user.id }
+              });
+            }, 1000);
+
+            // Wait 4 seconds to let both sides stabilize, then check if we should create offer (fallback)
             setTimeout(async () => {
               const { data: presenceList } = await supabase
                 .from('room_presence')
@@ -842,13 +874,13 @@ function StudySessionContent() {
                       event: 'webrtc-signal',
                       payload: { senderId: user.id, sdp: offer }
                     });
-                    console.log("WebRTC: SDP Offer sent by initiator:", user.id);
+                    console.log("WebRTC: SDP Offer sent by fallback initiator:", user.id);
                   } catch (err) {
-                    console.error("WebRTC error creating offer:", err);
+                    console.error("WebRTC error creating offer in fallback:", err);
                   }
                 }
               }
-            }, 3000);
+            }, 4000);
           }
         });
 
