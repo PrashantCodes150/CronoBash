@@ -1,4 +1,4 @@
-# FocusArena Database Setup Guide
+# CogniSweep Database Setup Guide
 
 ## Prerequisites
 
@@ -44,6 +44,7 @@ In Supabase Dashboard → Database → Replication:
 
 1. Enable replication for the `room_members` table (for live leaderboards)
 2. Enable replication for the `wallets` table (for balance updates)
+3. Enable replication for the `messages` table (for live chat)
 
 ## Step 5: Deploy Edge Functions
 
@@ -130,7 +131,7 @@ In Supabase Dashboard → Authentication → Providers:
 ## File Structure
 
 ```
-focus-arena/
+cognisweep/
 ├── schema.sql                          # Main database schema + functions
 ├── .env.local                          # Supabase credentials (gitignored)
 ├── supabase/

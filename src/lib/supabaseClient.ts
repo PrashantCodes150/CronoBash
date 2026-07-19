@@ -16,6 +16,7 @@ export interface UserProfile {
   email: string;
   avatar_url: string | null;
   daily_goal_minutes: number;
+  is_pro?: boolean;
   created_at: string;
 }
 
@@ -30,6 +31,7 @@ export interface Room {
   subject_tags: string[];
   description: string | null;
   is_active: boolean;
+  invite_code?: string;
   created_at: string;
 }
 

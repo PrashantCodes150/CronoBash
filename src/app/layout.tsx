@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-context";
 import LayoutWrapper from "@/components/layout-wrapper";
@@ -19,8 +19,13 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "FocusArena - Competitive Study Platform",
+  title: "CogniSweep - Cognitive Focus Scanner & Study Platform",
   description: "Track focus, challenge squads, and win rewards in high-stakes study sprints.",
 };
 
@@ -32,12 +37,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${dancingScript.variable} h-full antialiased dark`}
     >
       <head>
         {/* Load Material Symbols Outlined stylesheet */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
+        {/* Backup CDN load for Dancing Script font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap"
           rel="stylesheet"
         />
       </head>

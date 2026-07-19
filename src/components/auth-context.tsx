@@ -3,9 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase, UserProfile, Wallet } from '@/lib/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
   wallet: Wallet | null;
   loading: boolean;
@@ -25,24 +26,47 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  const fetchProfileAndWallet = async (userId: string) => {
+  const fetchProfileAndWallet = async (userId: string, email?: string, metaName?: string) => {
     try {
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (!profileError && profileData) {
-        setProfile(profileData as UserProfile);
+      let activeProfile = profileData;
+
+      if (profileError || !activeProfile) {
+        const { data: insertedProfile } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            name: metaName || 'Arena Fighter',
+            email: email || '',
+            avatar_url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'
+          })
+          .select()
+          .single();
+        if (insertedProfile) {
+          activeProfile = insertedProfile;
+        }
+      }
+
+      if (activeProfile) {
+        const finalProfile = { ...activeProfile } as UserProfile;
+        if ((!finalProfile.name || finalProfile.name === 'Arena Fighter') && metaName && metaName !== 'Arena Fighter') {
+          finalProfile.name = metaName;
+          await supabase.from('users').update({ name: metaName }).eq('id', userId);
+        }
+        setProfile(finalProfile);
       }
 
       // Fetch wallet
@@ -50,10 +74,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('wallets')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (!walletError && walletData) {
-        setWallet(walletData as Wallet);
+      let activeWallet = walletData;
+
+      if (walletError || !activeWallet) {
+        const { data: insertedWallet } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: userId,
+            balance: 1000
+          })
+          .select()
+          .single();
+
+        await supabase.from('transactions').insert({
+          user_id: userId,
+          type: 'deposit',
+          amount: 1000,
+          description: 'Welcome bonus tokens credited.'
+        });
+
+        if (insertedWallet) {
+          activeWallet = insertedWallet;
+        }
+      }
+
+      if (activeWallet) {
+        setWallet(activeWallet as Wallet);
       }
     } catch (e) {
       console.error('Error loading auth dependencies', e);
@@ -80,7 +128,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('id', user.id)
       .single();
     if (!error && data) {
-      setProfile(data as UserProfile);
+      const finalProfile = { ...data } as UserProfile;
+      const metaName = user.user_metadata?.name;
+      if ((!finalProfile.name || finalProfile.name === 'Arena Fighter') && metaName && metaName !== 'Arena Fighter') {
+        finalProfile.name = metaName;
+        await supabase.from('users').update({ name: metaName }).eq('id', user.id);
+      }
+      setProfile(finalProfile);
     }
   };
 
@@ -98,7 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        await fetchProfileAndWallet(session.user.id);
+        await fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name);
       }
       setLoading(false);
     };
@@ -109,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
-        await fetchProfileAndWallet(session.user.id);
+        await fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name);
       } else {
         setUser(null);
         setProfile(null);

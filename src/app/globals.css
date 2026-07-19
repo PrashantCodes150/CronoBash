@@ -3,16 +3,16 @@
 @theme {
   --color-primary: #f5fff5;
   --color-on-primary: #003920;
-  --color-primary-container: #00ffa3;
-  --color-on-primary-container: #007146;
-  --color-primary-fixed: #52ffac;
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-primary-fixed: var(--primary-fixed);
   --color-primary-fixed-dim: #00e290;
   --color-on-primary-fixed: #002111;
   --color-on-primary-fixed-variant: #005231;
   
   --color-secondary: #ccbdff;
   --color-on-secondary: #350097;
-  --color-secondary-container: #5018cb;
+  --color-secondary-container: var(--secondary-container);
   --color-on-secondary-container: #bfadff;
   --color-secondary-fixed: #e7deff;
   --color-secondary-fixed-dim: #ccbdff;
@@ -29,49 +29,111 @@
   --color-error-container: #93000a;
   --color-on-error-container: #ffdad6;
   
-  --color-background: #0f131d;
-  --color-on-background: #dfe2f1;
+  --color-background: var(--background);
+  --color-on-background: var(--foreground);
   
-  --color-surface: #0f131d;
-  --color-surface-dim: #0f131d;
+  --color-surface: var(--background);
+  --color-surface-dim: var(--background);
   --color-surface-bright: #353944;
   --color-surface-variant: #313540;
-  --color-on-surface: #dfe2f1;
-  --color-on-surface-variant: #b9cbbd;
+  --color-on-surface: var(--foreground);
+  --color-on-surface-variant: var(--foreground);
   --color-surface-container-lowest: #0a0e18;
-  --color-surface-container-low: #171b26;
-  --color-surface-container: #1c1f2a;
-  --color-surface-container-high: #262a35;
+  --color-surface-container-low: var(--background);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
   --color-surface-container-highest: #313540;
   
   --color-outline: #849588;
-  --color-outline-variant: #3a4a3f;
+  --color-outline-variant: var(--outline-variant);
   --color-surface-tint: #00e290;
   
   --font-sans: "Inter", var(--font-geist-sans), sans-serif;
   --font-mono: "JetBrains Mono", var(--font-geist-mono), monospace;
   --font-display: "Geist", var(--font-geist-sans), sans-serif;
+  --font-dancing: var(--font-dancing-script), 'Dancing Script', cursive;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global Dynamic Theme Overrides */
 :root {
-  --background: #0f131d;
+  --background: #0c0f16;
   --foreground: #dfe2f1;
+  --primary-container: #00ffa3;
+  --on-primary-container: #0c0f16;
+  --primary-fixed: #00ffa3;
+  --secondary-container: #5018cb;
+  --surface-container: #1c1f2a;
+  --surface-container-high: #262a35;
+  --outline-variant: #3a4a3f;
+}
+
+.theme-dark {
+  --background: #0c0f16;
+  --foreground: #dfe2f1;
+  --primary-container: #00ffa3;
+  --on-primary-container: #0c0f16;
+  --primary-fixed: #00ffa3;
+  --secondary-container: #5018cb;
+  --surface-container: #1c1f2a;
+  --surface-container-high: #262a35;
+  --outline-variant: #3a4a3f;
+}
+
+.theme-pink {
+  --background: #25161b;
+  --foreground: #FFE4E1;
+  --primary-container: #FF69B4;
+  --on-primary-container: #FFFFFF;
+  --primary-fixed: #FF1493;
+  --secondary-container: #DB7093;
+  --surface-container: #331f26;
+  --surface-container-high: #442a33;
+  --outline-variant: rgba(255, 105, 180, 0.25);
+}
+
+.theme-green {
+  --background: #0b1a0f;
+  --foreground: #ECFDF5;
+  --primary-container: #10B981;
+  --on-primary-container: #0b1a0f;
+  --primary-fixed: #34D399;
+  --secondary-container: #047857;
+  --surface-container: #132b19;
+  --surface-container-high: #1c3d25;
+  --outline-variant: rgba(16, 185, 129, 0.2);
+}
+
+.theme-water {
+  --background: #072235;
+  --foreground: #F0F9FF;
+  --primary-container: #0EA5E9;
+  --on-primary-container: #FFFFFF;
+  --primary-fixed: #38BDF8;
+  --secondary-container: #0284C7;
+  --surface-container: #0b3452;
+  --surface-container-high: #104b75;
+  --outline-variant: rgba(14, 165, 233, 0.25);
 }
 
 body {
-  background-color: #0c0f16;
+  background-color: var(--background);
   background-image: 
-    radial-gradient(at 10% 20%, rgba(0, 255, 163, 0.04) 0px, transparent 45%),
-    radial-gradient(at 90% 15%, rgba(112, 71, 235, 0.05) 0px, transparent 45%),
-    radial-gradient(at 50% 85%, rgba(0, 194, 255, 0.03) 0px, transparent 45%),
-    linear-gradient(to right, rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    radial-gradient(at 10% 20%, rgba(0, 255, 163, 0.02) 0px, transparent 45%),
+    radial-gradient(at 90% 15%, rgba(112, 71, 235, 0.03) 0px, transparent 45%),
+    radial-gradient(at 50% 85%, rgba(0, 194, 255, 0.01) 0px, transparent 45%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.008) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.008) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
   background-attachment: fixed;
   color: var(--foreground);
   font-family: "Inter", sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
 }
 
 /* Custom styles for glow effects and animations not covered by Tailwind config */
@@ -184,6 +246,9 @@ body {
 }
 
 /* Custom Scrollbar for inner elements */
+.custom-scrollbar {
+  scroll-behavior: smooth;
+}
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
