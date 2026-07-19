@@ -106,6 +106,13 @@ function StudySessionContent() {
     }
     return true;
   });
+  const [playersCount] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      return parseInt(sp.get('playersCount') || '2', 10);
+    }
+    return 2;
+  });
   const [opponents, setOpponents] = useState<any[]>([]);
   const [forfeitAlerts, setForfeitAlerts] = useState<string[]>([]);
 
@@ -781,7 +788,7 @@ function StudySessionContent() {
           if (forfeiterId === user.id) return;
           console.log("WebRTC: Opponent forfeited the match!");
           
-          if (opponents.length <= 1) {
+          if (playersCount <= 2) {
             // 1v1 Duel: End the match immediately
             setOpponentHandsDown(true);
             handleEndSession('opponent');
@@ -1385,19 +1392,21 @@ function StudySessionContent() {
     const interval = setInterval(async () => {
       await upsertPresence();
       
-      const safeTimeLimit = new Date(Date.now() - 120000).toISOString(); // 120 seconds limit to handle any local/database timezone or clock skew
       const { data, error } = await supabase
         .from('room_presence')
         .select('*, users(name, avatar_url)')
         .eq('room_id', roomId)
-        .neq('user_id', user.id)
-        .gt('updated_at', safeTimeLimit);
+        .neq('user_id', user.id);
+
+      if (error) {
+        console.error("Room presence select query error:", error.message);
+      }
 
       if (!error && data) {
         // If any opponent has hands_down = true, trigger opponent forfeit loss
         const forfeiter = data.find(opt => opt.hands_down);
         if (forfeiter) {
-          if (data.length <= 1) {
+          if (playersCount <= 2) {
             setOpponentHandsDown(true);
           } else {
             // Multi-player match: Alert remaining players

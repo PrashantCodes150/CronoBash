@@ -199,7 +199,7 @@ export default function RoomDetail() {
         setSecondsLeft(0);
         setCountdownActive(false);
         // Automatically launch to study room with configured settings!
-        router.push(`/study?roomId=${roomId}&shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}`);
+        router.push(`/study?roomId=${roomId}&shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}&playersCount=${members.length}`);
       } else {
         setSecondsLeft(secs);
         playBeepSound();
