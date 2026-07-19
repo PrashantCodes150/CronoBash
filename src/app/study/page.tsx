@@ -671,6 +671,16 @@ function StudySessionContent() {
     checkAndResumeSession();
   }, [user, roomId]);
 
+  // Auto-start session for room duels
+  useEffect(() => {
+    if (user && roomId && !sessionStarted && lobbyDeployed) {
+      const timer = setTimeout(() => {
+        handleStartSession();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [user, roomId, sessionStarted, lobbyDeployed]);
+
   // Initialize MediaPipe Gaze Tracking
   const initWebRTC = async (localStream: MediaStream) => {
     if (!roomId || !user) return;
