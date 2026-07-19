@@ -1,6 +1,6 @@
-# FocusArena - Competitive Study Platform
+# CogniSweep - Cognitive Focus Scanner & Study Platform
 
-FocusArena is a production-ready, full-stack web application built to gamify academic and professional productivity. It merges the discipline of deep focus sprints with the high-stakes matching system of competitive gaming. 
+CogniSweep is a production-ready, full-stack web application built to gamify academic and professional productivity. It merges the discipline of deep focus sprints with the high-stakes matching system of competitive gaming. 
 
 
 
@@ -22,7 +22,7 @@ Follow these step-by-step instructions to configure the database, connect creden
 
 ### Step 1: Create a Supabase Project
 1. Log in to the [Supabase Dashboard](https://supabase.com).
-2. Click **New Project**, choose a name (e.g. `FocusArena`), set a secure Database Password, and select your preferred hosting region.
+2. Click **New Project**, choose a name (e.g. `CogniSweep`), set a secure Database Password, and select your preferred hosting region.
 3. Once the database instance is fully provisioned, navigate to **Project Settings** > **API** to locate your URL and Anon Key.
 
 ### Step 2: Deploy SQL Migrations
@@ -62,7 +62,7 @@ The application is structured for direct, non-interactive integration into Verce
 
 1. Push your local repository to GitHub, GitLab, or Bitbucket.
 2. Log in to the [Vercel Dashboard](https://vercel.com) and click **Add New Project**.
-3. Select your FocusArena repository and choose **Next.js** as the framework template.
+3. Select your CogniSweep repository and choose **Next.js** as the framework template.
 4. Under **Environment Variables**, add the values from your `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -73,7 +73,7 @@ The application is structured for direct, non-interactive integration into Verce
 ## 📂 Project Directory Structure
 
 ```text
-FOCUS-ARENA/
+COGNISWEEP/
 ├── public/                 # Static asset resources
 ├── schema.sql              # Supabase Postgres database structure
 ├── src/
@@ -105,9 +105,9 @@ FOCUS-ARENA/
 
 ---
 
-## 🌟 FocusArena 2.0 Feature Changelog
+## 🌟 CogniSweep 2.0 Feature Changelog
 
-FocusArena 2.0 introduces powerful new features designed to solve textbooks focus false-negatives, enable head-to-head stakes, and create a real-time lobby workspace.
+CogniSweep 2.0 introduces powerful new features designed to solve textbooks focus false-negatives, enable head-to-head stakes, and create a real-time lobby workspace.
 
 ### 1. Client-Side Gaze Tracking (MediaPipe FaceMesh)
 - Focus is tracked via raw webcamera landmarks rather than static timers.

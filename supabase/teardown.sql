@@ -1,10 +1,12 @@
 -- ==========================================
--- FocusArena Schema Teardown
+-- CogniSweep Schema Teardown
 -- ==========================================
 -- Run this BEFORE schema.sql to cleanly re-create everything.
--- WARNING: This destroys all data in the FocusArena tables.
+-- WARNING: This destroys all data in the CogniSweep tables.
 
 -- Drop tables first (CASCADE removes triggers automatically)
+drop table if exists public.room_presence cascade;
+drop table if exists public.notifications cascade;
 drop table if exists public.messages cascade;
 drop table if exists public.challenges cascade;
 drop table if exists public.timetables cascade;

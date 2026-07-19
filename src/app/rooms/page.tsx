@@ -17,6 +17,8 @@ export default function RoomsLobby() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'money'>('all');
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [joiningByCode, setJoiningByCode] = useState(false);
 
   // Create Room modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +37,33 @@ export default function RoomsLobby() {
   const loadRooms = async () => {
     setLoadingRooms(true);
     try {
+      // Auto-cleanup empty public rooms older than 3 hours
+      const threeHoursAgo = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
+      const { data: oldPublicRooms } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('type', 'public')
+        .lt('created_at', threeHoursAgo);
+
+      if (oldPublicRooms && oldPublicRooms.length > 0) {
+        const oldRoomIds = oldPublicRooms.map(r => r.id);
+        const { data: memberCounts } = await supabase
+          .from('room_members')
+          .select('room_id')
+          .in('room_id', oldRoomIds);
+
+        const activeRoomsSet = new Set(memberCounts?.map(m => m.room_id) || []);
+        const emptyRoomIds = oldRoomIds.filter(id => !activeRoomsSet.has(id));
+
+        if (emptyRoomIds.length > 0) {
+          await supabase
+            .from('rooms')
+            .delete()
+            .in('id', emptyRoomIds);
+        }
+      }
+
+      // Load active rooms list
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -46,7 +75,7 @@ export default function RoomsLobby() {
         setFilteredRooms(data as Room[]);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Error loading/cleaning rooms:", e);
     } finally {
       setLoadingRooms(false);
     }
@@ -113,12 +142,56 @@ export default function RoomsLobby() {
     }
   };
 
+  const handleJoinByCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinCodeInput.trim() || !user) return;
+    if (joinCodeInput.length !== 6) {
+      setAlertMsg({ type: 'error', text: 'Invite code must be exactly 6 characters.' });
+      return;
+    }
+    setJoiningByCode(true);
+    setAlertMsg(null);
+    try {
+      const { data: roomData, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('invite_code', joinCodeInput)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (roomError || !roomData) {
+        setAlertMsg({ type: 'error', text: 'Room not found for the entered invite code.' });
+        setJoiningByCode(false);
+        return;
+      }
+
+      await handleJoinRoom(roomData as Room);
+    } catch (err) {
+      console.error(err);
+      setAlertMsg({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred while joining the room.' });
+    } finally {
+      setJoiningByCode(false);
+    }
+  };
+
   // Create room handler
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoomName.trim() || !user) return;
     setCreating(true);
     setAlertMsg(null);
+
+    // Limit validations based on room type
+    if (newRoomType === 'money' && (newRoomLimit < 2 || newRoomLimit > 6)) {
+      setAlertMsg({ type: 'error', text: 'Money rooms must have a maximum capacity of 2 to 6 contestants.' });
+      setCreating(false);
+      return;
+    }
+    if ((newRoomType === 'public' || newRoomType === 'private') && (newRoomLimit < 2 || newRoomLimit > 10)) {
+      setAlertMsg({ type: 'error', text: 'Public or private rooms must have a maximum capacity of 2 to 10 contestants.' });
+      setCreating(false);
+      return;
+    }
 
     const tagsArray = newRoomTags.split(',').map(t => t.trim()).filter(Boolean);
 
@@ -212,9 +285,9 @@ export default function RoomsLobby() {
       setNewRoomName('');
       setNewRoomDescription('');
       router.push(`/rooms/${newRoom.id}`);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      setAlertMsg({ type: 'error', text: e.message || 'An unexpected error occurred.' });
+      setAlertMsg({ type: 'error', text: e instanceof Error ? e.message : 'An unexpected error occurred.' });
     } finally {
       setCreating(false);
     }
@@ -222,6 +295,14 @@ export default function RoomsLobby() {
 
   useEffect(() => {
     loadRooms();
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('kicked') === 'true') {
+        setAlertMsg({ type: 'error', text: 'You were kicked from the study room by the owner.' });
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
   }, []);
 
   return (
@@ -269,16 +350,38 @@ export default function RoomsLobby() {
           ))}
         </div>
 
-        {/* Search Input bar */}
-        <div className="w-full md:max-w-xs relative flex items-center bg-background border border-outline-variant rounded-lg px-3 py-2">
-          <span className="material-symbols-outlined text-on-surface-variant text-lg mr-2 select-none">search</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search study squads..."
-            className="w-full bg-transparent text-xs text-on-surface focus:outline-none"
-          />
+        {/* Join by Code & Search Container */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+          {/* Join by Code form */}
+          <form onSubmit={handleJoinByCode} className="w-full sm:w-auto flex gap-2">
+            <input
+              type="text"
+              maxLength={6}
+              value={joinCodeInput}
+              onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
+              placeholder="ENTER ROOM CODE..."
+              className="bg-background border border-outline-variant rounded-lg px-3 py-2 font-mono text-xs text-on-surface focus:outline-none uppercase tracking-wider w-full sm:w-36 text-center"
+            />
+            <button
+              type="submit"
+              disabled={joiningByCode}
+              className="bg-secondary-container hover:bg-secondary-fixed text-on-secondary font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer shrink-0 uppercase"
+            >
+              {joiningByCode ? 'Joining...' : 'Join Code'}
+            </button>
+          </form>
+
+          {/* Search Input bar */}
+          <div className="w-full sm:w-44 relative flex items-center bg-background border border-outline-variant rounded-lg px-3 py-2">
+            <span className="material-symbols-outlined text-on-surface-variant text-lg mr-2 select-none">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search study squads..."
+              className="w-full bg-transparent text-xs text-on-surface focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -344,9 +447,24 @@ export default function RoomsLobby() {
                 </div>
 
                 <div className="border-t border-outline-variant/30 pt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-label-mono text-xs text-on-surface-variant">
-                    <span className="material-symbols-outlined text-sm">groups</span>
-                    <span>Max: {room.max_members} spots</span>
+                  <div className="flex flex-col gap-1 font-label-mono text-xs text-on-surface-variant">
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">groups</span>
+                      <span>Max: {room.max_members} spots</span>
+                    </div>
+                    {room.invite_code && (
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(room.invite_code || '');
+                          setAlertMsg({ type: 'success', text: `Room code ${room.invite_code} copied to clipboard!` });
+                        }}
+                        className="text-[10px] text-primary-fixed hover:text-primary-fixed-dim bg-primary-container/10 px-1.5 py-0.5 rounded cursor-pointer transition-colors w-fit select-none font-bold font-mono tracking-wider mt-1"
+                        title="Click to copy code"
+                      >
+                        CODE: {room.invite_code}
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -394,7 +512,7 @@ export default function RoomsLobby() {
                   <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Room Type</label>
                   <select
                     value={newRoomType}
-                    onChange={(e) => setNewRoomType(e.target.value as any)}
+                    onChange={(e) => setNewRoomType(e.target.value as ('public' | 'private' | 'money'))}
                     className="w-full bg-background border border-outline-variant rounded-lg px-3 py-2 text-xs font-mono text-on-surface focus:outline-none focus:border-primary-fixed"
                   >
                     <option value="public">Public</option>

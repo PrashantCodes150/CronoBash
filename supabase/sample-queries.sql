@@ -1,5 +1,5 @@
 -- ==========================================
--- FocusArena Sample Queries
+-- CogniSweep Sample Queries
 -- ==========================================
 -- HOW TO USE:
 -- 1. Uncomment ONE query at a time

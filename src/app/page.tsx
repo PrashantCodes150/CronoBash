@@ -82,6 +82,86 @@ function HeroScene() {
 }
 
 
+// ─── Animated Sine Wave Section ──────────────────────────────────────────────
+function SineWaveSection() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef   = useRef<number>(0);
+
+  const waves = [
+    { color: '#00FFA3', amplitude: 28, frequency: 0.012, speed: 0.022, phase: 0,     lineWidth: 2.5, opacity: 0.9 },
+    { color: '#7B61FF', amplitude: 40, frequency: 0.009, speed: 0.016, phase: 1.2,   lineWidth: 2,   opacity: 0.75 },
+    { color: '#00BFFF', amplitude: 20, frequency: 0.016, speed: 0.030, phase: 2.4,   lineWidth: 1.8, opacity: 0.7 },
+    { color: '#FF6B6B', amplitude: 34, frequency: 0.010, speed: 0.012, phase: 3.6,   lineWidth: 2,   opacity: 0.6 },
+    { color: '#FFD93D', amplitude: 22, frequency: 0.014, speed: 0.025, phase: 5.0,   lineWidth: 1.5, opacity: 0.55 },
+  ];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let t = 0;
+    const phaseOffsets = waves.map(w => w.phase);
+
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth  * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const draw = () => {
+      const W = canvas.offsetWidth;
+      const H = canvas.offsetHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      waves.forEach((wave, i) => {
+        phaseOffsets[i] += wave.speed;
+        const centerY = H / 2;
+
+        ctx.beginPath();
+        ctx.strokeStyle = wave.color;
+        ctx.lineWidth   = wave.lineWidth;
+        ctx.globalAlpha = wave.opacity;
+        ctx.shadowColor = wave.color;
+        ctx.shadowBlur  = 10;
+
+        for (let x = 0; x <= W; x += 1) {
+          const y = centerY + wave.amplitude * Math.sin(wave.frequency * x + phaseOffsets[i]);
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur  = 0;
+      });
+
+      t++;
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <div className="relative w-full overflow-hidden" style={{ height: '160px' }}>
+      {/* Fade edges */}
+      <div className="absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+        style={{ display: 'block' }}
+      />
+    </div>
+  );
+}
+
 // ─── Scroll-triggered reveal wrapper ─────────────────────────────────────────
 function Reveal({ children, delay = 0, className = '' }: {
   children: React.ReactNode; delay?: number; className?: string;
@@ -150,6 +230,7 @@ function FeatureCard({ icon, title, desc, accent, delay }: {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function LandingPage() {
+
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale   = useTransform(scrollYProgress, [0, 0.2], [1, 0.94]);
@@ -188,10 +269,14 @@ export default function LandingPage() {
 
       {/* ── Navbar ─────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-background/70 backdrop-blur-lg border-b border-outline-variant/50">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="FocusArena Logo" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-display text-xl font-black text-primary-fixed tracking-tighter">FocusArena</span>
-        </div>
+        <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-64 shrink-0">
+          <div className="font-display text-xl md:text-2xl font-medium tracking-wide flex items-center text-primary-fixed">
+            <span className="font-dancing text-2xl md:text-3xl font-bold italic pr-0.5 select-none">C</span>
+            <span className="text-on-surface">ogni</span>
+            <span className="font-dancing text-2xl md:text-3xl font-bold italic pl-1 pr-0.5 select-none">S</span>
+            <span className="text-on-surface">weep</span>
+          </div>
+        </Link>
         <div className="hidden md:flex space-x-8">
           {[['#features','Features'],['#workflow','Workflow'],['#stats','Stats']].map(([href, label]) => (
             <a key={href} href={href} className="text-on-surface-variant font-mono text-xs hover:text-primary-fixed transition-colors">{label}</a>
@@ -278,6 +363,9 @@ export default function LandingPage() {
         </motion.div>
       </motion.section>
 
+      {/* ── Sine Wave Transition ─────────────────────── */}
+      <SineWaveSection />
+
       {/* ── Stats Bar ──────────────────────────────────── */}
       <section id="stats" className="py-20 px-6 md:px-12 max-w-7xl mx-auto">
         <Reveal>
@@ -302,9 +390,87 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Section Divider ───────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-4">
-        <div className="h-px bg-gradient-to-r from-transparent via-primary-container/40 to-transparent" />
+
+      {/* ── Parabola Divider ──────────────────────────── */}
+      <div className="w-full overflow-hidden" style={{ height: '120px' }}>
+        <svg
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+        >
+          <defs>
+            <filter id="glow-green">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <filter id="glow-purple">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <style>{`
+              @keyframes drawParabola {
+                from { stroke-dashoffset: 1600; }
+                to   { stroke-dashoffset: 0; }
+              }
+              @keyframes drawParabola2 {
+                from { stroke-dashoffset: 1700; }
+                to   { stroke-dashoffset: 0; }
+              }
+              @keyframes drawParabola3 {
+                from { stroke-dashoffset: 1500; }
+                to   { stroke-dashoffset: 0; }
+              }
+              .parabola-1 {
+                stroke-dasharray: 1600;
+                stroke-dashoffset: 1600;
+                animation: drawParabola 2s cubic-bezier(0.4,0,0.2,1) 0.1s forwards;
+              }
+              .parabola-2 {
+                stroke-dasharray: 1700;
+                stroke-dashoffset: 1700;
+                animation: drawParabola2 2.3s cubic-bezier(0.4,0,0.2,1) 0.3s forwards;
+              }
+              .parabola-3 {
+                stroke-dasharray: 1500;
+                stroke-dashoffset: 1500;
+                animation: drawParabola3 1.8s cubic-bezier(0.4,0,0.2,1) 0.5s forwards;
+              }
+            `}</style>
+          </defs>
+
+          {/* Shadow purple parabola (offset below) */}
+          <path
+            d="M 0 110 Q 720 -30 1440 110"
+            fill="none"
+            stroke="#7B61FF"
+            strokeWidth="2"
+            opacity="0.4"
+            filter="url(#glow-purple)"
+            className="parabola-2"
+          />
+
+          {/* Cyan accent parabola (slightly smaller arc) */}
+          <path
+            d="M 0 115 Q 720 10 1440 115"
+            fill="none"
+            stroke="#00BFFF"
+            strokeWidth="1.5"
+            opacity="0.35"
+            className="parabola-3"
+          />
+
+          {/* Main neon green parabola */}
+          <path
+            d="M 0 112 Q 720 -20 1440 112"
+            fill="none"
+            stroke="#00FFA3"
+            strokeWidth="2.5"
+            opacity="0.9"
+            filter="url(#glow-green)"
+            className="parabola-1"
+          />
+        </svg>
       </div>
 
       {/* ── Workflow ───────────────────────────────────── */}
@@ -365,16 +531,20 @@ export default function LandingPage() {
 
       {/* ── Footer ─────────────────────────────────────── */}
       <footer className="w-full py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest border-t border-outline-variant text-xs text-on-surface-variant font-mono">
-        <div className="flex items-center gap-2 mb-4 md:mb-0">
-          <img src="/logo.png" alt="FocusArena" className="w-6 h-6 rounded object-cover" />
-          <span className="font-display text-md font-black text-primary-fixed">FocusArena</span>
+        <div className="flex items-center mb-4 md:mb-0">
+          <div className="font-display text-lg font-medium tracking-wide flex items-center text-primary-fixed select-none">
+            <span className="font-dancing text-xl font-bold italic pr-0.5 select-none">C</span>
+            <span className="text-on-surface">ogni</span>
+            <span className="font-dancing text-xl font-bold italic pl-0.5 pr-0.5 select-none">S</span>
+            <span className="text-on-surface">weep</span>
+          </div>
         </div>
         <div className="flex gap-6 mb-4 md:mb-0">
           <a href="#" className="hover:text-primary-fixed transition-colors">Privacy Policy</a>
           <a href="#" className="hover:text-primary-fixed transition-colors">Terms of Service</a>
           <a href="#" className="hover:text-primary-fixed transition-colors">Discord</a>
         </div>
-        <div>© 2026 FocusArena. All rights reserved.</div>
+        <div>© 2026 CogniSweep. All rights reserved.</div>
       </footer>
     </div>
   );

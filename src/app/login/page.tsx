@@ -63,9 +63,12 @@ export default function LoginPage() {
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
         <div className="text-center mb-8">
-          <h1 className="font-display text-2xl font-black text-primary-fixed uppercase tracking-tight">
-            FocusArena
-          </h1>
+            <div className="font-display text-3xl md:text-4xl font-medium tracking-wide flex items-center justify-center text-primary-fixed select-none">
+              <span className="font-dancing text-4xl md:text-5xl font-bold italic pr-0.5 select-none">C</span>
+              <span className="text-on-surface">ogni</span>
+              <span className="font-dancing text-4xl md:text-5xl font-bold italic pl-1 pr-0.5 select-none">S</span>
+              <span className="text-on-surface">weep</span>
+            </div>
           <p className="font-label-mono text-xs text-on-surface-variant mt-2">
             Enter The Arena Console
           </p>
@@ -88,7 +91,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="fighter@focusarena.com"
+              placeholder="fighter@cognisweep.com"
               className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed transition-all"
             />
           </div>

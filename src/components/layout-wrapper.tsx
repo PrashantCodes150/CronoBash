@@ -2,11 +2,25 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import Sidebar from './sidebar';
 import Header from './header';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  React.useEffect(() => {
+    const savedTheme = 'dark';
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+
+    const themeClasses = ['theme-dark', 'theme-pink', 'theme-green', 'theme-water'];
+    themeClasses.forEach(cls => {
+      htmlEl.classList.remove(cls);
+      bodyEl.classList.remove(cls);
+    });
+
+    htmlEl.classList.add(`theme-${savedTheme}`);
+    bodyEl.classList.add(`theme-${savedTheme}`);
+  }, [pathname]);
 
   // Route groups where the global sidebar & header are hidden
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding', '/study'];
@@ -18,16 +32,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
-      {/* Sidebar - fixed left width 72 (288px) */}
-      <Sidebar />
-
-      {/* Main Canvas frame */}
-      <div className="flex-1 md:ml-72 flex flex-col min-h-screen">
+      {/* Main Canvas frame — full screen without sidebar */}
+      <div className="flex-grow flex flex-col min-h-screen">
         {/* Top Header navbar */}
         <Header />
-        
+
         {/* Page contents */}
-        <main className="flex-grow pt-20 md:pt-6 pb-12 px-4 md:px-8 w-full max-w-[1600px] mx-auto">
+        <main className="flex-grow pt-4 pb-12 px-4 md:px-8 w-full max-w-full mx-auto">
           {children}
         </main>
       </div>

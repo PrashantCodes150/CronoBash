@@ -31,6 +31,7 @@ export interface Room {
   subject_tags: string[];
   description: string | null;
   is_active: boolean;
+  invite_code?: string;
   created_at: string;
 }
 

@@ -7,6 +7,15 @@ import { useAuth } from './auth-context';
 import { supabase } from '@/lib/supabaseClient';
 import confetti from 'canvas-confetti';
 
+interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -20,12 +29,11 @@ export default function Header() {
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   // Notifications states
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const ENABLE_GOPRO = false;
-  const isPro = ENABLE_GOPRO && (user?.user_metadata?.is_pro === true);
+  const isPro = false;
 
   const loadNotifications = async () => {
     if (!user) return;
@@ -42,8 +50,8 @@ export default function Header() {
         const fallbackData = [
           {
             id: 'demo-1',
-            title: 'Welcome to FocusArena!',
-            message: 'Complete study sprints together, double your token winnings, and unlock premium aesthetic rig dashboard themes!',
+            title: 'Welcome to CogniSweep!',
+            message: 'Complete study sprints together, earn token winnings, and configure aesthetic rig dashboard themes!',
             type: 'info',
             is_read: false,
             created_at: new Date().toISOString()
@@ -51,7 +59,7 @@ export default function Header() {
           {
             id: 'demo-2',
             title: 'RIG UPGRADE ACTIVE',
-            message: 'Unlock Go Pro Mode in the header panel to double focus payouts and access Glacier, Cyberpunk, or Volcano themes.',
+            message: 'Customize your study dashboard rig to stay focused and earn token payouts!',
             type: 'achievement',
             is_read: false,
             created_at: new Date(Date.now() - 3600000).toISOString()
@@ -169,9 +177,9 @@ export default function Header() {
       });
 
       setProModalOpen(false);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      setPurchaseError(e.message || "An unexpected error occurred.");
+      setPurchaseError(e instanceof Error ? e.message : "An unexpected error occurred.");
     } finally {
       setBuying(false);
     }
@@ -186,12 +194,64 @@ export default function Header() {
       {/* Desktop Top Header Bar */}
       <header className="hidden md:flex justify-between items-center h-16 px-8 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-30">
         <div className="flex items-center gap-4">
-          <span className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">
-            Current Arena: <span className="text-primary-fixed font-bold">{pathname.split('/')[1]?.toUpperCase() || 'DASHBOARD'}</span>
-          </span>
+          <Link href="/dashboard" className="flex items-center group cursor-pointer select-none no-underline shrink-0">
+            <div className="font-display text-lg md:text-xl font-medium tracking-wide flex items-center text-primary-fixed">
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic pr-0.5 select-none">C</span>
+              <span className="text-on-surface">ogni</span>
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic pl-1 pr-0.5 select-none">S</span>
+              <span className="text-on-surface">weep</span>
+            </div>
+          </Link>
         </div>
         
         <div className="flex items-center gap-6">
+          {/* Hover Menu Options trigger: three vertical dots (more_vert) */}
+          <div className="relative group/menu">
+            <button className="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary-fixed hover:bg-surface-variant transition-all cursor-pointer select-none" title="Navigation Menu">
+              <span className="material-symbols-outlined text-[22px]">more_vert</span>
+            </button>
+
+            {/* Dropdown Options shown on hover */}
+            <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 transform scale-95 group-hover/menu:scale-100 z-50">
+              <div className="w-56 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-2.5">
+                <div className="px-3 py-1.5 border-b border-outline-variant/30 mb-2 font-mono text-[9px] text-on-surface-variant uppercase tracking-widest font-black text-left">
+                  Arena Navigation
+                </div>
+                <ul className="space-y-1 font-label-mono text-xs uppercase font-bold text-on-surface-variant text-left">
+                  {[
+                    { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+                    { name: 'Rooms', href: '/rooms', icon: 'groups' },
+                    { name: 'Challenges', href: '/challenges', icon: 'sports_esports' },
+                    { name: 'Arena', href: '/arena', icon: 'military_tech' },
+                    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
+                    { name: 'Tasks', href: '/tasks', icon: 'checklist' },
+                    { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
+                    { name: 'Buddies', href: '/profile?tab=buddies', icon: 'person_add' },
+                    { name: 'Profile', href: '/profile', icon: 'person' },
+                    { name: 'Settings', href: '/settings', icon: 'settings' }
+                  ].map((link) => {
+                    const isActive = pathname === link.href;
+                    return (
+                      <li key={link.name}>
+                        <Link
+                          href={link.href}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                            isActive
+                              ? 'text-on-primary bg-primary-container font-bold'
+                              : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-sm">{link.icon}</span>
+                          <span>{link.name}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* Wallet quick balance */}
           <Link href="/wallet" className="flex items-center gap-2.5 bg-surface-container border border-outline-variant px-3 py-1.5 rounded-lg hover:border-primary-container transition-all">
             <span className="material-symbols-outlined text-primary-container text-sm font-bold">account_balance_wallet</span>
@@ -344,9 +404,14 @@ export default function Header() {
 
       {/* Mobile Top Bar */}
       <header className="md:hidden flex justify-between items-center p-4 bg-surface-container border-b border-outline-variant fixed top-0 left-0 w-full z-50">
-        <h1 className="font-headline-md text-headline-md font-black text-primary-fixed select-none">
-          FocusArena
-        </h1>
+        <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-44 shrink-0">
+          <div className="font-display text-lg font-medium tracking-wide flex items-center text-primary-fixed">
+            <span className="font-dancing text-xl md:text-2xl font-bold italic pr-0.5 select-none">C</span>
+            <span className="text-on-surface">ogni</span>
+            <span className="font-dancing text-xl md:text-2xl font-bold italic pl-1 pr-0.5 select-none">S</span>
+            <span className="text-on-surface">weep</span>
+          </div>
+        </Link>
         <div className="flex items-center gap-4">
           <Link href="/wallet" className="flex items-center gap-1 font-label-mono text-sm text-primary-fixed font-bold bg-surface-container-high px-2.5 py-1 rounded-lg border border-outline-variant">
             <span>{wallet?.balance ?? 0}</span>
@@ -377,6 +442,7 @@ export default function Header() {
                 { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
                 { name: 'Tasks', href: '/tasks', icon: 'checklist' },
                 { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
+                { name: 'Buddies', href: '/profile?tab=buddies', icon: 'person_add' },
                 { name: 'Profile', href: '/profile', icon: 'person' },
                 { name: 'Settings', href: '/settings', icon: 'settings' }
               ].map((link) => {

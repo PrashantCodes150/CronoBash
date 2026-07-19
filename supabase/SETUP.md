@@ -1,4 +1,4 @@
-# FocusArena Database Setup Guide
+# CogniSweep Database Setup Guide
 
 ## Prerequisites
 
@@ -131,7 +131,7 @@ In Supabase Dashboard → Authentication → Providers:
 ## File Structure
 
 ```
-focus-arena/
+cognisweep/
 ├── schema.sql                          # Main database schema + functions
 ├── .env.local                          # Supabase credentials (gitignored)
 ├── supabase/

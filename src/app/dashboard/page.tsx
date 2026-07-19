@@ -30,6 +30,9 @@ export default function Dashboard() {
   const [liveRooms, setLiveRooms] = useState<Room[]>([]);
 
   const [loadingData, setLoadingData] = useState(true);
+  const [allSessionsList, setAllSessionsList] = useState<any[]>([]);
+  const [taskFocusMinutes, setTaskFocusMinutes] = useState<Record<string, number>>({});
+  const [roomFocusMinutes, setRoomFocusMinutes] = useState<Record<string, number>>({});
 
   // Charts states
   const [weeklyChartData, setWeeklyChartData] = useState<any[]>([]);
@@ -40,16 +43,27 @@ export default function Dashboard() {
     if (!user) return;
     setLoadingData(true);
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      // ── Timezone-safe date helpers ──
+      // Build local midnight boundaries as UTC ISO strings so queries
+      // correctly match sessions created anywhere in the world.
+      const localToday = new Date();
+      const localMidnightStart = new Date(
+        localToday.getFullYear(), localToday.getMonth(), localToday.getDate(), 0, 0, 0, 0
+      ).toISOString();
+      const localMidnightEnd = new Date(
+        localToday.getFullYear(), localToday.getMonth(), localToday.getDate(), 23, 59, 59, 999
+      ).toISOString();
+
       let focusSum = 0;
       let totalSum = 0;
 
-      // 1. Fetch study sessions today for detail
+      // 1. Fetch study sessions today (using local-day boundaries)
       const { data: sessionsToday, error: sessError } = await supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('start_time', `${todayStr}T00:00:00Z`);
+        .gte('start_time', localMidnightStart)
+        .lte('start_time', localMidnightEnd);
 
       if (!sessError && sessionsToday) {
         sessionsToday.forEach(s => {
@@ -95,16 +109,17 @@ export default function Dashboard() {
         setLiveRooms(parsed);
       }
 
-      // 5. Chart 1: Weekly Focus (Last 7 days) — real data from study_sessions
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-      const weekStartStr = sevenDaysAgo.toISOString().split('T')[0];
+      // 5. Chart 1: Weekly Focus (Last 7 local days)
+      const sevenDaysAgoLocal = new Date(
+        localToday.getFullYear(), localToday.getMonth(), localToday.getDate() - 6, 0, 0, 0, 0
+      ).toISOString();
 
       const { data: weekSessions } = await supabase
         .from('study_sessions')
         .select('start_time, focus_seconds')
         .eq('user_id', user.id)
-        .gte('start_time', `${weekStartStr}T00:00:00Z`);
+        .gte('start_time', sevenDaysAgoLocal)
+        .lte('start_time', localMidnightEnd);
 
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const dailyMinutes: Record<string, number> = {};
@@ -118,6 +133,7 @@ export default function Dashboard() {
       if (weekSessions) {
         for (const s of weekSessions) {
           const d = new Date(s.start_time);
+          // Use LOCAL day-of-week so IST sessions map to correct bar
           const key = dayNames[d.getDay()];
           if (key in dailyMinutes) {
             dailyMinutes[key] += Math.round((s.focus_seconds || 0) / 60);
@@ -131,7 +147,7 @@ export default function Dashboard() {
 
       // 6. Chart 2: Hourly Focus (Today) — bucket by 2-hour windows
       const hourlyBuckets: Record<string, number> = {};
-      for (let h = 8; h <= 22; h += 2) {
+      for (let h = 0; h <= 22; h += 2) {
         const label = `${String(h).padStart(2, '0')}:00`;
         hourlyBuckets[label] = 0;
       }
@@ -139,6 +155,7 @@ export default function Dashboard() {
       if (sessionsToday) {
         for (const s of sessionsToday) {
           const d = new Date(s.start_time);
+          // Use local hours so IST sessions land in the correct bucket
           const h = d.getHours();
           const bucket = Math.floor(h / 2) * 2;
           const label = `${String(bucket).padStart(2, '0')}:00`;
@@ -152,27 +169,56 @@ export default function Dashboard() {
         Object.entries(hourlyBuckets).map(([name, minutes]) => ({ name, minutes }))
       );
 
-      // 7. Calculate streak: count consecutive days backwards with study sessions
+      // 7. Fetch all study sessions to populate logs, task aggregations, and room aggregations
       const { data: allSessions } = await supabase
         .from('study_sessions')
-        .select('start_time')
+        .select('*, rooms(type)')
         .eq('user_id', user.id)
         .order('start_time', { ascending: false });
 
       if (allSessions) {
+        setAllSessionsList(allSessions || []);
+
+        // Aggregate room focus minutes
+        const roomMinutes: Record<string, number> = {};
+        // Aggregate task focus minutes
+        const taskMinutes: Record<string, number> = {};
+
+        allSessions.forEach((s: any) => {
+          // Room aggregation
+          if (s.room_id) {
+            roomMinutes[s.room_id] = (roomMinutes[s.room_id] || 0) + Math.round((s.focus_seconds || 0) / 60);
+          }
+
+          // Task aggregation - match by name (since the session name matches the task title)
+          if (s.name) {
+            const taskKey = s.name.trim().toLowerCase();
+            taskMinutes[taskKey] = (taskMinutes[taskKey] || 0) + Math.round((s.focus_seconds || 0) / 60);
+          }
+        });
+
+        setRoomFocusMinutes(roomMinutes);
+        setTaskFocusMinutes(taskMinutes);
+
+        // Convert each session start_time to a local YYYY-MM-DD string
+        const toLocalDateStr = (iso: string) => {
+          const d = new Date(iso);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+        const todayLocalStr = toLocalDateStr(new Date().toISOString());
+
         const sessionDates = new Set<string>();
         for (const s of allSessions) {
-          sessionDates.add(new Date(s.start_time).toISOString().split('T')[0]);
+          sessionDates.add(toLocalDateStr(s.start_time));
         }
 
         let streak = 0;
         const checkDate = new Date();
-        // If no sessions today, start checking from yesterday
-        if (!sessionDates.has(checkDate.toISOString().split('T')[0])) {
+        if (!sessionDates.has(todayLocalStr)) {
           checkDate.setDate(checkDate.getDate() - 1);
         }
 
-        while (sessionDates.has(checkDate.toISOString().split('T')[0])) {
+        while (sessionDates.has(toLocalDateStr(checkDate.toISOString()))) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
         }
@@ -257,14 +303,17 @@ export default function Dashboard() {
   }
 
   const focusMinsToday = Math.round(focusSecondsToday / 60);
-  const distractedMinsToday = Math.max(10, Math.round((totalSecondsToday - focusSecondsToday) / 60));
+  // Don't use Math.max(10,...) — that forces a fake 10m distracted even on zero data
+  const distractedMinsToday = Math.max(0, Math.round((totalSecondsToday - focusSecondsToday) / 60));
   const progressPercent = Math.min(100, Math.round((focusMinsToday / targetGoal) * 100));
 
   // Chart 3: Donut chart data
-  const donutData = [
-    { name: 'Focus', value: focusMinsToday, color: '#00FFA3' },
-    { name: 'Distracted', value: distractedMinsToday, color: '#FF0055' }
-  ];
+  const donutData = focusMinsToday === 0 && distractedMinsToday === 0
+    ? [{ name: 'No sessions today', value: 1, color: '#313540' }]
+    : [
+        { name: 'Focus', value: focusMinsToday, color: '#00FFA3' },
+        { name: 'Distracted', value: distractedMinsToday, color: '#FF0055' }
+      ];
 
   return (
     <div className="space-y-6">
@@ -512,9 +561,14 @@ export default function Dashboard() {
                         onChange={() => toggleTask(task.id, task.completed)}
                         className="w-3.5 h-3.5 text-primary-container bg-background border-outline-variant rounded focus:ring-primary-container cursor-pointer"
                       />
-                      <span className={`text-xs text-on-surface truncate ${task.completed ? 'line-through' : ''}`}>
-                        {task.title}
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className={`text-xs text-on-surface truncate ${task.completed ? 'line-through' : ''}`}>
+                          {task.title}
+                        </span>
+                        <span className="text-[9px] text-primary-fixed font-mono font-bold">
+                          Focus: {taskFocusMinutes[task.title.trim().toLowerCase()] || 0}m / {task.planned_minutes}m target
+                        </span>
+                      </div>
                     </div>
                     <button 
                       onClick={() => deleteTask(task.id)}
@@ -555,9 +609,15 @@ export default function Dashboard() {
                 >
                   <div className="min-w-0">
                     <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight">{room.name}</h4>
-                    <span className="font-mono text-[8px] text-on-surface-variant uppercase tracking-widest mt-1 inline-block font-bold">
-                      #{room.type} • {room.max_members} max
-                    </span>
+                    <div className="flex gap-2 items-center mt-1">
+                      <span className="font-mono text-[8px] text-on-surface-variant uppercase tracking-widest inline-block font-bold">
+                        #{room.type} • {room.max_members} max
+                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                      <span className="font-mono text-[8px] text-primary-fixed uppercase tracking-widest inline-block font-bold">
+                        Focus: {roomFocusMinutes[room.id] || 0}m
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() => router.push(`/rooms/${room.id}`)}
@@ -572,6 +632,119 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* Duel History & Study Logs */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Arena Battle Duels Log (6 cols) */}
+        <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden">
+          <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30 mb-4 bg-surface-container-low/10">
+            <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-[#00ffa3]">swords</span>
+              Arena Battle Duels
+            </h3>
+            <span className="font-label-mono text-[10px] text-on-surface-variant">
+              {allSessionsList.filter(s => s.opponent_name).length} Duels
+            </span>
+          </div>
+
+          <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
+            {allSessionsList.filter(s => s.opponent_name).length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center">
+                <p className="text-xs text-on-surface-variant font-mono uppercase">No duel history found. Enter a study lobby to challenge buddies!</p>
+              </div>
+            ) : (
+              allSessionsList.filter(s => s.opponent_name).map(duel => {
+                const date = new Date(duel.start_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const myMins = Math.round(duel.focus_seconds / 60);
+                const oppMins = Math.round(duel.opponent_focus_seconds / 60);
+                return (
+                  <div key={duel.id} className="p-3 bg-surface-container-lowest/60 border border-outline-variant/35 rounded-xl flex items-center justify-between gap-3 font-mono">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${
+                          duel.is_winner 
+                            ? 'text-[#00ffa3] bg-[#00ffa3]/10 border-[#00ffa3]/30 shadow-[0_0_5px_rgba(0,255,163,0.15)]'
+                            : 'text-[#ff3b30] bg-[#ff3b30]/10 border-[#ff3b30]/30 shadow-[0_0_5px_rgba(255,59,48,0.15)]'
+                        }`}>
+                          {duel.is_winner ? 'VICTORY' : 'DEFEAT'}
+                        </span>
+                        {duel.hands_down_forfeited && (
+                          <span className="text-[8px] text-on-surface-variant uppercase font-bold">(Forfeited)</span>
+                        )}
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight mt-1.5">
+                        VS {duel.opponent_name}
+                      </h4>
+                      <p className="text-[9px] text-on-surface-variant uppercase mt-0.5">
+                        You: {myMins}m | Opponent: {oppMins}m
+                      </p>
+                    </div>
+                    <span className="text-[9px] text-on-surface-variant shrink-0">{date}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Recent Study Sessions Log (6 cols) */}
+        <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden">
+          <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30 mb-4 bg-surface-container-low/10">
+            <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider">Recent Study Sessions</h3>
+            <span className="font-label-mono text-[10px] text-on-surface-variant">{allSessionsList.length} total</span>
+          </div>
+
+          <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
+            {allSessionsList.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center">
+                <p className="text-xs text-on-surface-variant font-mono">No recorded study sessions found.</p>
+              </div>
+            ) : (
+              allSessionsList.slice(0, 10).map(session => {
+                const date = new Date(session.start_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const totalMin = Math.round(session.total_seconds / 60);
+                const focusMin = Math.round(session.focus_seconds / 60);
+                const ratio = session.total_seconds > 0 ? Math.round((session.focus_seconds / session.total_seconds) * 100) : 0;
+                
+                const roomType = session.rooms?.type;
+                const typeLabel = roomType 
+                  ? `Arena: ${roomType.charAt(0).toUpperCase() + roomType.slice(1)}` 
+                  : 'Self Mode';
+                const badgeColor = roomType === 'money' 
+                  ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
+                  : roomType === 'private'
+                  ? 'text-purple-400 bg-purple-500/10 border-purple-500/30'
+                  : roomType === 'public'
+                  ? 'text-[#00ffa3] bg-[#00ffa3]/10 border-[#00ffa3]/30'
+                  : 'text-on-surface-variant bg-surface-container border-outline-variant';
+
+                return (
+                  <div key={session.id} className="p-3 bg-surface-container-lowest/60 border border-outline-variant/35 rounded-xl flex items-center justify-between gap-3 font-mono">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[7px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeColor}`}>
+                          {typeLabel}
+                        </span>
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight">{session.name || 'Untitled Study Session'}</h4>
+                      <p className="text-[9px] text-primary-fixed uppercase tracking-wider font-bold mt-1">
+                        Focus: {focusMin}m / {totalMin}m ({ratio}%)
+                      </p>
+                      <p className="text-[8px] text-on-surface-variant uppercase mt-0.5">
+                        🖥️ {Math.round(session.screen_focus_seconds / 60)}m / 📝 {Math.round(session.paper_focus_seconds / 60)}m
+                      </p>
+                    </div>
+                    <span className="text-[9px] text-on-surface-variant shrink-0">{date}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }

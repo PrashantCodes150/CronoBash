@@ -1,11 +1,33 @@
 -- ==========================================
--- FocusArena Supabase Database Schema
+-- CogniSweep Supabase Database Schema
 -- ==========================================
 -- Run this in the Supabase SQL Editor or via `supabase db push`
 -- Requires: Supabase project with Auth enabled
 
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
+
+-- Helper function to generate a random 6-character alphanumeric invite code
+create or replace function public.generate_invite_code()
+returns text as $$
+declare
+    chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    result text := '';
+    i integer;
+begin
+    loop
+        result := '';
+        for i in 1..6 loop
+            result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+        end loop;
+        -- Check if it is already taken
+        exit when not exists (
+            select 1 from public.rooms where invite_code = result
+        );
+    end loop;
+    return result;
+end;
+$$ language plpgsql;
 
 -- ==========================================
 -- 1. USERS TABLE
@@ -85,6 +107,7 @@ create table public.rooms (
     subject_tags text[] not null default '{}'::text[],
     description text,
     is_active boolean not null default true,
+    invite_code text not null default public.generate_invite_code() unique,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -157,6 +180,17 @@ create policy "Users can leave rooms"
     on public.room_members for delete
     using (auth.uid() = user_id);
 
+create policy "Owners can kick members"
+    on public.room_members for delete
+    using (
+        exists (
+            select 1 from public.rooms
+            where rooms.id = room_members.room_id
+              and rooms.owner_id = auth.uid()
+              and rooms.type != 'money'
+        )
+    );
+
 create policy "Members can update own focus seconds"
     on public.room_members for update
     using (auth.uid() = user_id);
@@ -174,7 +208,8 @@ create table public.study_sessions (
     total_seconds integer not null default 0,
     mode_changes jsonb not null default '[]'::jsonb,
     screen_focus_seconds integer not null default 0,
-    paper_focus_seconds integer not null default 0
+    paper_focus_seconds integer not null default 0,
+    name text
 );
 
 alter table public.study_sessions enable row level security;
@@ -1046,4 +1081,156 @@ create trigger tr_transaction_notification
     for each row
     execute function public.handle_new_transaction_notification();
 
+
+-- ==========================================
+-- MIGRATIONS
+-- Run each block in your Supabase SQL editor
+-- ==========================================
+
+-- Add session name column to study_sessions
+alter table public.study_sessions
+    add column if not exists name text;
+
+-- ==========================================
+-- Migration: Add unique invite code logic to rooms and kick capabilities to room owners
+-- ==========================================
+
+-- 1. Create the generate_invite_code function
+create or replace function public.generate_invite_code()
+returns text as $$
+declare
+    chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    result text := '';
+    i integer;
+begin
+    loop
+        result := '';
+        for i in 1..6 loop
+            result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+        end loop;
+        exit when not exists (
+            select 1 from public.rooms where invite_code = result
+        );
+    end loop;
+    return result;
+end;
+$$ language plpgsql;
+
+-- 2. Add invite_code column to rooms table
+alter table public.rooms
+    add column if not exists invite_code text default public.generate_invite_code() unique;
+
+-- 3. Add Owners can kick members RLS policy to room_members table
+drop policy if exists "Owners can kick members" on public.room_members;
+create policy "Owners can kick members"
+    on public.room_members for delete
+    using (
+        exists (
+            select 1 from public.rooms
+            where rooms.id = room_members.room_id
+              and rooms.owner_id = auth.uid()
+              and rooms.type != 'money'
+        )
+    );
+
+-- ==========================================
+-- ROOM PRESENCE TABLE
+-- Tracks live arena sprint state per member
+-- ==========================================
+create table if not exists public.room_presence (
+    id uuid default uuid_generate_v4() primary key,
+    room_id uuid references public.rooms(id) on delete cascade not null,
+    user_id uuid references public.users(id) on delete cascade not null,
+    session_id uuid references public.study_sessions(id) on delete set null,
+    focus_score integer not null default 0,
+    focus_seconds integer not null default 0,
+    is_active boolean not null default true,
+    is_muted boolean not null default false,
+    share_camera boolean not null default false,
+    share_graphs boolean not null default true,
+    share_stats boolean not null default true,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique(room_id, user_id)
+);
+
+alter table public.room_presence enable row level security;
+
+create policy "Room members can view presence"
+    on public.room_presence for select
+    using (exists (
+        select 1 from public.room_members
+        where room_members.room_id = room_presence.room_id
+          and room_members.user_id = auth.uid()
+    ));
+
+create policy "Users can upsert their own presence"
+    on public.room_presence for insert
+    with check (auth.uid() = user_id);
+
+create policy "Users can update their own presence"
+    on public.room_presence for update
+    using (auth.uid() = user_id);
+
+create policy "Users can delete their own presence"
+    on public.room_presence for delete
+    using (auth.uid() = user_id);
+
+create index if not exists idx_room_presence_room_id on public.room_presence (room_id);
+create index if not exists idx_room_presence_user_id on public.room_presence (user_id);
+
+-- =========================================================================
+-- PHASING MIGRATION: SOCIAL CONNECTIONS, FORFEITING, & TIE-BREAKER METRICS
+-- =========================================================================
+
+-- 1. Create connections table for followers/following and study buddies
+create table if not exists public.connections (
+    id uuid default uuid_generate_v4() primary key,
+    sender_id uuid references public.users(id) on delete cascade not null,
+    receiver_id uuid references public.users(id) on delete cascade not null,
+    status text not null check (status in ('pending', 'accepted')),
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique (sender_id, receiver_id)
+);
+
+alter table public.connections enable row level security;
+
+create policy "Connections are viewable by everyone"
+    on public.connections for select
+    using (true);
+
+create policy "Users can send connection requests"
+    on public.connections for insert
+    with check (auth.uid() = sender_id);
+
+create policy "Users can accept connection requests"
+    on public.connections for update
+    using (auth.uid() = receiver_id);
+
+create policy "Users can delete connection requests"
+    on public.connections for delete
+    using (auth.uid() = sender_id or auth.uid() = receiver_id);
+
+-- 2. Add hands_down and live stats to room_presence
+alter table public.room_presence add column if not exists hands_down boolean default false;
+alter table public.room_presence add column if not exists attention_ratio integer default 100;
+alter table public.room_presence add column if not exists interruptions_count integer default 0;
+alter table public.room_presence add column if not exists current_streak integer default 0;
+
+-- 3. Add public room delete policy for anyone if the room is empty and > 3 hours old
+create policy "Anyone can delete empty public spaces older than 3 hours"
+    on public.rooms for delete
+    using (
+        type = 'public' 
+        and created_at < now() - interval '3 hours'
+        and not exists (
+            select 1 from public.room_members 
+            where room_id = id
+        )
+    );
+
+-- 4. Add battle result fields to study_sessions table
+alter table public.study_sessions add column if not exists is_winner boolean;
+alter table public.study_sessions add column if not exists opponent_name text;
+alter table public.study_sessions add column if not exists opponent_focus_seconds integer;
+alter table public.study_sessions add column if not exists hands_down_forfeited boolean;
 
