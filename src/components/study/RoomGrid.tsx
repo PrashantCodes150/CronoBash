@@ -78,3 +78,5 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
     </div>
   );
 }
+
+export default RoomGrid;
