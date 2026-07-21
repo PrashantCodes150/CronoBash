@@ -1,0 +1,4 @@
+-- ==========================================
+-- CogniSweep Migration: Leaderboard Seeds Placeholder
+-- ==========================================
+-- This file is kept as an empty placeholder to satisfy CLI migration version history.

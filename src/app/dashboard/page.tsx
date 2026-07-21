@@ -593,12 +593,12 @@ export default function Dashboard() {
           <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-2">
             {liveRooms.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <p className="text-[11px] text-on-surface-variant font-label-mono">No active room memberships</p>
+                <p className="text-[11px] text-on-surface-variant font-label-mono">No active arena memberships</p>
                 <button 
                   onClick={() => router.push('/rooms')}
                   className="mt-3 bg-secondary-container text-on-secondary px-4 py-1.5 rounded font-label-mono text-[10px] font-bold hover:bg-secondary-fixed transition-colors cursor-pointer"
                 >
-                  Browse Lobbies
+                  Browse Arenas
                 </button>
               </div>
             ) : (

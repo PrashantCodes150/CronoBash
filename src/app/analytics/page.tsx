@@ -25,6 +25,7 @@ interface SessionRow {
   focus_seconds: number;
   total_seconds: number;
   room_id: string | null;
+  name: string | null;
 }
 
 interface TaskRow {
@@ -66,7 +67,7 @@ export default function AnalyticsPage() {
     Promise.all([
       supabase
         .from('study_sessions')
-        .select('id, user_id, start_time, end_time, focus_seconds, total_seconds, room_id')
+        .select('id, user_id, start_time, end_time, focus_seconds, total_seconds, room_id, name')
         .eq('user_id', user.id)
         .gte('start_time', startStr)
         .order('start_time', { ascending: true }),
@@ -115,21 +116,21 @@ export default function AnalyticsPage() {
 
   const subjectData = useMemo(() => {
     const subjectMap: Record<string, number> = {};
-    for (const t of tasks) {
-      if (t.completed) {
-        subjectMap[t.subject] = (subjectMap[t.subject] || 0) + (t.planned_minutes || 0);
-      }
+    for (const s of sessions) {
+      const matchingTask = tasks.find(t => t.title.trim().toLowerCase() === (s.name || '').trim().toLowerCase());
+      const subject = matchingTask ? matchingTask.subject : 'General Focus';
+      subjectMap[subject] = (subjectMap[subject] || 0) + Math.round((s.focus_seconds || 0) / 60);
     }
     const colors = ['#00FFA3', '#7047EB', '#FFB800', '#00C2FF', '#FF0055', '#A855F7'];
     return Object.entries(subjectMap)
       .map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
       .filter(s => s.value > 0);
-  }, [tasks]);
+  }, [sessions, tasks]);
 
   const plannedVsActual = useMemo(() => {
     const taskByDate: Record<string, number> = {};
     for (const t of tasks) {
-      if (t.completed && t.date) {
+      if (t.date) {
         taskByDate[t.date] = (taskByDate[t.date] || 0) + (t.planned_minutes || 0);
       }
     }

@@ -14,6 +14,7 @@ interface AppNotification {
   type: string;
   is_read: boolean;
   created_at: string;
+  metadata?: any;
 }
 
 export default function Header() {
@@ -90,6 +91,67 @@ export default function Header() {
 
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAcceptBuddyRequest = async (notificationId: string, connectionId: string) => {
+    try {
+      const { error: connError } = await supabase
+        .from('connections')
+        .update({ status: 'accepted' })
+        .eq('id', connectionId);
+      if (connError) throw connError;
+
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      alert("Buddy request accepted!");
+      if (typeof window !== 'undefined') window.location.reload();
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to accept buddy request.");
+    }
+  };
+
+  const handleDeclineBuddyRequest = async (notificationId: string, connectionId: string) => {
+    try {
+      const { error: connError } = await supabase
+        .from('connections')
+        .delete()
+        .eq('id', connectionId);
+      if (connError) throw connError;
+
+      await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      alert("Buddy request declined.");
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to decline buddy request.");
+    }
+  };
+
+  const handleJoinLobby = async (notificationId: string, inviteCode: string) => {
+    try {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotificationsOpen(false);
+      router.push(`/rooms?code=${inviteCode}`);
     } catch (e) {
       console.error(e);
     }
@@ -192,7 +254,7 @@ export default function Header() {
   return (
     <>
       {/* Desktop Top Header Bar */}
-      <header className="hidden md:flex justify-between items-center h-16 px-8 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-30">
+      <header className="hidden md:flex justify-between items-center h-16 px-8 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-40">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center group cursor-pointer select-none no-underline shrink-0">
             <div className="font-display text-lg md:text-xl font-medium tracking-wide flex items-center text-primary-fixed">
@@ -220,13 +282,12 @@ export default function Header() {
                 <ul className="space-y-1 font-label-mono text-xs uppercase font-bold text-on-surface-variant text-left">
                   {[
                     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-                    { name: 'Rooms', href: '/rooms', icon: 'groups' },
-                    { name: 'Challenges', href: '/challenges', icon: 'sports_esports' },
-                    { name: 'Arena', href: '/arena', icon: 'military_tech' },
-                    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
+                    { name: 'Buddies', href: '/buddies', icon: 'person_add' },
+                    { name: 'Arenas', href: '/rooms', icon: 'groups' },
                     { name: 'Tasks', href: '/tasks', icon: 'checklist' },
+                    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
                     { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
-                    { name: 'Buddies', href: '/profile?tab=buddies', icon: 'person_add' },
+                    { name: 'Store', href: '/marketplace', icon: 'storefront' },
                     { name: 'Profile', href: '/profile', icon: 'person' },
                     { name: 'Settings', href: '/settings', icon: 'settings' }
                   ].map((link) => {
@@ -319,7 +380,36 @@ export default function Header() {
                             )}
                           </div>
                           <p className="mt-1 leading-normal break-words">{n.message}</p>
-                          <p className="text-[8px] text-on-surface-variant/60 text-right mt-1.5">
+                          
+                          {n.type === 'buddy_request' && n.metadata?.connection_id && !n.is_read && (
+                            <div className="flex gap-1.5 mt-2 pt-2 border-t border-outline-variant/10">
+                              <button
+                                onClick={() => handleAcceptBuddyRequest(n.id, n.metadata.connection_id)}
+                                className="bg-[#00ffa3]/20 hover:bg-[#00ffa3]/30 text-[#00ffa3] font-bold text-[8px] uppercase px-2 py-1 rounded border border-[#00ffa3]/30 cursor-pointer"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleDeclineBuddyRequest(n.id, n.metadata.connection_id)}
+                                className="bg-error-container/20 hover:bg-error/30 text-error font-bold text-[8px] uppercase px-2 py-1 rounded border border-error/30 cursor-pointer"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          )}
+
+                          {n.type === 'invite' && n.metadata?.invite_code && !n.is_read && (
+                            <div className="flex gap-1.5 mt-2 pt-2 border-t border-outline-variant/10">
+                              <button
+                                onClick={() => handleJoinLobby(n.id, n.metadata.invite_code)}
+                                className="bg-primary-container hover:bg-primary-fixed text-on-primary font-bold text-[8px] uppercase px-2 py-1 rounded border border-primary-container cursor-pointer animate-pulse"
+                              >
+                                Join Lobby
+                              </button>
+                            </div>
+                          )}
+
+                          <p className="text-[8px] text-on-surface-variant/60 text-right mt-1.5 font-mono">
                             {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -436,13 +526,12 @@ export default function Header() {
             <ul className="flex flex-col gap-2 flex-grow">
               {[
                 { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-                { name: 'Rooms', href: '/rooms', icon: 'groups' },
-                { name: 'Challenges', href: '/challenges', icon: 'sports_esports' },
-                { name: 'Arena', href: '/arena', icon: 'military_tech' },
-                { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
+                { name: 'Buddies', href: '/buddies', icon: 'person_add' },
+                { name: 'Arenas', href: '/rooms', icon: 'groups' },
                 { name: 'Tasks', href: '/tasks', icon: 'checklist' },
+                { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
                 { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
-                { name: 'Buddies', href: '/profile?tab=buddies', icon: 'person_add' },
+                { name: 'Store', href: '/marketplace', icon: 'storefront' },
                 { name: 'Profile', href: '/profile', icon: 'person' },
                 { name: 'Settings', href: '/settings', icon: 'settings' }
               ].map((link) => {

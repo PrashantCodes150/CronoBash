@@ -25,9 +25,10 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "CogniSweep - Cognitive Focus Scanner & Study Platform",
-  description: "Track focus, challenge squads, and win rewards in high-stakes study sprints.",
+  title: "CogniSweep — Study with Friends, Compete Globally",
+  description: "Join 1v1 study battles, track focus with AI, climb leaderboards, and earn rewards.",
 };
+
 
 export default function RootLayout({
   children,

@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .from('wallets')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     if (!error && data) {
       setWallet(data as Wallet);
     }
@@ -190,6 +190,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       router.push('/dashboard');
     }
   }, [user, pathname, loading, router]);
+
+  // Online status heartbeat
+  useEffect(() => {
+    if (!user) return;
+
+    const updateLastSeen = async () => {
+      try {
+        await supabase
+          .from('users')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', user.id);
+      } catch (e) {
+        console.error("Heartbeat error:", e);
+      }
+    };
+
+    updateLastSeen(); // Initial update
+    const heartbeat = setInterval(updateLastSeen, 45000); // Every 45s
+
+    return () => clearInterval(heartbeat);
+  }, [user]);
 
   const isPublicRoute = ['/', '/login', '/signup'].includes(pathname);
   if (loading && !isPublicRoute) {

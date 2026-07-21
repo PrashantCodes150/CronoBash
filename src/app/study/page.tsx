@@ -174,6 +174,11 @@ function StudySessionContent() {
   const gazeDirectionRef = useRef('Calibrating');
   const currentStreakRef = useRef(0);
   const longestStreakRef = useRef(0);
+  const secondsRef = useRef(0);
+  const focusSecondsRef = useRef(0);
+  const screenFocusSecondsRef = useRef(0);
+  const paperFocusSecondsRef = useRef(0);
+  const modeChangesRef = useRef<ModeLog[]>([]);
 
   // Load MediaPipe scripts dynamically from jsDelivr CDN
   useEffect(() => {
@@ -939,7 +944,7 @@ function StudySessionContent() {
           // Combined: Center (screen) or Down (paper/book) are both focused
           if (dir === 'Center' || dir === 'Down') {
             setIsFocused(true);
-            setFocusScore(prev => Math.min(100, parseFloat((prev + (0.15 * recoveryMultiplier)).toFixed(2))));
+            setFocusScore(prev => Math.min(100, parseFloat((prev + (2.0 * recoveryMultiplier)).toFixed(2))));
           } else {
             setIsFocused(prev => {
               if (prev) {
@@ -1047,6 +1052,7 @@ function StudySessionContent() {
           });
         }
 
+        console.log("Attempting to insert study session for user:", user.id);
         const { data, error } = await supabase
           .from('study_sessions')
           .insert({
@@ -1063,9 +1069,10 @@ function StudySessionContent() {
           .single();
 
         if (!error && data) {
+          console.log("Successfully created study session row with ID:", data.id);
           setSessionId(data.id);
         } else if (error) {
-          console.error("Failed to create study session row:", error.message);
+          console.error("Failed to create study session row. Complete error details:", error);
         }
       } catch (e) {
         console.error("Error creating study session:", e);
@@ -1232,8 +1239,9 @@ function StudySessionContent() {
     }
 
     if (sessionId && user) {
+      console.log("Saving end session stats for sessionId:", sessionId);
       try {
-        await supabase
+        const { error: updateError } = await supabase
           .from('study_sessions')
           .update({
             end_time: new Date().toISOString(),
@@ -1248,6 +1256,42 @@ function StudySessionContent() {
             hands_down_forfeited: forfeitFlag
           })
           .eq('id', sessionId);
+
+        if (updateError) {
+          console.error("Failed to update study session row in DB:", updateError);
+        } else {
+          console.log("Successfully updated study session row in DB");
+        }
+
+        // Award XP / Points for Solo Session: 5 points per focus minute
+        if (!roomId && focusSeconds > 0) {
+          const soloMinutesFocused = Math.max(1, Math.floor(focusSeconds / 60));
+          const ptsGained = soloMinutesFocused * 5;
+
+          const { data: userData } = await supabase
+            .from('users')
+            .select('points')
+            .eq('id', user.id)
+            .single();
+
+          if (userData) {
+            const currentPoints = userData.points || 0;
+            const newPoints = currentPoints + ptsGained;
+
+            const { getLevelFromPoints, getEarnedBadgesForLevel } = await import('@/lib/levelUtils');
+            const newLevel = getLevelFromPoints(newPoints);
+            const newBadges = getEarnedBadgesForLevel(newLevel);
+
+            await supabase
+              .from('users')
+              .update({
+                points: newPoints,
+                level: newLevel,
+                badges: newBadges
+              })
+              .eq('id', user.id);
+          }
+        }
 
         const rewardMultiplier = user?.user_metadata?.is_pro === true ? 2 : 1;
         const tokenBase = Math.round(focusSeconds / 120);
@@ -1320,11 +1364,11 @@ function StudySessionContent() {
       await supabase
         .from('study_sessions')
         .update({
-          focus_seconds: focusSeconds,
-          total_seconds: seconds,
-          mode_changes: modeChanges,
-          screen_focus_seconds: screenFocusSeconds,
-          paper_focus_seconds: paperFocusSeconds
+          focus_seconds: focusSecondsRef.current,
+          total_seconds: secondsRef.current,
+          mode_changes: modeChangesRef.current,
+          screen_focus_seconds: screenFocusSecondsRef.current,
+          paper_focus_seconds: paperFocusSecondsRef.current
         })
         .eq('id', sessionId);
     } catch (e) {
@@ -1338,6 +1382,11 @@ function StudySessionContent() {
   useEffect(() => { gazeDirectionRef.current = gazeDirection; }, [gazeDirection]);
   useEffect(() => { currentStreakRef.current = currentStreak; }, [currentStreak]);
   useEffect(() => { longestStreakRef.current = longestStreak; }, [longestStreak]);
+  useEffect(() => { secondsRef.current = seconds; }, [seconds]);
+  useEffect(() => { focusSecondsRef.current = focusSeconds; }, [focusSeconds]);
+  useEffect(() => { screenFocusSecondsRef.current = screenFocusSeconds; }, [screenFocusSeconds]);
+  useEffect(() => { paperFocusSecondsRef.current = paperFocusSeconds; }, [paperFocusSeconds]);
+  useEffect(() => { modeChangesRef.current = modeChanges; }, [modeChanges]);
 
   // Timer Tick Loop — depends only on isActive so it never restarts mid-session
   useEffect(() => {
@@ -1376,7 +1425,7 @@ function StudySessionContent() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isActive]);
+  }, [isActive, cameraActive]);
 
   // Debounced DB Sync Loop
   useEffect(() => {
@@ -1391,7 +1440,7 @@ function StudySessionContent() {
     return () => {
       if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     };
-  }, [isActive, seconds, focusSeconds, modeChanges]);
+  }, [isActive]);
 
   // Setup room presence syncing if in a room
   useEffect(() => {
