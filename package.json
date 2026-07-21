@@ -1,7 +1,11 @@
 {
-  "name": "temp-app",
-  "version": "0.1.0",
+  "name": "cognisweep",
+  "version": "1.0.0",
+
+  "description": "CogniSweep Study Arena — Study with friends, compete globally, and earn rewards",
+  "keywords": ["study", "productivity", "focus", "medialive", "face-tracking", "gamification"],
   "private": true,
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -18,12 +18,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const links = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-    { name: 'Rooms', href: '/rooms', icon: 'groups' },
-    { name: 'Challenges', href: '/challenges', icon: 'sports_esports' },
-    { name: 'Arena', href: '/arena', icon: 'military_tech' },
-    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
+    { name: 'Buddies', href: '/buddies', icon: 'person_add' },
+    { name: 'Arenas', href: '/rooms', icon: 'groups' },
     { name: 'Tasks', href: '/tasks', icon: 'checklist' },
+    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
     { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
+    { name: 'Store', href: '/marketplace', icon: 'storefront' },
     { name: 'Profile', href: '/profile', icon: 'person' },
     { name: 'Settings', href: '/settings', icon: 'settings' }
   ];

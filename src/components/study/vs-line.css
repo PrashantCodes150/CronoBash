@@ -1,0 +1,40 @@
+/* styles/vs-line.css */
+.vs-divider {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 30;
+}
+.vs-line {
+  width: 2px;
+  height: 70%;
+  background: linear-gradient(180deg, rgba(249,115,22,0), rgba(249,115,22,1), rgba(239,68,68,1), rgba(239,68,68,0));
+  box-shadow: 0 0 12px rgba(249,115,22,0.8);
+  transform-origin: center;
+}
+.vs-badge {
+  position: absolute;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(10,10,10,0.85);
+  border: 1.5px solid rgba(249,115,22,0.6);
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: 1px;
+  font-family: monospace;
+  font-size: 11px;
+  backdrop-filter: blur(4px);
+}
+@media (orientation: portrait) {
+  .vs-divider { flex-direction: column; }
+  .vs-line { height: 70%; width: 2px; }
+  .vs-badge { transform: rotate(0deg); }
+}
+@media (orientation: landscape) {
+  .vs-divider { flex-direction: row; }
+  .vs-line { width: 70%; height: 2px; }
+  .vs-badge { transform: rotate(0deg); }
+}

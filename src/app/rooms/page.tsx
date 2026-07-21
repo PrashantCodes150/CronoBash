@@ -298,7 +298,7 @@ export default function RoomsLobby() {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get('kicked') === 'true') {
-        setAlertMsg({ type: 'error', text: 'You were kicked from the study room by the owner.' });
+        setAlertMsg({ type: 'error', text: 'You were kicked from the study arena by the owner.' });
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
       }
@@ -310,15 +310,15 @@ export default function RoomsLobby() {
       {/* Top Banner Lobbies controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Study Lobbies</h2>
-          <p className="text-xs text-on-surface-variant mt-1">Join study rooms or stake tokens in high-stakes money contests</p>
+          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Study Arenas</h2>
+          <p className="text-xs text-on-surface-variant mt-1">Join study arenas or stake tokens in high-stakes money contests</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-primary-container text-on-primary font-label-mono text-xs font-bold py-2.5 px-6 rounded-lg hover:bg-primary-fixed transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,163,0.2)] cursor-pointer"
         >
           <span className="material-symbols-outlined text-sm font-bold">add</span>
-          Create Room
+          Create Arena
         </button>
       </div>
 
@@ -359,7 +359,7 @@ export default function RoomsLobby() {
               maxLength={6}
               value={joinCodeInput}
               onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
-              placeholder="ENTER ROOM CODE..."
+              placeholder="ENTER ARENA CODE..."
               className="bg-background border border-outline-variant rounded-lg px-3 py-2 font-mono text-xs text-on-surface focus:outline-none uppercase tracking-wider w-full sm:w-36 text-center"
             />
             <button
@@ -378,7 +378,7 @@ export default function RoomsLobby() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search study squads..."
+              placeholder="Search study arenas..."
               className="w-full bg-transparent text-xs text-on-surface focus:outline-none"
             />
           </div>
@@ -389,12 +389,12 @@ export default function RoomsLobby() {
       {loadingRooms ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-on-surface-variant font-label-mono text-xs mt-4">FETCHING ACTIVE LOBBIES...</p>
+          <p className="text-on-surface-variant font-label-mono text-xs mt-4">FETCHING ACTIVE ARENAS...</p>
         </div>
       ) : filteredRooms.length === 0 ? (
         <div className="card-base text-center py-20 space-y-4">
           <span className="material-symbols-outlined text-5xl text-on-surface-variant">meeting_room</span>
-          <p className="text-sm font-label-mono text-on-surface-variant">No active study lobbies found</p>
+          <p className="text-sm font-label-mono text-on-surface-variant">No active study arenas found</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -419,7 +419,7 @@ export default function RoomsLobby() {
                           ? 'bg-secondary-container/10 text-secondary-fixed border border-secondary-container/30'
                           : 'bg-surface-variant text-on-surface-variant'
                     }`}>
-                      {room.type} Room
+                      {room.type} Arena
                     </span>
                     {isMoneyRoom && (
                       <span className="font-label-mono text-[10px] text-primary-fixed font-bold bg-primary-container/15 px-2 py-0.5 rounded flex items-center gap-0.5">
@@ -434,7 +434,7 @@ export default function RoomsLobby() {
                   </h3>
                   
                   <p className="text-xs text-on-surface-variant line-clamp-2 min-h-[32px] mb-4">
-                    {room.description || 'Join this study squad to sprint focus timers together, share resources, and climb daily metrics.'}
+                    {room.description || 'Join this study arena to sprint focus timers together, share resources, and climb daily metrics.'}
                   </p>
 
                   <div className="flex flex-wrap gap-1.5 mb-6">
@@ -457,7 +457,7 @@ export default function RoomsLobby() {
                         onClick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(room.invite_code || '');
-                          setAlertMsg({ type: 'success', text: `Room code ${room.invite_code} copied to clipboard!` });
+                          setAlertMsg({ type: 'success', text: `Arena code ${room.invite_code} copied to clipboard!` });
                         }}
                         className="text-[10px] text-primary-fixed hover:text-primary-fixed-dim bg-primary-container/10 px-1.5 py-0.5 rounded cursor-pointer transition-colors w-fit select-none font-bold font-mono tracking-wider mt-1"
                         title="Click to copy code"
@@ -471,7 +471,7 @@ export default function RoomsLobby() {
                     onClick={() => handleJoinRoom(room)}
                     className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors shadow-[0_0_8px_rgba(0,255,163,0.15)] cursor-pointer"
                   >
-                    {isMoneyRoom ? `Stake & Join` : 'Enter Room'}
+                    {isMoneyRoom ? `Stake & Join` : 'Enter Arena'}
                   </button>
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function RoomsLobby() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-6">
           <div className="w-full max-w-lg bg-surface-container border border-outline-variant rounded-2xl p-8 relative overflow-hidden shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-lg font-black text-on-surface uppercase">Configure Focus Room</h3>
+              <h3 className="font-display text-lg font-black text-on-surface uppercase">Configure Focus Arena</h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer"
@@ -496,7 +496,7 @@ export default function RoomsLobby() {
 
             <form onSubmit={handleCreateRoom} className="space-y-4">
               <div>
-                <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Room Name</label>
+                <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Arena Name</label>
                 <input
                   type="text"
                   required
@@ -509,7 +509,7 @@ export default function RoomsLobby() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Room Type</label>
+                  <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Arena Type</label>
                   <select
                     value={newRoomType}
                     onChange={(e) => setNewRoomType(e.target.value as ('public' | 'private' | 'money'))}
@@ -517,7 +517,7 @@ export default function RoomsLobby() {
                   >
                     <option value="public">Public</option>
                     <option value="private">Private</option>
-                    <option value="money">Money Room</option>
+                    <option value="money">Money Arena</option>
                   </select>
                 </div>
                 <div>
@@ -573,7 +573,7 @@ export default function RoomsLobby() {
                 disabled={creating}
                 className="w-full bg-primary-container text-on-primary font-label-mono text-xs font-bold py-3.5 rounded-lg hover:bg-primary-fixed transition-colors mt-4 cursor-pointer"
               >
-                {creating ? 'Spawning Instance...' : 'Initialize Study Room'}
+                {creating ? 'Spawning Instance...' : 'Initialize Study Arena'}
               </button>
             </form>
           </div>

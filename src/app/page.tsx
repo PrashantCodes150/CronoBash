@@ -373,7 +373,7 @@ export default function LandingPage() {
             <StatCard value="12K+"  label="Active Students"        icon="school" />
             <StatCard value="4.2M"  label="Focus Minutes Logged"   icon="timer" />
             <StatCard value="98K+"  label="Tokens Distributed"     icon="account_balance_wallet" />
-            <StatCard value="850+"  label="Live Rooms Today"        icon="groups" />
+            <StatCard value="850+"  label="Live Arenas Today"        icon="groups" />
           </div>
         </Reveal>
       </section>

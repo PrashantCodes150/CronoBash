@@ -30,6 +30,7 @@ export default function RoomDetail() {
 
   // PUBG Matchmaking and Countdown states
   const [readyMembers, setReadyMembers] = useState<Record<string, boolean>>({});
+  const [selfReady, setSelfReady] = useState(false);
   const [countdownTime, setCountdownTime] = useState<number | null>(null);
   const [countdownActive, setCountdownActive] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number>(15);
@@ -115,13 +116,19 @@ export default function RoomDetail() {
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         const readies: Record<string, boolean> = {};
-        Object.keys(state).forEach((userId) => {
-          const presenceObj = state[userId][0] as any;
-          if (presenceObj) {
-            readies[userId] = !!presenceObj.isReady;
+        Object.keys(state).forEach((key) => {
+          const presenceObj = state[key][0] as any;
+          if (presenceObj && presenceObj.userId) {
+            const memberUserId = presenceObj.userId;
+            readies[memberUserId] = !!presenceObj.isReady;
+
+            // Sync selfReady if it comes from the server sync
+            if (memberUserId === user.id) {
+              setSelfReady(!!presenceObj.isReady);
+            }
 
             // Sync settings from owner to members (so their local config matches the owner's)
-            if (userId === roomOwnerIdRef.current && userId !== user.id) {
+            if (memberUserId === roomOwnerIdRef.current && memberUserId !== user.id) {
               if (presenceObj.shareCamera !== undefined) setShareCamera(presenceObj.shareCamera);
               if (presenceObj.shareGraphs !== undefined) setShareGraphs(presenceObj.shareGraphs);
               if (presenceObj.shareStats !== undefined) setShareStats(presenceObj.shareStats);
@@ -199,7 +206,7 @@ export default function RoomDetail() {
         setSecondsLeft(0);
         setCountdownActive(false);
         // Automatically launch to study room with configured settings!
-        router.push(`/study?roomId=${roomId}&shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}`);
+        router.push(`/study/${roomId}?shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}&playersCount=${members.length}`);
       } else {
         setSecondsLeft(secs);
         playBeepSound();
@@ -213,14 +220,15 @@ export default function RoomDetail() {
 
   const toggleReady = async () => {
     if (!matchChannelRef.current || !user) return;
-    const currentlyReady = !!readyMembers[user.id];
+    const nextReady = !selfReady;
+    setSelfReady(nextReady);
     setReadyMembers(prev => ({
       ...prev,
-      [user.id]: !currentlyReady
+      [user.id]: nextReady
     }));
     await matchChannelRef.current.track({
       userId: user.id,
-      isReady: !currentlyReady,
+      isReady: nextReady,
       joinedAt: new Date().toISOString()
     });
   };
@@ -813,7 +821,7 @@ export default function RoomDetail() {
                                     {statusBadge}
                                   </span>
                                 ) : (() => {
-                                  const isReady = !!readyMembers[mbr.user_id];
+                                  const isReady = mbr.user_id === user?.id ? selfReady : !!readyMembers[mbr.user_id];
                                   const readyBadge = room.owner_id === mbr.user_id
                                     ? "OWNER"
                                     : (isReady ? "READY" : "PREPARING");
@@ -1067,15 +1075,15 @@ export default function RoomDetail() {
                     disabled={countdownActive}
                     onClick={toggleReady}
                     className={`w-full font-label-mono text-xs font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider ${
-                      readyMembers[user?.id || '']
+                      selfReady
                         ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400'
                         : 'bg-surface-container-high border border-outline-variant text-on-surface hover:border-primary-fixed hover:text-primary-fixed'
                     }`}
                   >
                     <span className="material-symbols-outlined">
-                      {readyMembers[user?.id || ''] ? 'check_circle' : 'hourglass_empty'}
+                      {selfReady ? 'check_circle' : 'hourglass_empty'}
                     </span>
-                    {readyMembers[user?.id || ''] ? 'I am Ready! (Cancel)' : 'Ready Up'}
+                    {selfReady ? 'I am Ready! (Cancel)' : 'Ready Up'}
                   </button>
                 )}
                 <button

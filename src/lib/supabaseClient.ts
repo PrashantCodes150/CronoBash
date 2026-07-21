@@ -18,6 +18,11 @@ export interface UserProfile {
   daily_goal_minutes: number;
   is_pro?: boolean;
   created_at: string;
+  is_public?: boolean;
+  last_seen_at?: string;
+  points?: number;
+  level?: number;
+  badges?: string[];
 }
 
 export interface Room {

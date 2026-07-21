@@ -9,6 +9,7 @@ interface UseFocusDetectionResult {
   facingScreen: boolean;
   modelLoaded: boolean;
   modelError: string | null;
+  isFakeCam: boolean;
 }
 
 interface UseFocusDetectionOptions {
@@ -62,12 +63,16 @@ export function useFocusDetection({
   const [facingScreen, setFacingScreen] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
+  const [isFakeCam, setIsFakeCam] = useState(false);
 
   const faceLandmarkerRef = useRef<{ detectForVideo: (v: HTMLVideoElement, t: number) => { faceLandmarks?: { x: number; y: number }[][] }; close: () => void } | null>(null);
   const detectionLoopRef = useRef<NodeJS.Timeout | null>(null);
   const lastFrameTimeRef = useRef<number>(-1);
   const lastResultRef = useRef({ eyeOpen: true, facingScreen: true });
   const consecutiveNoFaceRef = useRef(0);
+
+  // Landmark history ref for fake camera detection
+  const noseHistoryRef = useRef<{ x: number; y: number }[]>([]);
 
   const loadModel = useCallback(async () => {
     try {
@@ -91,7 +96,6 @@ export function useFocusDetection({
           numFaces: 1,
         });
       } catch {
-        // GPU delegate failed, fall back to CPU
         console.warn("GPU delegate unavailable, falling back to CPU");
         faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
           baseOptions: {
@@ -152,6 +156,26 @@ export function useFocusDetection({
       const rightCheek = landmarks[RIGHT_CHEEK];
       const forehead = landmarks[FOREHEAD];
 
+      // Anti-Cheat: Static Frame Check
+      const history = noseHistoryRef.current;
+      history.push({ x: nose.x, y: nose.y });
+      if (history.length > 10) {
+        history.shift();
+      }
+
+      // Verify micro-movements variance (Sensor Noise check)
+      if (history.length === 10) {
+        const meanX = history.reduce((sum, p) => sum + p.x, 0) / 10;
+        const meanY = history.reduce((sum, p) => sum + p.y, 0) / 10;
+        const varX = history.reduce((sum, p) => sum + Math.pow(p.x - meanX, 2), 0) / 10;
+        const varY = history.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0) / 10;
+
+        // Still image prints or virtual camera freezes will have absolute zero deviation.
+        // Webcams have standard deviation due to frame wiggles and light noise.
+        const isStatic = varX < 0.000001 && varY < 0.000001;
+        setIsFakeCam(isStatic);
+      }
+
       const faceCenterX = (leftCheek.x + rightCheek.x) / 2;
       const noseOffsetFromCenter = Math.abs(nose.x - faceCenterX);
       const faceWidth = distance(leftCheek, rightCheek);
@@ -169,7 +193,7 @@ export function useFocusDetection({
 
       lastResultRef.current = { eyeOpen: eyesOpen, facingScreen: facing };
     } catch {
-      // Detection failed on this frame, keep previous state
+      // Keep previous state
     }
   }, [videoRef]);
 
@@ -200,5 +224,5 @@ export function useFocusDetection({
     };
   }, []);
 
-  return { isFocused, faceDetected, eyeOpen, facingScreen, modelLoaded, modelError };
+  return { isFocused, faceDetected, eyeOpen, facingScreen, modelLoaded, modelError, isFakeCam };
 }
