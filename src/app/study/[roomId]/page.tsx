@@ -19,7 +19,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import {
   Volume2, VolumeX, Eye, ShieldAlert,
-  Flame, Sliders, Moon, Leaf, Heart, Droplet, HelpCircle, RotateCcw
+  Flame, Sliders, Moon, Leaf, Heart, Droplet, HelpCircle, RotateCcw, Mic, MicOff
 } from 'lucide-react';
 
 interface ChartPoint {
@@ -212,6 +212,15 @@ export default function StudyRoomPage() {
     onMatchForfeited: handleRemoteForfeit,
     onOpponentDistracted: (oppName, strikes) => {}
   });
+
+  useEffect(() => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !isSelfMuted;
+      });
+    }
+    broadcastMuteState(isSelfMuted);
+  }, [isSelfMuted, localStream]);
 
   const handleForfeitMatch = () => {
     if (!user || sessionConcluded) return;
@@ -644,7 +653,7 @@ export default function StudyRoomPage() {
               name: m.users?.name || 'Studier',
               avatarUrl: m.users?.avatar_url || undefined,
               isFocused: m.isFocused,
-              isMuted: m.isMuted,
+              isMuted: m.user_id === user.id ? isSelfMuted : m.isMuted,
               distractionCount: m.distractionCount,
               focusScore: m.user_id === user.id ? focusScore : (m.focusScore !== undefined ? m.focusScore : Math.max(40, 100 - (m.distractionCount || 0) * 12)),
               focusSeconds: m.user_id === user.id ? activeFocusSeconds : (m.total_focus_seconds_today || 300),
@@ -677,9 +686,24 @@ export default function StudyRoomPage() {
             <div className="h-6 w-px bg-neutral-800 mx-2 hidden sm:block" />
             <button
               onClick={() => setIsSelfMuted(!isSelfMuted)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${isSelfMuted ? 'bg-red-950/40 border-red-900 text-red-400' : 'bg-neutral-900 border-neutral-800 text-neutral-400'}`}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
+                isSelfMuted 
+                  ? 'bg-red-950/80 border-red-800 text-red-400 font-bold' 
+                  : 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 font-bold'
+              }`}
+              title={isSelfMuted ? "Click to Unmute Microphone" : "Click to Mute Microphone"}
             >
-              {isSelfMuted ? 'Muted' : 'Unmuted'}
+              {isSelfMuted ? (
+                <>
+                  <MicOff className="w-3.5 h-3.5 text-red-400" />
+                  <span>MIC MUTED</span>
+                </>
+              ) : (
+                <>
+                  <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <span>MIC LIVE 🎙️</span>
+                </>
+              )}
             </button>
             
             <button
