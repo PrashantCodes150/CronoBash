@@ -104,6 +104,11 @@ export default function RoomsLobby() {
     if (!user) return;
     setAlertMsg(null);
 
+    if (room.is_active === false) {
+      setAlertMsg({ type: 'error', text: 'Match in progress! This public study room is currently locked.' });
+      return;
+    }
+
     try {
       // 1. If money room, check wallet stakes and join via atomic RPC
       if (room.type === 'money') {
@@ -144,8 +149,9 @@ export default function RoomsLobby() {
 
   const handleJoinByCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joinCodeInput.trim() || !user) return;
-    if (joinCodeInput.length !== 6) {
+    const cleanCode = joinCodeInput.trim().toUpperCase();
+    if (!cleanCode || !user) return;
+    if (cleanCode.length !== 6) {
       setAlertMsg({ type: 'error', text: 'Invite code must be exactly 6 characters.' });
       return;
     }
@@ -155,8 +161,7 @@ export default function RoomsLobby() {
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .select('*')
-        .eq('invite_code', joinCodeInput)
-        .eq('is_active', true)
+        .ilike('invite_code', cleanCode)
         .maybeSingle();
 
       if (roomError || !roomData) {
@@ -412,15 +417,23 @@ export default function RoomsLobby() {
                 
                 <div>
                   <div className="flex justify-between items-start gap-4 mb-4">
-                    <span className={`font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                      isMoneyRoom 
-                        ? 'bg-primary-container/10 text-primary-fixed border border-primary-container/30' 
-                        : room.type === 'private' 
-                          ? 'bg-secondary-container/10 text-secondary-fixed border border-secondary-container/30'
-                          : 'bg-surface-variant text-on-surface-variant'
-                    }`}>
-                      {room.type} Arena
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                        isMoneyRoom 
+                          ? 'bg-primary-container/10 text-primary-fixed border border-primary-container/30' 
+                          : room.type === 'private' 
+                            ? 'bg-secondary-container/10 text-secondary-fixed border border-secondary-container/30'
+                            : 'bg-surface-variant text-on-surface-variant'
+                      }`}>
+                        {room.type} Arena
+                      </span>
+                      {room.is_active === false && (
+                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-error-container/20 border border-error/40 text-error flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[10px]">lock</span>
+                          MATCH IN PROGRESS
+                        </span>
+                      )}
+                    </div>
                     {isMoneyRoom && (
                       <span className="font-label-mono text-[10px] text-primary-fixed font-bold bg-primary-container/15 px-2 py-0.5 rounded flex items-center gap-0.5">
                         <span className="material-symbols-outlined text-[12px] font-bold">attach_money</span>
@@ -468,10 +481,15 @@ export default function RoomsLobby() {
                   </div>
 
                   <button
+                    disabled={room.is_active === false}
                     onClick={() => handleJoinRoom(room)}
-                    className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors shadow-[0_0_8px_rgba(0,255,163,0.15)] cursor-pointer"
+                    className={`font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors shadow-[0_0_8px_rgba(0,255,163,0.15)] cursor-pointer ${
+                      room.is_active === false
+                        ? 'bg-surface-container-high text-on-surface-variant border border-outline-variant cursor-not-allowed opacity-60'
+                        : 'bg-primary-container hover:bg-primary-fixed text-on-primary'
+                    }`}
                   >
-                    {isMoneyRoom ? `Stake & Join` : 'Enter Arena'}
+                    {room.is_active === false ? 'LOCKED 🔒' : isMoneyRoom ? `Stake & Join` : 'Enter Arena'}
                   </button>
                 </div>
               </div>

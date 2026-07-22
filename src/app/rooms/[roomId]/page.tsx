@@ -141,6 +141,22 @@ export default function RoomDetail() {
           }
         });
         setReadyMembers(readies);
+        loadRoomMembers();
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        const presenceData = newPresences[0] as any;
+        if (presenceData && key !== user?.id) {
+          toast.success(`${presenceData.name || 'A contestant'} joined the arena!`, { icon: '👋', duration: 4000 });
+          loadRoomMembers();
+        }
+      })
+      .on('broadcast', { event: 'chat_message' }, ({ payload }) => {
+        if (payload && payload.user_id !== user?.id) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
+        }
       })
       .on('broadcast', { event: 'countdown-start' }, ({ payload }) => {
         const { targetTime, shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th, duration: dur } = payload;
@@ -257,12 +273,19 @@ export default function RoomDetail() {
     });
   };
 
-  const startCountdown = () => {
+  const startCountdown = async () => {
     if (members.length <= 1) {
       setAlertMsg({ type: 'error', text: 'At least one more contestant is required to start the matchmaking duel!' });
       return;
     }
     if (!matchChannelRef.current || room?.owner_id !== user?.id) return;
+
+    // Lock public room so outside users cannot enter while match is playing
+    await supabase
+      .from('rooms')
+      .update({ is_active: false })
+      .eq('id', roomId);
+
     const targetTime = new Date(Date.now() + 15000).toISOString(); // 15 seconds countdown
     matchChannelRef.current.send({
       type: 'broadcast',
@@ -279,8 +302,15 @@ export default function RoomDetail() {
     setCountdownActive(true);
   };
 
-  const cancelCountdown = () => {
+  const cancelCountdown = async () => {
     if (!matchChannelRef.current || room?.owner_id !== user?.id) return;
+
+    // Unlock room if countdown is cancelled
+    await supabase
+      .from('rooms')
+      .update({ is_active: true })
+      .eq('id', roomId);
+
     matchChannelRef.current.send({
       type: 'broadcast',
       event: 'countdown-cancel',
@@ -417,7 +447,7 @@ export default function RoomDetail() {
 
     const now = Date.now();
     if (now - lastSentTime < 2000) {
-      alert("Please wait 2 seconds between messages.");
+      toast.error("Please wait 2 seconds between messages.");
       return;
     }
 
@@ -428,26 +458,48 @@ export default function RoomDetail() {
       cleanText = cleanText.replace(regex, '***');
     });
 
+    const tempMsg = {
+      id: Math.random().toString(),
+      room_id: roomId,
+      user_id: user.id,
+      message_text: cleanText,
+      created_at: new Date().toISOString(),
+      users: {
+        name: profile?.name || user.email?.split('@')[0] || 'Contestant',
+        avatar_url: profile?.avatar_url || null,
+        is_pro: profile?.is_pro || false
+      }
+    };
+
+    // 1. Instant optimistic update (0ms UI latency!)
+    setMessages(prev => [...prev, tempMsg]);
+    setNewMessage('');
+    setLastSentTime(now);
+
+    // 2. Realtime broadcast for zero-latency arrival across all clients (<30ms)
+    if (matchChannelRef.current) {
+      matchChannelRef.current.send({
+        type: 'broadcast',
+        event: 'chat_message',
+        payload: tempMsg
+      });
+    }
+
+    // 3. Persist to DB in background
     try {
-      setLastSentTime(now);
-      const { error } = await supabase
+      await supabase
         .from('messages')
         .insert({
           room_id: roomId,
           user_id: user.id,
           message_text: cleanText
         });
-
-      if (!error) {
-        setNewMessage('');
-        await loadRoomMessages();
-      }
     } catch (e) {
-      console.error(e);
+      console.error("DB message insert error:", e);
     }
   };
 
-  // Setup Real-Time Subscriptions
+  // Setup Real-Time Subscriptions & Initial Data
   useEffect(() => {
     if (!roomId) return;
     
@@ -458,62 +510,6 @@ export default function RoomDetail() {
     };
 
     initData();
-
-    // Subscribe to Postgres changes on room_members for this room
-    const channel = supabase
-      .channel(`room-leaderboard-${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'room_members',
-          filter: `room_id=eq.${roomId}`
-        },
-        () => {
-          // Debounce: batch rapid updates (e.g. multiple members joining)
-          if (debounceRef.current) clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => {
-            loadRoomMembers();
-            setRealtimePulse(true);
-            setTimeout(() => setRealtimePulse(false), 1500);
-          }, 300);
-        }
-      )
-      .subscribe();
-
-    // Subscribe to messages changes
-    const chatChannel = supabase
-      .channel(`room-chat-${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `room_id=eq.${roomId}`
-        },
-        async (payload) => {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('name, avatar_url, is_pro')
-            .eq('id', payload.new.user_id)
-            .single();
-
-          const fullMsg = {
-            ...payload.new,
-            users: userData || { name: 'Contestant', avatar_url: null }
-          };
-          setMessages(prev => [...prev, fullMsg]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      supabase.removeChannel(channel);
-      supabase.removeChannel(chatChannel);
-    };
   }, [roomId]);
 
   // Scroll chat window to bottom
@@ -546,6 +542,12 @@ export default function RoomDetail() {
     if (!user || !room) return;
     setJoining(true);
     setAlertMsg(null);
+
+    if (room.is_active === false) {
+      setAlertMsg({ type: 'error', text: 'Match in progress! Public study room is currently locked.' });
+      setJoining(false);
+      return;
+    }
 
     try {
       if (room.type === 'money') {

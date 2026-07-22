@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
 import { supabase } from '@/lib/supabaseClient';
 import confetti from 'canvas-confetti';
+import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 
 interface AppNotification {
   id: string;
@@ -446,8 +447,9 @@ export default function Header() {
                 
                 <div className="absolute right-0 mt-2 w-56 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-3 py-2 border-b border-outline-variant/30 text-xs font-mono">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-on-surface truncate">{profile?.name || 'Arena Fighter'}</span>
+                      <VerifiedBadge level={profile?.level || 1} size="sm" showLevelNumber={true} />
                     </div>
                     <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{profile?.email}</p>
                   </div>

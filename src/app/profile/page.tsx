@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { supabase } from '@/lib/supabaseClient';
 import { BADGES } from '@/lib/badges';
+import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -323,6 +324,7 @@ export default function ProfilePage() {
                     <h3 className="font-display text-xl font-bold text-on-surface uppercase tracking-tight">
                       {profile?.name || 'Arena Fighter'}
                     </h3>
+                    <VerifiedBadge level={profile?.level || 1} size="md" showLevelNumber={true} />
                     {/* Render unlocked badges inline next to name */}
                     {profile?.badges && profile.badges.map(badgeId => {
                       const badge = BADGES.find(b => b.id === badgeId);

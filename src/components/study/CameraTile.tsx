@@ -20,6 +20,7 @@ interface CameraTileProps {
   focusScore?: number;
   focusSeconds?: number;
   focusTimeline?: ChartPoint[];
+  level?: number;
 }
 
 export function CameraTile({
@@ -32,7 +33,8 @@ export function CameraTile({
   distractionCount = 0,
   focusScore = 100,
   focusSeconds = 0,
-  focusTimeline = []
+  focusTimeline = [],
+  level = 1
 }: CameraTileProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [showDistractionAlert, setShowDistractionAlert] = useState(false);

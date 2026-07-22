@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
 import { supabase, Task, Room } from '@/lib/supabaseClient';
+import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -11,7 +12,7 @@ import {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, refreshWallet } = useAuth();
+  const { user, profile, wallet, refreshWallet } = useAuth();
 
   // Metrics states
   const [focusSecondsToday, setFocusSecondsToday] = useState(0);
@@ -390,8 +391,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column (4 cols): Quick stats cards */}
+        {/* Right Column (4 cols): Quick stats cards & Level Badges */}
         <div className="lg:col-span-4 grid grid-rows-3 gap-4">
+          <div className="card-base p-4 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-fixed">
+                <span className="material-symbols-outlined">verified</span>
+              </div>
+              <div>
+                <p className="font-label-mono text-[10px] text-on-surface-variant uppercase font-bold">Verified Arena Badge</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="font-display text-sm font-bold text-on-surface">Level {profile?.level || 1}</span>
+                  <VerifiedBadge level={profile?.level || 1} size="md" showLevelNumber={false} />
+                </div>
+              </div>
+            </div>
+            <span className="font-label-mono text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full font-bold">
+              {profile?.points || 0} XP
+            </span>
+          </div>
+
           <div className="card-base p-4 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-fixed">
@@ -415,18 +434,6 @@ export default function Dashboard() {
               <div>
                 <p className="font-label-mono text-[10px] text-on-surface-variant uppercase font-bold">Sessions Today</p>
                 <p className="font-display text-lg font-black text-on-surface">{totalSessionsToday} Runs</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card-base p-4 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-fixed">
-                <span className="material-symbols-outlined">trending_up</span>
-              </div>
-              <div>
-                <p className="font-label-mono text-[10px] text-on-surface-variant uppercase font-bold">Average Focus</p>
-                <p className="font-display text-lg font-black text-on-surface">{avgFocusPercent}%</p>
               </div>
             </div>
           </div>

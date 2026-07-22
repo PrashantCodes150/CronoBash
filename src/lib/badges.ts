@@ -3,33 +3,32 @@ export interface Badge {
   name: string;
   description: string;
   shape: 'hexagon' | 'octagon' | 'shield' | 'diamond' | 'star' | 'circle' | 'crown' | 'cross' | 'banner' | 'flame';
-  color: string; // Tailwind/custom CSS gradient classes
-  icon: string;  // Material symbols icon name
+  color: string; // Tailwind gradient classes
+  icon: string;  // Material symbol icon name
   reqLevel: number;
 }
 
-// Generate the 100 badges programmatically to guarantee unique shapes, names, and visual cues.
-const badgeNames = [
-  "Dawn Initiate", "Focus Spark", "Cognitive Seed", "Tempo Runner", "Aether Cadet",
-  "Silicon Scout", "Zenith Novice", "Calm Wanderer", "Solitary Spark", "Epoch Starter",
-  "Circuit Walker", "Mind Apprentice", "Quantum Squire", "Vanguard Scout", "Starlight Seeker",
-  "Apex Initiate", "Silent Weaver", "Pristine Focal", "Digital Nomad", "Chrono Tracker",
-  "Steel Sentry", "Cyber Vanguard", "Echo Warden", "Lobby Raider", "Glitch Specialist",
-  "Tether Weaver", "Neon Striker", "Hyper Focus", "Synapse Architect", "Vortex Rider",
-  "Spectral Guard", "Cognitive Blade", "Void Specter", "Quantum Keeper", "Matrix Sentinel",
-  "Cipher Hacker", "Aurora Knight", "Solar Champion", "Luna Protector", "Cosmic Seeker",
-  "Nebula Warden", "Eclipse Vanguard", "Chrono Guardian", "Infinity Squire", "Vector Ranger",
-  "Pulse Gladiator", "Dynamo Breaker", "Apex Predator", "Prism Scholar", "Obsidian Shield",
-  "Emerald Sentry", "Ruby Vanguard", "Sapphire Scholar", "Amber Knight", "Titan Warden",
-  "Astral Monk", "Focal Zealot", "Deep Focus Master", "Horizon Walker", "Rune Weaver",
-  "Cyber Knight", "Plasma Raider", "Solitary Titan", "Entropy Restorer", "Anomaly Hunter",
-  "Gravity Bender", "Neutron Star", "Supernova Focal", "Void Walker", "Alpha Sentinel",
-  "Omega Guardian", "Zenith Master", "Ether Catalyst", "Matrix Overlord", "Synapse Emperor",
-  "Apex Overlord", "Quantum Sage", "Chrono Chronologist", "Cosmic Deity", "Infinity Overlord",
-  "Monolith Sentinel", "Dark Matter Master", "Solar Flare Champion", "Void Harbinger", "Glitch Monarch",
-  "Vector Warlord", "Aether Archon", "Focal Leviathan", "Lobby Warlord", "Starlight Empress",
-  "Celestial Sovereign", "Abyss Emperor", "Epoch Overlord", "Neural Overlord", "Prime Catalyst",
-  "Elysian Warden", "Chronos Monarch", "Vortex Sovereign", "Zenith Vanguard", "CogniSweep Legend"
+const badgeNames: string[] = [
+  "Noob Starter 🔰", "Focus Recruit ⚡", "Cognitive Spark 💡", "Tempo Scout 🏃", "Aether Cadet 🌌",
+  "Silicon Initiate 💻", "Zenith Novice 🎯", "Calm Wanderer 🧘", "Solitary Spark 🌟", "Epoch Runner ⏱️",
+  "Circuit Walker 🔌", "Mind Apprentice 🧠", "Quantum Squire ⚛️", "Vanguard Scout 🚩", "Starlight Seeker ✨",
+  "Apex Initiate 🔼", "Silent Weaver 🕸️", "Pristine Focal 💎", "Digital Nomad 🛰️", "Chrono Tracker ⏳",
+  "Steel Sentry 🛡️", "Cyber Vanguard 🦾", "Echo Warden 🔊", "Lobby Raider ⚔️", "Glitch Specialist 👾",
+  "Tether Weaver 🪢", "Neon Striker ⚡", "Hyper Focus 🚀", "Synapse Architect 🧬", "Vortex Rider 🌀",
+  "Spectral Guard 👻", "Cognitive Blade 🗡️", "Void Specter 🌌", "Quantum Keeper 🪐", "Matrix Sentinel 🤖",
+  "Cipher Hacker 🔓", "Aurora Knight 🌅", "Solar Champion ☀️", "Luna Protector 🌙", "Cosmic Seeker 💫",
+  "Nebula Warden 🌠", "Eclipse Vanguard 🌘", "Chrono Guardian 🕰️", "Infinity Squire ♾️", "Vector Ranger 🏹",
+  "Pulse Gladiator 🛡️", "Dynamo Breaker ⚡", "Apex Predator 🦅", "Prism Scholar 🔮", "Obsidian Shield 🛡️",
+  "Emerald Sentry 💚", "Ruby Vanguard 🔴", "Sapphire Scholar 🔷", "Amber Knight 📙", "Titan Warden 🗿",
+  "Astral Monk 🧘‍♂️", "Focal Zealot 🔥", "Deep Focus Master 🌊", "Horizon Walker 🌅", "Rune Weaver 📜",
+  "Cyber Knight ⚔️", "Plasma Raider 💥", "Solitary Titan 🔱", "Entropy Restorer ⚖️", "Anomaly Hunter 🛸",
+  "Gravity Bender 🌌", "Neutron Star 🌟", "Supernova Focal 💥", "Void Walker 👤", "Alpha Sentinel 🐺",
+  "Omega Guardian ⚜️", "Zenith Master 👑", "Ether Catalyst 🧪", "Matrix Overlord 🖥️", "Synapse Emperor 👑",
+  "Apex Overlord 🎖️", "Quantum Sage 🧙‍♂️", "Chrono Master ⏱️", "Cosmic Deity 🌌", "Infinity Overlord ♾️",
+  "Monolith Sentinel 🗽", "Dark Matter Master 🌑", "Solar Flare Champion ☀️", "Void Harbinger 🔮", "Glitch Monarch 👑",
+  "Vector Warlord ⚔️", "Aether Archon 🏛️", "Focal Leviathan 🐉", "Lobby Warlord 🛡️", "Starlight Empress 👸",
+  "Celestial Sovereign 🌌", "Abyss Emperor 👑", "Epoch Overlord ⌛", "Neural Overlord 🧠", "Prime Catalyst ⚡",
+  "Elysian Warden 🏰", "Chronos Monarch 👑", "Vortex Sovereign 🌀", "Zenith Vanguard 🎖️", "Supreme Arena Overlord 👑"
 ];
 
 const shapes: Badge['shape'][] = [
@@ -51,21 +50,21 @@ const gradients = [
 ];
 
 const icons = [
-  "local_fire_department", "bolt", "psychology", "insights", "military_tech",
+  "verified", "bolt", "psychology", "insights", "military_tech",
   "workspace_premium", "emoji_events", "shield", "hourglass_empty", "camera_enhance",
   "speed", "verified", "star", "vpn_key", "school",
   "extension", "language", "spa", "wb_sunny", "nights_stay"
 ];
 
 export const BADGES: Badge[] = Array.from({ length: 100 }).map((_, i) => {
-  const levelRequirement = i < 20 ? 30 + i : 100 + (i - 20);
+  const reqLevel = i + 1; // Exactly 100 badges corresponding to Levels 1 through 100
   return {
-    id: `badge_${i + 1}`,
-    name: badgeNames[i] || `Focus Badge ${i + 1}`,
-    description: `Unlocked at Level ${levelRequirement} by completing high-focus study sprints in CogniSweep Arenas.`,
+    id: `badge_${reqLevel}`,
+    name: badgeNames[i] || `Level ${reqLevel} Badge`,
+    description: `Unlocked at Level ${reqLevel} by completing focus study sprints in CogniSweep Arenas.`,
     shape: shapes[i % shapes.length],
     color: gradients[i % gradients.length],
     icon: icons[i % icons.length],
-    reqLevel: levelRequirement
+    reqLevel
   };
 });

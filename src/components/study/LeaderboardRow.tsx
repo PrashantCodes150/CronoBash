@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Award, ShieldCheck } from 'lucide-react';
+import { Award } from 'lucide-react';
+import { VerifiedBadge } from './VerifiedBadge';
 
 interface LeaderboardRowProps {
   rank: number;
@@ -12,13 +13,14 @@ interface LeaderboardRowProps {
     total_focus_hours: number;
     avg_focus_percent: number;
     win_rate: number;
-    verified_badge: boolean;
+    verified_badge?: boolean;
+    level?: number;
+    points?: number;
   };
   isCurrentUser?: boolean;
 }
 
 export function LeaderboardRow({ rank, user, isCurrentUser = false }: LeaderboardRowProps) {
-  // Determine text colors based on average performance ratio
   const avgFocusColor = user.avg_focus_percent >= 80 
     ? 'text-emerald-400' 
     : user.avg_focus_percent < 50 
@@ -51,7 +53,7 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
         )}
       </td>
 
-      {/* Profile Avatar & Name */}
+      {/* Profile Avatar, Name & Twitter/Insta Verified Checkmark */}
       <td className="p-3">
         <div className="flex items-center gap-3">
           <img 
@@ -60,12 +62,8 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
             className="w-8 h-8 rounded-full border border-neutral-800 object-cover"
           />
           <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-white text-xs truncate max-w-[150px]">{user.name}</span>
-            {user.verified_badge && (
-              <span title="Verified Focus Member">
-                <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
-              </span>
-            )}
+            <span className="font-semibold text-white text-xs truncate max-w-[140px]">{user.name}</span>
+            <VerifiedBadge level={user.level || 1} size="sm" showLevelNumber={true} />
             {isCurrentUser && (
               <span className="bg-orange-500/20 text-orange-400 text-[9px] font-mono font-black uppercase px-1 rounded border border-orange-500/30">You</span>
             )}
@@ -75,6 +73,9 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
 
       {/* Focus Hours */}
       <td className="p-3 font-mono text-neutral-200">{user.total_focus_hours.toFixed(1)}h</td>
+
+      {/* Points / XP */}
+      <td className="p-3 font-mono text-emerald-400 font-bold">{user.points || 0} XP</td>
 
       {/* Average Focus % */}
       <td className={`p-3 font-mono font-bold ${avgFocusColor}`}>{user.avg_focus_percent}%</td>
