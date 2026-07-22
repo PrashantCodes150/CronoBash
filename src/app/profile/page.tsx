@@ -334,7 +334,7 @@ export default function ProfilePage() {
                     <h3 className="font-display text-xl font-bold text-on-surface uppercase tracking-tight">
                       {profile?.name || 'Arena Fighter'}
                     </h3>
-                    <VerifiedBadge level={profile?.level || 1} size="md" showLevelNumber={true} />
+                    <VerifiedBadge level={profile?.level || 1} followersCount={profile?.followers_count || 0} isVerified={profile?.is_verified} size="md" showLevelNumber={true} />
                     {/* Render unlocked badges inline next to name */}
                     {profile?.badges && profile.badges.map(badgeId => {
                       const badge = BADGES.find(b => b.id === badgeId);

@@ -4,6 +4,8 @@ import React from 'react';
 
 interface VerifiedBadgeProps {
   level?: number;
+  followersCount?: number;
+  isVerified?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showLevelNumber?: boolean;
   className?: string;
@@ -11,6 +13,8 @@ interface VerifiedBadgeProps {
 
 export function VerifiedBadge({
   level = 1,
+  followersCount = 0,
+  isVerified = false,
   size = 'sm',
   showLevelNumber = true,
   className = ''
@@ -27,31 +31,28 @@ export function VerifiedBadge({
     lg: 'w-3.5 h-3.5'
   };
 
-  // Color scheme based on level brackets
-  let badgeGradient = 'from-sky-500 to-blue-600 shadow-blue-500/50'; // Default Twitter / Insta blue
-  let glowColor = 'rgba(59, 130, 246, 0.6)';
+  // Explicit rule: The Blue Verified Checkmark is ONLY awarded to users with at least 1,000,000 (1 Million) followers!
+  const hasOneMillionFollowers = (followersCount && followersCount >= 1000000) || isVerified === true;
 
-  if (level >= 80) {
-    badgeGradient = 'from-amber-400 to-yellow-600 shadow-amber-500/50'; // Gold Overlord
-    glowColor = 'rgba(245, 158, 11, 0.7)';
-  } else if (level >= 50) {
-    badgeGradient = 'from-purple-500 to-pink-600 shadow-purple-500/50'; // Cyber Master
-    glowColor = 'rgba(168, 85, 247, 0.7)';
-  } else if (level >= 20) {
-    badgeGradient = 'from-emerald-400 to-teal-600 shadow-emerald-500/50'; // Emerald Elite
-    glowColor = 'rgba(16, 185, 129, 0.7)';
+  if (!hasOneMillionFollowers) {
+    if (!showLevelNumber) return null;
+    return (
+      <span className={`font-mono font-bold text-neutral-400 text-[10px] ${className}`}>
+        Lv.{level}
+      </span>
+    );
   }
 
   return (
     <div
       className={`inline-flex items-center gap-1 font-mono align-middle ${className}`}
-      title={`Level ${level} Verified Arena Fighter`}
+      title={`Official Blue Verified Celebrity (1M+ Followers) - Level ${level}`}
     >
       <div 
-        className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-tr ${badgeGradient} text-white font-bold shadow-md shrink-0 ${sizeClasses[size]}`}
-        style={{ boxShadow: `0 0 8px ${glowColor}` }}
+        className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white font-bold shadow-md shrink-0 ${sizeClasses[size]}`}
+        style={{ boxShadow: '0 0 8px rgba(59, 130, 246, 0.7)' }}
       >
-        {/* Checkmark SVG */}
+        {/* Twitter / Instagram Blue Checkmark SVG */}
         <svg
           className={`${iconSizes[size]} fill-current stroke-current stroke-2`}
           viewBox="0 0 24 24"
@@ -61,7 +62,7 @@ export function VerifiedBadge({
       </div>
 
       {showLevelNumber && (
-        <span className="text-[10px] font-bold text-neutral-400 font-mono tracking-tighter">
+        <span className="text-[10px] font-bold text-sky-400 font-mono tracking-tighter">
           Lv.{level}
         </span>
       )}

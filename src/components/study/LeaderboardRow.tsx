@@ -63,7 +63,7 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
           />
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-white text-xs truncate max-w-[140px]">{user.name}</span>
-            <VerifiedBadge level={user.level || 1} size="sm" showLevelNumber={true} />
+            <VerifiedBadge level={user.level || 1} followersCount={user.followers_count || 0} isVerified={user.verified_badge} size="sm" showLevelNumber={true} />
             {isCurrentUser && (
               <span className="bg-orange-500/20 text-orange-400 text-[9px] font-mono font-black uppercase px-1 rounded border border-orange-500/30">You</span>
             )}

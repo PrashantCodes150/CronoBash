@@ -449,7 +449,7 @@ export default function Header() {
                   <div className="px-3 py-2 border-b border-outline-variant/30 text-xs font-mono">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-on-surface truncate">{profile?.name || 'Arena Fighter'}</span>
-                      <VerifiedBadge level={profile?.level || 1} size="sm" showLevelNumber={true} />
+                      <VerifiedBadge level={profile?.level || 1} followersCount={profile?.followers_count || 0} isVerified={profile?.is_verified} size="sm" showLevelNumber={true} />
                     </div>
                     <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{profile?.email}</p>
                   </div>

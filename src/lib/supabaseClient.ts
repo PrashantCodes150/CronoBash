@@ -24,6 +24,8 @@ export interface UserProfile {
   level?: number;
   badges?: string[];
   has_seen_onboarding?: boolean;
+  followers_count?: number;
+  is_verified?: boolean;
 }
 
 export interface Room {
