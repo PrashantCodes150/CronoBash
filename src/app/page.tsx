@@ -6,6 +6,7 @@ import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial, Float, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+import Footer from '@/components/Footer';
 
 // ─── 3D: Animated distorted glowing orb ──────────────────────────────────────
 function GlowOrb({ position, color, speed, distort }: {
@@ -530,22 +531,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────── */}
-      <footer className="w-full py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest border-t border-outline-variant text-xs text-on-surface-variant font-mono">
-        <div className="flex items-center mb-4 md:mb-0">
-          <div className="font-display text-lg font-medium tracking-wide flex items-center text-primary-fixed select-none">
-            <span className="font-dancing text-xl font-bold italic pr-0.5 select-none">C</span>
-            <span className="text-on-surface">ogni</span>
-            <span className="font-dancing text-xl font-bold italic pl-0.5 pr-0.5 select-none">S</span>
-            <span className="text-on-surface">weep</span>
-          </div>
-        </div>
-        <div className="flex gap-6 mb-4 md:mb-0">
-          <a href="#" className="hover:text-primary-fixed transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-primary-fixed transition-colors">Terms of Service</a>
-          <a href="#" className="hover:text-primary-fixed transition-colors">Discord</a>
-        </div>
-        <div>© 2026 CogniSweep. All rights reserved.</div>
-      </footer>
+      <Footer />
     </div>
   );
 }

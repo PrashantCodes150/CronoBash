@@ -42,8 +42,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {children}
         </main>
 
-        {/* Global Footer */}
-        <Footer />
+        {/* Global Footer (Only on Home & Legal Pages) */}
+        {['/', '/terms', '/privacy', '/refund'].includes(pathname) && <Footer />}
       </div>
     </div>
   );
