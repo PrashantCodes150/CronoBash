@@ -25,17 +25,18 @@ export default function LoginPage() {
 
       if (error) {
         setErrorMsg(error.message);
+        setLoading(false);
       } else {
-        router.push('/dashboard');
+        // Immediate 1-click route transition to dashboard
+        router.replace('/dashboard');
       }
     } catch (e: any) {
       const msg = e?.message || String(e);
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        setErrorMsg('Cannot reach the server. Check your internet connection and verify the Supabase project is active.');
+        setErrorMsg('Cannot reach the server. Check your internet connection.');
       } else {
         setErrorMsg('An unexpected error occurred: ' + msg);
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -121,7 +122,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-primary-container text-on-primary font-label-mono text-sm font-bold py-3 rounded-lg hover:bg-primary-fixed transition-colors mt-6 shadow-[0_0_15px_rgba(0,255,163,0.25)] hover:scale-[1.01] cursor-pointer"
           >
-            {loading ? 'Validating Link...' : 'Enter Arena'}
+            {loading ? 'Entering Arena...' : 'Enter Arena'}
           </button>
         </form>
 
