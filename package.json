@@ -1,11 +1,16 @@
 {
   "name": "cognisweep",
   "version": "1.0.0",
-
   "description": "CogniSweep Study Arena — Study with friends, compete globally, and earn rewards",
-  "keywords": ["study", "productivity", "focus", "medialive", "face-tracking", "gamification"],
+  "keywords": [
+    "study",
+    "productivity",
+    "focus",
+    "medialive",
+    "face-tracking",
+    "gamification"
+  ],
   "private": true,
-
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -24,12 +29,15 @@
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-hot-toast": "^2.6.0",
     "recharts": "^3.9.2",
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

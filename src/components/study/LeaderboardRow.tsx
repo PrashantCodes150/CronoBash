@@ -62,7 +62,9 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-white text-xs truncate max-w-[150px]">{user.name}</span>
             {user.verified_badge && (
-              <ShieldCheck className="w-3.5 h-3.5 text-orange-500" title="Verified Focus Member" />
+              <span title="Verified Focus Member">
+                <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
+              </span>
             )}
             {isCurrentUser && (
               <span className="bg-orange-500/20 text-orange-400 text-[9px] font-mono font-black uppercase px-1 rounded border border-orange-500/30">You</span>

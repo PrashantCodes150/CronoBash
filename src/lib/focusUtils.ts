@@ -59,7 +59,7 @@ export function computeStandings(
 
   // Compute standings and ranks
   let currentRank = 1;
-  const standings = evaluated.map((player, index) => {
+  const standings: PlayerStanding[] = evaluated.map((player, index) => {
     if (index > 0) {
       const prev = evaluated[index - 1];
       if (player.focusScore < prev.focusScore) {

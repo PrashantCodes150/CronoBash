@@ -119,8 +119,8 @@ export default function AICoachDashboard() {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklyData}>
-                <XAxis dataKey="day" stroke="#525252" fontSize={10} fontClassName="font-mono" />
-                <YAxis stroke="#525252" fontSize={10} fontClassName="font-mono" />
+                <XAxis dataKey="day" stroke="#525252" fontSize={10} className="font-mono" />
+                <YAxis stroke="#525252" fontSize={10} className="font-mono" />
                 <Tooltip contentStyle={{ background: '#171717', border: '1px solid #262626', color: '#fff', fontSize: 11 }} />
                 <Line type="monotone" dataKey="hours" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316' }} />
               </LineChart>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.11.0"
 
@@ -6,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -29,7 +30,7 @@ serve(async (req) => {
 
     if (userErr) throw userErr
 
-    const referrer = (users || []).find(u => u.id.substring(0, 8).toUpperCase() === referrerCode.toUpperCase())
+    const referrer = (users || []).find((u: any) => u.id.substring(0, 8).toUpperCase() === referrerCode.toUpperCase())
     if (!referrer) {
       return new Response(
         JSON.stringify({ error: "Invalid referral code." }),
