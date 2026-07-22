@@ -19,7 +19,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import {
   Volume2, VolumeX, Eye, ShieldAlert,
-  Flame, Sliders, Moon, Leaf, Heart, Droplet, HelpCircle
+  Flame, Sliders, Moon, Leaf, Heart, Droplet, HelpCircle, RotateCcw
 } from 'lucide-react';
 
 interface ChartPoint {
@@ -38,6 +38,8 @@ export default function StudyRoomPage() {
   // Query configuration params
   const isSpectator = searchParams.get('spectator') === 'true';
   const initialTheme = searchParams.get('theme') || 'dark';
+  const initialDuration = Number(searchParams.get('durationMinutes')) || 25;
+  const targetSeconds = initialDuration * 60;
 
   // Room states
   const [room, setRoom] = useState<any>(null);
@@ -67,11 +69,12 @@ export default function StudyRoomPage() {
   const [activeFocusSeconds, setActiveFocusSeconds] = useState(0);
   const [focusScore, setFocusScore] = useState(100);
 
-  // Time Limit Countdown
-  const [secondsRemaining, setSecondsRemaining] = useState(1500); // 25 min default
+  // Time Limit Countdown & Forfeit
+  const [secondsRemaining, setSecondsRemaining] = useState(targetSeconds);
   const [sessionConcluded, setSessionConcluded] = useState(false);
+  const [forfeitedUserId, setForfeitedUserId] = useState<string | null>(null);
 
-  const secondsRemainingRef = useRef(1500);
+  const secondsRemainingRef = useRef(targetSeconds);
   useEffect(() => {
     secondsRemainingRef.current = secondsRemaining;
   }, [secondsRemaining]);
@@ -84,7 +87,7 @@ export default function StudyRoomPage() {
   const saveStudySession = async () => {
     if (!user || isSpectator) return;
     try {
-      const elapsed = 1500 - secondsRemainingRef.current;
+      const elapsed = targetSeconds - secondsRemainingRef.current;
       const { error } = await supabase
         .from('study_sessions')
         .insert({
@@ -180,13 +183,23 @@ export default function StudyRoomPage() {
     detectionInterval: 1000
   });
 
-  // Supabase Realtime Synchronization Hook
+  const handleRemoteForfeit = (forfeitingId: string) => {
+    setForfeitedUserId(forfeitingId);
+    setSessionConcluded(true);
+    saveStudySession();
+    if (forfeitingId !== user?.id) {
+      toast.success("Opponent forfeited the match! You WIN! 🏆", { icon: '🏆', duration: 6000 });
+    }
+  };
+
+  // Real-time synchronization hook
   const {
     members,
     sendEmote,
     broadcastFocusState,
     broadcastMuteState,
-    endSessionBroadcast
+    endSessionBroadcast,
+    forfeitMatchBroadcast
   } = useRoomEvents({
     roomId,
     userId: user?.id || '',
@@ -196,10 +209,18 @@ export default function StudyRoomPage() {
       setSessionConcluded(true);
       saveStudySession();
     },
-    onOpponentDistracted: (oppName, strikes) => {
-      // Event handler if needed
-    }
+    onMatchForfeited: handleRemoteForfeit,
+    onOpponentDistracted: (oppName, strikes) => {}
   });
+
+  const handleForfeitMatch = () => {
+    if (!user || sessionConcluded) return;
+    setForfeitedUserId(user.id);
+    forfeitMatchBroadcast(user.id);
+    setSessionConcluded(true);
+    saveStudySession();
+    toast.error("You forfeited the match! Marked as LOSER 💀", { icon: '💀', duration: 6000 });
+  };
 
   // WebRTC Camera Video Streaming Hook
   const opponentIds = members.filter(m => m.user_id !== user?.id).map(m => m.user_id);
@@ -228,7 +249,6 @@ export default function StudyRoomPage() {
     const verifyAccessAndLoad = async () => {
       setLoadingRoom(true);
       try {
-        // Fetch room
         const { data: roomData, error: roomError } = await supabase
           .from('rooms')
           .select('*')
@@ -242,25 +262,19 @@ export default function StudyRoomPage() {
 
         setRoom(roomData);
 
-        // Check if money room
         if (roomData.type === 'money') {
-          // Check user wallet
           const { data: walletData, error: walletError } = await supabase
             .from('wallets')
             .select('balance')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           if (walletError || !walletData || walletData.balance < roomData.entry_fee) {
-            setAccessDenied(`Insufficient wallet balance. Entry fee is ₹${roomData.entry_fee}.`);
+            setAccessDenied(`Insufficient token balance to enter this money match. Requires ${roomData.entry_fee} TKN.`);
             return;
           }
-
-          // In production, we invoke edge function to lock escrow. 
-          // Here, we simulate by checking balance.
         }
 
-        // Check onboarding flag
         const onboardingSeen = localStorage.getItem(`onboarding_seen_${user.id}`);
         if (!onboardingSeen && !profile?.has_seen_onboarding) {
           setShowOnboarding(true);
@@ -290,7 +304,6 @@ export default function StudyRoomPage() {
         });
         setLocalStream(stream);
         setCameraActive(true);
-        // Bind video tag for focus detection
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -319,70 +332,48 @@ export default function StudyRoomPage() {
     const currentFocus = focusDetector.isFocused;
     setIsSelfFocused(currentFocus);
 
-    if (!currentFocus && focusDetector.faceDetected) {
-      // Distracted: Start 3-second strike debouncer
-      if (!debounceTimerRef.current) {
-        debounceTimerRef.current = setTimeout(() => {
-          setDistractionCount(prev => {
-            const next = prev + 1;
-            // Play alarm beep
-            playAlertSound();
-            toast.error(`Distraction detected! Strike ${next}/5`, { icon: '⚡' });
-            
-            if (next >= 5) {
-              toast.error("Eliminated from room due to 5 strikes!");
-              endSessionBroadcast();
-              setSessionConcluded(true);
-              saveStudySession();
-            }
-            return next;
-          });
-          debounceTimerRef.current = null;
-        }, 3000);
+    if (currentFocus) {
+      streakRef.current += 1;
+      if (streakRef.current % 5 === 0) {
+        setActiveFocusSeconds(prev => prev + 5);
       }
+      const scoreGain = Math.min(100, focusScore + 0.5);
+      setFocusScore(scoreGain);
     } else {
-      // Focused again: clear debouncer
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
+      streakRef.current = 0;
+      const scoreDrop = Math.max(0, focusScore - 1.5);
+      setFocusScore(scoreDrop);
+
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        setDistractionCount(prev => {
+          const next = prev + 1;
+          playAlertSound();
+          toast.error(`Focus lost! Strike #${next}/5`, { icon: '⚡' });
+          return next;
+        });
+      }, 2000);
     }
+
+    broadcastFocusState(currentFocus, distractionCount);
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setFocusTimeline(prev => {
+      const updated = [...prev, { time: nowStr, level: currentFocus ? 1 : 0 }];
+      return updated.slice(-30);
+    });
   }, [focusDetector.isFocused, isSpectator, sessionConcluded]);
 
-  // Real-time synchronization broadcaster loop
-  useEffect(() => {
-    if (isSpectator || sessionConcluded) return;
-    const interval = setInterval(() => {
-      broadcastFocusState(isSelfFocused, distractionCount);
-
-      // Increment active focus seconds
-      if (isSelfFocused) {
-        setActiveFocusSeconds(prev => prev + 1);
-      }
-
-      // Append chart point
-      setFocusTimeline(prev => {
-        const nextScore = isSelfFocused ? Math.min(100, focusScore + 1) : Math.max(0, focusScore - 5);
-        setFocusScore(nextScore);
-        const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        return [...prev.slice(-30), { time: timeStr, level: nextScore }];
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isSelfFocused, distractionCount, focusScore, isSpectator, sessionConcluded]);
-
-  // Session timer countdown tick
+  // Countdown timer logic
   useEffect(() => {
     if (sessionConcluded) return;
+
     const timer = setInterval(() => {
       setSecondsRemaining(prev => {
         if (prev <= 1) {
           clearInterval(timer);
           setSessionConcluded(true);
           saveStudySession();
-          // Broadcast end session to everyone in case you are owner
           if (room?.owner_id === user?.id) {
             endSessionBroadcast();
           }
@@ -395,12 +386,11 @@ export default function StudyRoomPage() {
     return () => clearInterval(timer);
   }, [sessionConcluded, room, user]);
 
-  // Synced synth nodes generator (Web Audio API)
+  // Synced synth nodes generator
   const toggleAmbientSound = () => {
     if (typeof window === 'undefined') return;
 
     if (ambientAudio) {
-      // Stop all oscillators
       oscNodesRef.current.forEach(osc => {
         try { osc.stop(); } catch (e) {}
       });
@@ -419,7 +409,6 @@ export default function StudyRoomPage() {
       gain.connect(ctx.destination);
       gainNodeRef.current = gain;
 
-      // Theme frequencies configuration
       const freqs = activeTheme === 'pink' ? [220, 275, 330] : activeTheme === 'green' ? [180, 240, 320] : [110, 165, 220];
       
       freqs.forEach(freq => {
@@ -427,11 +416,10 @@ export default function StudyRoomPage() {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
         
-        // Add low frequency oscillator (LFO) for wave modulation
         const lfo = ctx.createOscillator();
         const lfoGain = ctx.createGain();
         lfo.type = 'sine';
-        lfo.frequency.setValueAtTime(0.2, ctx.currentTime); // very slow mod
+        lfo.frequency.setValueAtTime(0.2, ctx.currentTime);
         lfoGain.gain.setValueAtTime(1.5, ctx.currentTime);
         
         lfo.connect(lfoGain);
@@ -477,11 +465,9 @@ export default function StudyRoomPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Keyboard Simulation key handler for quick testing
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (isSpectator || sessionConcluded) return;
     if (e.key.toLowerCase() === 'h' || e.key.toLowerCase() === 'd') {
-      // Simulate distraction strike instantly
       setDistractionCount(prev => {
         const next = prev + 1;
         playAlertSound();
@@ -520,28 +506,43 @@ export default function StudyRoomPage() {
 
   // Standings data assembler for CelebrationScreen
   const getSortedStandings = () => {
-    const playersList = members.map(m => ({
-      userId: m.user_id,
-      userName: m.users?.name || 'Studier',
-      avatarUrl: m.users?.avatar_url || undefined,
-      focusSeconds: m.user_id === user?.id ? activeFocusSeconds : (m.total_focus_seconds_today || 600),
-      distractionCount: m.user_id === user?.id ? distractionCount : (m.distractionCount || 0)
-    }));
+    const playersList = members.map(m => {
+      const isForfeit = forfeitedUserId === m.user_id;
+      return {
+        userId: m.user_id,
+        userName: m.users?.name || 'Studier',
+        avatarUrl: m.users?.avatar_url || undefined,
+        focusSeconds: m.user_id === user?.id ? activeFocusSeconds : (m.total_focus_seconds_today || 600),
+        distractionCount: m.user_id === user?.id ? distractionCount : (m.distractionCount || 0),
+        isForfeit
+      };
+    });
 
-    return computeStandings(playersList, room.type, room.entry_fee, room.platform_fee_percent);
+    let calculated = computeStandings(playersList, room?.type || 'public', room?.entry_fee || 0, room?.platform_fee_percent || 0);
+
+    if (forfeitedUserId) {
+      calculated = calculated.map(p => {
+        if (p.userId === forfeitedUserId) {
+          return { ...p, rank: 2, isForfeit: true };
+        }
+        return { ...p, rank: 1 };
+      });
+    }
+
+    return calculated;
   };
 
-  // Map theme strings to background CSS
+  // Map theme strings to dynamic background CSS
   const getThemeBackground = () => {
     switch (activeTheme) {
       case 'pink':
-        return 'bg-gradient-to-tr from-neutral-950 via-purple-950/20 to-neutral-950 border-purple-900/20';
+        return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-950 via-purple-950/40 to-neutral-950 border-purple-900/30';
       case 'green':
-        return 'bg-gradient-to-tr from-neutral-950 via-emerald-950/20 to-neutral-950 border-emerald-900/20';
+        return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950 via-green-950/40 to-neutral-950 border-emerald-900/30';
       case 'water':
-        return 'bg-gradient-to-tr from-neutral-950 via-cyan-950/20 to-neutral-950 border-cyan-900/20';
+        return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950 via-blue-950/40 to-neutral-950 border-blue-900/30';
       default:
-        return 'bg-neutral-950';
+        return 'bg-neutral-950 bg-grid-pattern';
     }
   };
 
@@ -576,7 +577,8 @@ export default function StudyRoomPage() {
           summary={generateSummary({ focusPercent: focusScore, distractionCount })}
           onRematch={() => {
             setDistractionCount(0);
-            setSecondsRemaining(1500);
+            setSecondsRemaining(targetSeconds);
+            setForfeitedUserId(null);
             setSessionConcluded(false);
           }}
           onLeave={() => {
@@ -604,7 +606,7 @@ export default function StudyRoomPage() {
           </div>
         </div>
 
-        {/* Ambient controls */}
+        {/* Ambient & Theme controls */}
         <div className="flex items-center gap-2">
           <button
             onClick={toggleAmbientSound}
@@ -636,6 +638,9 @@ export default function StudyRoomPage() {
               isFocused: m.isFocused,
               isMuted: m.isMuted,
               distractionCount: m.distractionCount,
+              focusScore: m.user_id === user.id ? focusScore : Math.max(40, 100 - (m.distractionCount || 0) * 12),
+              focusSeconds: m.user_id === user.id ? activeFocusSeconds : (m.total_focus_seconds_today || 300),
+              focusTimeline: m.user_id === user.id ? focusTimeline : [],
               isSpectator: m.isSpectator
             }));
             return (
@@ -647,23 +652,32 @@ export default function StudyRoomPage() {
             );
           })()}
 
-          {/* Quick emotes dock */}
-          <div className="p-4 bg-neutral-950/60 border-t border-neutral-900 flex justify-center items-center gap-3">
+          {/* Quick emotes dock & Forfeit control */}
+          <div className="p-4 bg-neutral-950/60 border-t border-neutral-900 flex flex-wrap justify-center items-center gap-3">
             {['👍', '🔥', '😴', '💡', '👏', '🎯'].map(emote => (
               <button
                 key={emote}
                 onClick={() => sendEmote(emote)}
-                className="text-xl hover:scale-125 transition-transform p-2 bg-neutral-900 hover:bg-neutral-850 rounded-lg border border-neutral-800/50"
+                className="text-xl hover:scale-125 transition-transform p-2 bg-neutral-900 hover:bg-neutral-850 rounded-lg border border-neutral-800/50 cursor-pointer"
               >
                 {emote}
               </button>
             ))}
-            <div className="h-6 w-px bg-neutral-800 mx-2" />
+            <div className="h-6 w-px bg-neutral-800 mx-2 hidden sm:block" />
             <button
               onClick={() => setIsSelfMuted(!isSelfMuted)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-colors ${isSelfMuted ? 'bg-red-950/40 border-red-900 text-red-400' : 'bg-neutral-900 border-neutral-800 text-neutral-400'}`}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${isSelfMuted ? 'bg-red-950/40 border-red-900 text-red-400' : 'bg-neutral-900 border-neutral-800 text-neutral-400'}`}
             >
               {isSelfMuted ? 'Muted' : 'Unmuted'}
+            </button>
+            
+            <button
+              onClick={handleForfeitMatch}
+              className="px-3 py-1.5 rounded-lg border text-xs font-mono transition-all bg-red-950/60 border-red-800 text-red-400 hover:bg-red-900/80 hover:text-white cursor-pointer uppercase font-bold flex items-center gap-1.5 shadow-lg"
+              title="Restarting or leaving forfeits the match immediately"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Restart Match (Forfeit)
             </button>
           </div>
         </div>
@@ -679,38 +693,38 @@ export default function StudyRoomPage() {
 
           {/* Theme selector */}
           <div className="space-y-3">
-            <h2 className="text-xs font-semibold text-neutral-400 font-mono tracking-wider">ARENA ENVIROMENT</h2>
+            <h2 className="text-xs font-semibold text-neutral-400 font-mono tracking-wider">ARENA ENVIRONMENT</h2>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setActiveTheme('dark')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono ${activeTheme === 'dark' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono transition-all cursor-pointer ${activeTheme === 'dark' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
               >
                 <Moon className="w-4 h-4" />
-                Dark Theme
+                Cyberpunk Dark
               </button>
               <button
                 onClick={() => setActiveTheme('green')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono ${activeTheme === 'green' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono transition-all cursor-pointer ${activeTheme === 'green' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
               >
                 <Leaf className="w-4 h-4" />
-                Green Forest
+                Hacker Green
               </button>
               <button
                 onClick={() => setActiveTheme('pink')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono ${activeTheme === 'pink' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono transition-all cursor-pointer ${activeTheme === 'pink' ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
               >
                 <Heart className="w-4 h-4" />
-                Pink Petals
+                Neon Pink
               </button>
               <button
                 onClick={() => setActiveTheme('water')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono ${activeTheme === 'water' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-mono transition-all cursor-pointer ${activeTheme === 'water' ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400' : 'bg-neutral-900/60 border-neutral-800 text-neutral-500 hover:border-neutral-700'}`}
               >
                 <Droplet className="w-4 h-4" />
                 Water Flow
               </button>
+            </div>
           </div>
-        </div>
 
           {/* AI Coach Settings Panel */}
           <AICoachSettings
@@ -731,7 +745,7 @@ export default function StudyRoomPage() {
               Focus Simulation Tips
             </span>
             <p>
-              Don't have multiple webcams? You can press <kbd className="bg-neutral-950 px-1 border border-neutral-800 rounded font-mono text-white text-[10px]">H</kbd> or <kbd className="bg-neutral-950 px-1 border border-neutral-800 rounded font-mono text-white text-[10px]">D</kbd> on your keyboard to instantly simulate a distraction strike!
+              Press <kbd className="bg-neutral-950 px-1 border border-neutral-800 rounded font-mono text-white text-[10px]">H</kbd> or <kbd className="bg-neutral-950 px-1 border border-neutral-800 rounded font-mono text-white text-[10px]">D</kbd> on your keyboard to instantly simulate a distraction strike!
             </p>
           </div>
         </div>

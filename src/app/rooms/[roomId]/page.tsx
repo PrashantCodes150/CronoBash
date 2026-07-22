@@ -41,9 +41,10 @@ export default function RoomDetail() {
   const [shareGraphs, setShareGraphs] = useState(true);
   const [shareStats, setShareStats] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState('dark');
+  const [selectedDuration, setSelectedDuration] = useState(25);
   const [settingsConfigured, setSettingsConfigured] = useState(false);
 
-  const updateOwnerPresenceSettings = async (sc: boolean, sg: boolean, ss: boolean, th: string, conf: boolean) => {
+  const updateOwnerPresenceSettings = async (sc: boolean, sg: boolean, ss: boolean, th: string, dur: number, conf: boolean) => {
     if (!matchChannelRef.current || !user || room?.owner_id !== user.id) return;
     try {
       await matchChannelRef.current.track({
@@ -54,6 +55,7 @@ export default function RoomDetail() {
         shareGraphs: sg,
         shareStats: ss,
         selectedTheme: th,
+        selectedDuration: dur,
         settingsConfigured: conf
       });
     } catch (e) {
@@ -133,6 +135,7 @@ export default function RoomDetail() {
               if (presenceObj.shareGraphs !== undefined) setShareGraphs(presenceObj.shareGraphs);
               if (presenceObj.shareStats !== undefined) setShareStats(presenceObj.shareStats);
               if (presenceObj.selectedTheme !== undefined) setSelectedTheme(presenceObj.selectedTheme);
+              if (presenceObj.selectedDuration !== undefined) setSelectedDuration(presenceObj.selectedDuration);
               if (presenceObj.settingsConfigured !== undefined) setSettingsConfigured(presenceObj.settingsConfigured);
             }
           }
@@ -140,7 +143,7 @@ export default function RoomDetail() {
         setReadyMembers(readies);
       })
       .on('broadcast', { event: 'countdown-start' }, ({ payload }) => {
-        const { targetTime, shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th } = payload;
+        const { targetTime, shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th, duration: dur } = payload;
         const targetMs = new Date(targetTime).getTime();
         setCountdownTime(targetMs);
         setCountdownActive(true);
@@ -148,14 +151,15 @@ export default function RoomDetail() {
         if (sg !== undefined) setShareGraphs(sg);
         if (ss !== undefined) setShareStats(ss);
         if (th !== undefined) setSelectedTheme(th);
+        if (dur !== undefined) setSelectedDuration(dur);
       })
       .on('broadcast', { event: 'countdown-cancel' }, () => {
         setCountdownTime(null);
         setCountdownActive(false);
       })
       .on('broadcast', { event: 'match-launch' }, ({ payload }) => {
-        const { shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th, playersCount: pc } = payload || {};
-        const url = `/study/${roomId}?shareCamera=${sc ?? shareCamera}&shareGraphs=${sg ?? shareGraphs}&shareStats=${ss ?? shareStats}&theme=${th ?? selectedTheme}&playersCount=${pc ?? members.length}`;
+        const { shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th, duration: dur, playersCount: pc } = payload || {};
+        const url = `/study/${roomId}?shareCamera=${sc ?? shareCamera}&shareGraphs=${sg ?? shareGraphs}&shareStats=${ss ?? shareStats}&theme=${th ?? selectedTheme}&durationMinutes=${dur ?? selectedDuration}&playersCount=${pc ?? members.length}`;
         router.push(url);
       })
       .on('broadcast', { event: 'request-countdown-state' }, () => {
@@ -169,7 +173,8 @@ export default function RoomDetail() {
               shareCamera,
               shareGraphs,
               shareStats,
-              theme: selectedTheme
+              theme: selectedTheme,
+              duration: selectedDuration
             }
           });
         }
@@ -220,11 +225,12 @@ export default function RoomDetail() {
               shareGraphs, 
               shareStats, 
               theme: selectedTheme, 
+              duration: selectedDuration,
               playersCount: members.length 
             }
           });
         }
-        router.push(`/study/${roomId}?shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}&playersCount=${members.length}`);
+        router.push(`/study/${roomId}?shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}&durationMinutes=${selectedDuration}&playersCount=${members.length}`);
       } else {
         setSecondsLeft(secs);
         playBeepSound();
@@ -920,7 +926,7 @@ export default function RoomDetail() {
                     onChange={(e) => {
                       setSelectedTheme(e.target.value);
                       if (room.owner_id === user?.id) {
-                        updateOwnerPresenceSettings(shareCamera, shareGraphs, shareStats, e.target.value, false);
+                        updateOwnerPresenceSettings(shareCamera, shareGraphs, shareStats, e.target.value, selectedDuration, false);
                         setSettingsConfigured(false); // Reset confirmation on edit
                       }
                     }}
@@ -930,6 +936,32 @@ export default function RoomDetail() {
                     <option value="pink">Neon Pink (Vaporwave)</option>
                     <option value="green">Hacker Green (Matrix)</option>
                     <option value="water">Deep Ocean Blue</option>
+                  </select>
+                </div>
+
+                {/* Session Duration Selector */}
+                <div className="space-y-2">
+                  <label className="block text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    Target Session Duration
+                  </label>
+                  <select
+                    disabled={room.owner_id !== user?.id || countdownActive}
+                    value={selectedDuration}
+                    onChange={(e) => {
+                      const dur = Number(e.target.value);
+                      setSelectedDuration(dur);
+                      if (room.owner_id === user?.id) {
+                        updateOwnerPresenceSettings(shareCamera, shareGraphs, shareStats, selectedTheme, dur, false);
+                        setSettingsConfigured(false);
+                      }
+                    }}
+                    className="w-full bg-surface-container-high border border-outline-variant rounded-lg px-2.5 py-2 font-mono text-[10px] text-on-surface focus:outline-none focus:border-primary-fixed cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+                  >
+                    <option value={5}>5 Minutes (Sprint)</option>
+                    <option value={15}>15 Minutes (Short)</option>
+                    <option value={25}>25 Minutes (Standard Pomodoro)</option>
+                    <option value={45}>45 Minutes (Extended)</option>
+                    <option value={60}>60 Minutes (Deep Focus)</option>
                   </select>
                 </div>
 
@@ -944,7 +976,7 @@ export default function RoomDetail() {
                       onChange={(e) => {
                         setShareCamera(e.target.checked);
                         if (room.owner_id === user?.id) {
-                          updateOwnerPresenceSettings(e.target.checked, shareGraphs, shareStats, selectedTheme, false);
+                          updateOwnerPresenceSettings(e.target.checked, shareGraphs, shareStats, selectedTheme, selectedDuration, false);
                           setSettingsConfigured(false);
                         }
                       }}
@@ -961,7 +993,7 @@ export default function RoomDetail() {
                       onChange={(e) => {
                         setShareGraphs(e.target.checked);
                         if (room.owner_id === user?.id) {
-                          updateOwnerPresenceSettings(shareCamera, e.target.checked, shareStats, selectedTheme, false);
+                          updateOwnerPresenceSettings(shareCamera, e.target.checked, shareStats, selectedTheme, selectedDuration, false);
                           setSettingsConfigured(false);
                         }
                       }}
@@ -978,7 +1010,7 @@ export default function RoomDetail() {
                       onChange={(e) => {
                         setShareStats(e.target.checked);
                         if (room.owner_id === user?.id) {
-                          updateOwnerPresenceSettings(shareCamera, shareGraphs, e.target.checked, selectedTheme, false);
+                          updateOwnerPresenceSettings(shareCamera, shareGraphs, e.target.checked, selectedTheme, selectedDuration, false);
                           setSettingsConfigured(false);
                         }
                       }}
@@ -993,7 +1025,7 @@ export default function RoomDetail() {
                     disabled={countdownActive}
                     onClick={() => {
                       setSettingsConfigured(true);
-                      updateOwnerPresenceSettings(shareCamera, shareGraphs, shareStats, selectedTheme, true);
+                      updateOwnerPresenceSettings(shareCamera, shareGraphs, shareStats, selectedTheme, selectedDuration, true);
                     }}
                     className={`w-full py-2.5 rounded-lg font-label-mono text-[9px] font-bold tracking-widest uppercase transition-all ${
                       settingsConfigured

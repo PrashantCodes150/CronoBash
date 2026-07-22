@@ -11,6 +11,7 @@ interface UseRoomEventsProps {
   userName: string;
   isSpectator?: boolean;
   onSessionEnded?: () => void;
+  onMatchForfeited?: (forfeitingUserId: string) => void;
   onOpponentDistracted?: (opponentId: string, distractionCount: number) => void;
 }
 
@@ -29,6 +30,7 @@ export function useRoomEvents({
   userName,
   isSpectator = false,
   onSessionEnded,
+  onMatchForfeited,
   onOpponentDistracted
 }: UseRoomEventsProps) {
   const [members, setMembers] = useState<SyncMember[]>([]);
@@ -80,7 +82,6 @@ export function useRoomEvents({
       payload: { isFocused, distractionCount, isFakeCam }
     }).then(({ error }) => {
       if (error && error.code !== 'PGRST116') {
-        // Silently capture or log, table may not be migrated yet
         console.debug("sync_logs write error: ", error.message);
       }
     });
@@ -182,11 +183,10 @@ export function useRoomEvents({
       .on('broadcast', { event: 'focus_state_event' }, ({ payload }) => {
         const { userId: senderId, isFocused, distractionCount, isFakeCam } = payload;
         
-        // 3-sec event debounce check
         const now = Date.now();
         const lastAlert = lastFocusAlertTime.current[senderId] || 0;
         if (!isFocused && now - lastAlert < 3000) {
-          return; // Ignore duplicate distraction pulses within 3s
+          return;
         }
         if (!isFocused) {
           lastFocusAlertTime.current[senderId] = now;
@@ -208,6 +208,10 @@ export function useRoomEvents({
       })
       .on('broadcast', { event: 'session_ended_event' }, () => {
         if (onSessionEnded) onSessionEnded();
+      })
+      .on('broadcast', { event: 'match_forfeited_event' }, ({ payload }) => {
+        const { forfeitingUserId } = payload || {};
+        if (onMatchForfeited) onMatchForfeited(forfeitingUserId);
       });
 
     channel.subscribe(async (status) => {
@@ -236,11 +240,21 @@ export function useRoomEvents({
     });
   };
 
+  const forfeitMatchBroadcast = (forfeitingUserId: string) => {
+    if (!channelRef.current) return;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'match_forfeited_event',
+      payload: { forfeitingUserId }
+    });
+  };
+
   return {
     members,
     sendEmote,
     broadcastFocusState,
     broadcastMuteState,
-    endSessionBroadcast
+    endSessionBroadcast,
+    forfeitMatchBroadcast
   };
 }
