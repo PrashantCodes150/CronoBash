@@ -15,6 +15,9 @@ interface Member {
   focusSeconds?: number;
   focusTimeline?: { time: string; level: number }[];
   isSpectator?: boolean;
+  gazeScore?: number;
+  poseStability?: number;
+  level?: number;
 }
 
 interface RoomGridProps {
@@ -47,6 +50,9 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
               focusScore={self.focusScore}
               focusSeconds={self.focusSeconds}
               focusTimeline={self.focusTimeline}
+              gazeScore={self.gazeScore}
+              poseStability={self.poseStability}
+              level={self.level}
             />
           </div>
 
@@ -64,6 +70,9 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
               focusScore={opponent.focusScore}
               focusSeconds={opponent.focusSeconds}
               focusTimeline={opponent.focusTimeline}
+              gazeScore={opponent.gazeScore}
+              poseStability={opponent.poseStability}
+              level={opponent.level}
             />
           </div>
         </div>
@@ -71,7 +80,6 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
     );
   }
 
-  // Calculate dynamic grid layout parameters up to 10 users
   const total = activeMembers.length;
   let gridStyle = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl";
 
@@ -101,6 +109,9 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
               focusScore={m.focusScore}
               focusSeconds={m.focusSeconds}
               focusTimeline={m.focusTimeline}
+              gazeScore={m.gazeScore}
+              poseStability={m.poseStability}
+              level={m.level}
             />
           </div>
         ))}

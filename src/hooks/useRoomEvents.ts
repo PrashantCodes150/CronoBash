@@ -22,6 +22,9 @@ export interface SyncMember extends RoomMember {
   isSpectator: boolean;
   latestEmote?: { code: string; id: string } | null;
   isFakeCam?: boolean;
+  focusScore?: number;
+  gazeScore?: number;
+  poseStability?: number;
 }
 
 export function useRoomEvents({
@@ -36,8 +39,6 @@ export function useRoomEvents({
   const [members, setMembers] = useState<SyncMember[]>([]);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
-  // Debouncing locks
-  const lastStateSentRef = useRef<{ isFocused: boolean; distractionCount: number }>({ isFocused: true, distractionCount: 0 });
   const lastFocusAlertTime = useRef<Record<string, number>>({});
 
   const updateMemberState = (uId: string, updates: Partial<SyncMember>) => {
@@ -58,28 +59,27 @@ export function useRoomEvents({
     });
   };
 
-  const broadcastFocusState = (isFocused: boolean, distractionCount: number, isFakeCam = false) => {
+  const broadcastFocusState = (
+    isFocused: boolean, 
+    distractionCount: number, 
+    isFakeCam = false,
+    focusScore = 100,
+    gazeScore = 100,
+    poseStability = 100
+  ) => {
     if (!channelRef.current || isSpectator) return;
-    
-    // Prevent duplicated redundant status updates
-    const last = lastStateSentRef.current;
-    if (last.isFocused === isFocused && last.distractionCount === distractionCount) {
-      return;
-    }
-    lastStateSentRef.current = { isFocused, distractionCount };
 
     channelRef.current.send({
       type: 'broadcast',
       event: 'focus_state_event',
-      payload: { userId, isFocused, distractionCount, isFakeCam }
+      payload: { userId, isFocused, distractionCount, isFakeCam, focusScore, gazeScore, poseStability }
     });
 
-    // Log to sync_logs table in Supabase
     supabase.from('sync_logs').insert({
       room_id: roomId,
       user_id: userId,
       event_type: isFocused ? 'focus' : 'distraction',
-      payload: { isFocused, distractionCount, isFakeCam }
+      payload: { isFocused, distractionCount, isFakeCam, focusScore, gazeScore, poseStability }
     }).then(({ error }) => {
       if (error && error.code !== 'PGRST116') {
         console.debug("sync_logs write error: ", error.message);
@@ -112,7 +112,10 @@ export function useRoomEvents({
           isMuted: false,
           distractionCount: 0,
           isSpectator: false,
-          isFakeCam: false
+          isFakeCam: false,
+          focusScore: 100,
+          gazeScore: 100,
+          poseStability: 100
         }));
         setMembers(synced);
       }
@@ -159,7 +162,10 @@ export function useRoomEvents({
                   isMuted: false,
                   distractionCount: 0,
                   isSpectator: !!presenceData.isSpectator,
-                  isFakeCam: false
+                  isFakeCam: false,
+                  focusScore: 100,
+                  gazeScore: 100,
+                  poseStability: 100
                 }];
               }
               return prev;
@@ -181,7 +187,7 @@ export function useRoomEvents({
         }
       })
       .on('broadcast', { event: 'focus_state_event' }, ({ payload }) => {
-        const { userId: senderId, isFocused, distractionCount, isFakeCam } = payload;
+        const { userId: senderId, isFocused, distractionCount, isFakeCam, focusScore, gazeScore, poseStability } = payload || {};
         
         const now = Date.now();
         const lastAlert = lastFocusAlertTime.current[senderId] || 0;
@@ -192,10 +198,17 @@ export function useRoomEvents({
           lastFocusAlertTime.current[senderId] = now;
         }
 
-        updateMemberState(senderId, { isFocused, distractionCount, isFakeCam });
+        updateMemberState(senderId, { 
+          isFocused: !!isFocused, 
+          distractionCount: distractionCount || 0, 
+          isFakeCam: !!isFakeCam,
+          focusScore: focusScore !== undefined ? focusScore : 100,
+          gazeScore: gazeScore !== undefined ? gazeScore : 100,
+          poseStability: poseStability !== undefined ? poseStability : 100
+        });
         
         if (!isFocused && senderId !== userId && onOpponentDistracted) {
-          onOpponentDistracted(senderId, distractionCount);
+          onOpponentDistracted(senderId, distractionCount || 0);
         }
       })
       .on('broadcast', { event: 'mute_state_event' }, ({ payload }) => {

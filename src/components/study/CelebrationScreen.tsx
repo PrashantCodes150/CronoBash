@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Trophy, RefreshCw, LogOut, Share2, Award, Clock, EyeOff, Skull, AlertCircle } from 'lucide-react';
+import { Trophy, RefreshCw, LogOut, Share2, Award, Clock, EyeOff, Skull, AlertCircle, Volume2 } from 'lucide-react';
 import { AISummaryCard } from './AISummaryCard';
 
 interface Standing {
@@ -25,6 +25,7 @@ interface CelebrationScreenProps {
   standings: Standing[];
   onRematch: () => void;
   onLeave: () => void;
+  currentUserId?: string;
   summary?: {
     good: string;
     improve: string;
@@ -38,33 +39,80 @@ export default function CelebrationScreen({
   standings,
   onRematch,
   onLeave,
+  currentUserId,
   summary
 }: CelebrationScreenProps) {
   const winner = standings.find(s => s.rank === 1) || standings[0];
   const loser = standings.find(s => s.rank > 1) || (standings.length > 1 ? standings[1] : null);
+  const isSelfWinner = currentUserId ? winner?.userId === currentUserId : true;
 
   useEffect(() => {
-    // Fire confetti bursts (Optimized performance: 3s limit, 100 particles max)
-    const duration = 3 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100 };
+    // Play Victory Fanfare or Defeat Audio Effect via Web Audio API
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
 
-    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-    const interval: NodeJS.Timeout = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
+        if (isSelfWinner) {
+          // Victory Fanfare (C5 -> E5 -> G5 -> C6)
+          const freqs = [523.25, 659.25, 783.99, 1046.50];
+          freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+            gain.gain.setValueAtTime(0.12, now + idx * 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.15 + 0.6);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.15);
+            osc.stop(now + idx * 0.15 + 0.65);
+          });
+        } else {
+          // Defeat Audio Drop (A4 -> G#4 -> G4 -> F4 minor descent)
+          const freqs = [440.00, 415.30, 392.00, 349.23];
+          freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.2);
+            gain.gain.setValueAtTime(0.1, now + idx * 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.2 + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.2);
+            osc.stop(now + idx * 0.2 + 0.55);
+          });
+        }
+      } catch (e) {
+        console.error("Audio synth error:", e);
       }
+    }
 
-      const particleCount = Math.floor(35 * (timeLeft / duration));
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.15, 0.3), y: Math.random() - 0.2 } });
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.85), y: Math.random() - 0.2 } });
-    }, 400);
+    // Fire confetti bursts if winner
+    if (isSelfWinner) {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100 };
 
-    return () => clearInterval(interval);
-  }, []);
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: NodeJS.Timeout = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = Math.floor(35 * (timeLeft / duration));
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.15, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.85), y: Math.random() - 0.2 } });
+      }, 400);
+
+      return () => clearInterval(interval);
+    }
+  }, [isSelfWinner]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -88,14 +136,19 @@ export default function CelebrationScreen({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-1"
         >
-          <span className="text-[11px] font-mono tracking-widest text-emerald-400 bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-800/40 uppercase font-bold">
-            MATCH CONCLUDED
+          <span className={`text-[11px] font-mono tracking-widest px-3 py-1 rounded-full border uppercase font-bold ${
+            isSelfWinner 
+              ? 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40' 
+              : 'text-red-400 bg-red-950/40 border-red-800/40'
+          }`}>
+            {isSelfWinner ? 'VICTORY ACHIEVED 🏆' : 'DEFEAT SUFFERED 💀'}
           </span>
+
           <h1 className="text-3xl md:text-5xl font-black text-white font-sans mt-2 tracking-tight">
-            Focus Duel Results
+            {isSelfWinner ? 'YOU WON THE MATCH! 🏆' : 'YOU LOST THE MATCH 💀'}
           </h1>
           <p className="text-sm text-neutral-400 font-mono">
-            Sprint settled inside <span className="text-emerald-400 font-semibold">{roomName}</span>
+            Focus duel settled inside <span className="text-emerald-400 font-semibold">{roomName}</span>
           </p>
         </motion.div>
 
@@ -194,7 +247,7 @@ export default function CelebrationScreen({
           <div className="px-6 py-4 border-b border-neutral-800 bg-neutral-950/80 flex items-center justify-between">
             <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase">
               <Award className="w-4 h-4 text-emerald-400" />
-              Official Standings
+              Official Match Standings
             </h3>
             <span className="text-[10px] text-neutral-500 uppercase font-bold">RANKED BY PERFORMANCE</span>
           </div>

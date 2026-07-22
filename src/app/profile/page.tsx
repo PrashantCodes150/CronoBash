@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth-context';
 import { supabase } from '@/lib/supabaseClient';
 import { BADGES } from '@/lib/badges';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
+import { BadgesModal } from '@/components/study/BadgesModal';
 
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -17,6 +18,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const [isProfilePublic, setIsProfilePublic] = useState(true);
+  const [badgesModalOpen, setBadgesModalOpen] = useState(false);
 
 
 
@@ -272,7 +274,7 @@ export default function ProfilePage() {
             <div className="card-base p-6 md:p-8 relative overflow-hidden group border-l-2 border-primary-fixed bg-grid-pattern">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               
-              {/* Edit Profile trigger button */}
+              {/* Edit Profile & Badges trigger buttons */}
               <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
                 <button 
                   onClick={() => setEditModalOpen(true)}
@@ -280,6 +282,14 @@ export default function ProfilePage() {
                 >
                   <span className="material-symbols-outlined text-xs">edit</span>
                   Edit Profile
+                </button>
+
+                <button 
+                  onClick={() => setBadgesModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/40 text-on-surface font-label-mono text-[9px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xs">military_tech</span>
+                  All 100 Badges 🎖️
                 </button>
 
                 <button
@@ -590,6 +600,14 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* 100 Level Badges Collection Modal */}
+      <BadgesModal
+        isOpen={badgesModalOpen}
+        onClose={() => setBadgesModalOpen(false)}
+        userLevel={profile?.level || 1}
+        earnedBadgeIds={profile?.badges || []}
+      />
     </div>
   );
 }
