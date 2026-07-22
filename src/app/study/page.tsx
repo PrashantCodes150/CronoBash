@@ -1048,7 +1048,7 @@ function StudySessionContent() {
         if (!walletCheck) {
           await supabase.from('wallets').insert({
             user_id: user.id,
-            balance: 1000
+            balance: 0
           });
         }
 

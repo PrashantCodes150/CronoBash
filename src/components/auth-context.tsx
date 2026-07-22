@@ -83,17 +83,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .from('wallets')
           .insert({
             user_id: userId,
-            balance: 1000
+            balance: 0
           })
           .select()
           .single();
-
-        await supabase.from('transactions').insert({
-          user_id: userId,
-          type: 'deposit',
-          amount: 1000,
-          description: 'Welcome bonus tokens credited.'
-        });
 
         if (insertedWallet) {
           activeWallet = insertedWallet;
