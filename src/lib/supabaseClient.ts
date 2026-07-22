@@ -23,6 +23,7 @@ export interface UserProfile {
   points?: number;
   level?: number;
   badges?: string[];
+  has_seen_onboarding?: boolean;
 }
 
 export interface Room {

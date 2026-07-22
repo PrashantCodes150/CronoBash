@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.11.0"
 
@@ -6,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -31,7 +32,7 @@ serve(async (req) => {
 
     let streakDays = 0
     if (!error && sessions && sessions.length > 0) {
-      const dates = sessions.map(s => s.created_at.split('T')[0])
+      const dates = sessions.map((s: any) => s.created_at.split('T')[0])
       const uniqueDates = [...new Set(dates)]
       
       let current = new Date()

@@ -1,4 +1,5 @@
 // tests/stats.test.ts
+/// <reference types="jest" />
 // Unit tests auditing the CogniSweep focus score formula
 
 describe("CogniSweep Focus Score Calculation Tests", () => {
