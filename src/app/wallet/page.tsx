@@ -3,12 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { supabase, Transaction } from '@/lib/supabaseClient';
+import { loadRazorpayScript } from '@/components/RazorpayScript';
+import { isStateRestricted, RESTRICTED_INDIAN_STATES } from '@/lib/geoBlock';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { CreditCard, ArrowUpRight, ArrowDownLeft, ShieldCheck, AlertTriangle, Building2, Smartphone, CheckCircle2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function WalletPage() {
-  const { user, wallet, refreshWallet } = useAuth();
+  const { user, profile, wallet, refreshWallet } = useAuth();
   
-  // Ledger states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,11 +21,16 @@ export default function WalletPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [alert, setAlert] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
+  // Withdrawal modal & state
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [upiId, setUpiId] = useState('');
+  const [userState, setUserState] = useState('Delhi');
+  const [showStateModal, setShowStateModal] = useState(false);
+
   // Charts data
   const [earningsChartData, setEarningsChartData] = useState<any[]>([]);
   const [balanceChartData, setBalanceChartData] = useState<any[]>([]);
 
-  // Fetch transactions list
   const loadTransactions = async () => {
     if (!user) return;
     setLoading(true);
@@ -36,12 +44,10 @@ export default function WalletPage() {
       if (!error && data) {
         setTransactions(data as Transaction[]);
 
-        // Build chart data from real transactions (last 7 days)
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const earningsByDay: Record<string, number> = {};
         const balanceByDay: Record<string, number> = {};
 
-        // Initialize last 7 days
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
@@ -50,7 +56,6 @@ export default function WalletPage() {
           balanceByDay[key] = 0;
         }
 
-        // Accumulate real transaction amounts
         let runningBalance = 0;
         for (const tx of data) {
           const txDate = new Date(tx.created_at);
@@ -71,7 +76,6 @@ export default function WalletPage() {
           Object.entries(balanceByDay).map(([day, Balance]) => ({ day, Balance }))
         );
       }
-
     } catch (e) {
       console.error(e);
     } finally {
@@ -79,41 +83,88 @@ export default function WalletPage() {
     }
   };
 
-  // Deposit tokens transaction handler
-  const handleDeposit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || depositAmount <= 0) return;
+  // Razorpay Checkout Launcher (Test Mode)
+  const handleRazorpayDeposit = async (amount: number) => {
+    if (!user) return;
+    
+    // Geo-block state check
+    if (isStateRestricted(userState)) {
+      toast.error(`Cash deposits are legally restricted in ${userState}.`, { icon: '🚫' });
+      return;
+    }
+
     setActionLoading(true);
     setAlert(null);
 
+    const res = await loadRazorpayScript();
+    if (!res) {
+      toast.error('Failed to load Razorpay Payment Gateway SDK.');
+      setActionLoading(false);
+      return;
+    }
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || 'rzp_test_5123456789',
+      amount: amount * 100, // Amount in paise
+      currency: 'INR',
+      name: 'Focus Arena',
+      description: `Deposit +${amount} Tokens into Wallet`,
+      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=150',
+      handler: async function (response: any) {
+        toast.success(`Payment Success! Credit ID: ${response.razorpay_payment_id || 'PAY-TEST'}`);
+        try {
+          const { data, error } = await supabase.rpc('deposit_tokens_secure', {
+            p_user_id: user.id,
+            p_amount: amount
+          });
+
+          if (!error) {
+            toast.success(`Successfully credited +${amount} Tokens to your wallet!`);
+            await refreshWallet();
+            await loadTransactions();
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setActionLoading(false);
+        }
+      },
+      prefill: {
+        name: profile?.name || user.email?.split('@')[0],
+        email: user.email,
+        contact: '9999999999'
+      },
+      theme: {
+        color: '#00FFA3'
+      }
+    };
+
     try {
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (e) {
+      // Fallback for simulation
       const { data, error } = await supabase.rpc('deposit_tokens_secure', {
         p_user_id: user.id,
-        p_amount: depositAmount
+        p_amount: amount
       });
-
-      if (error || (data && data.error)) {
-        setAlert({ type: 'error', text: error?.message || data?.error || 'Deposit execution failed.' });
-        return;
+      if (!error) {
+        toast.success(`[Test Mode] Credited +${amount} Tokens!`);
+        await refreshWallet();
+        await loadTransactions();
       }
-
-      setAlert({ type: 'success', text: `Successfully credited +${depositAmount} TKN to your wallet.` });
-      await refreshWallet();
-      await loadTransactions();
-    } catch (e) {
-      console.error(e);
-      setAlert({ type: 'error', text: 'Error executing transaction.' });
-    } finally {
       setActionLoading(false);
     }
   };
 
-  // Withdraw tokens transaction handler
-  const handleWithdraw = async (e: React.FormEvent) => {
+  const handleWithdrawRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || withdrawAmount <= 0) return;
+    if (withdrawAmount > (wallet?.balance || 0)) {
+      toast.error('Insufficient wallet balance!');
+      return;
+    }
     setActionLoading(true);
-    setAlert(null);
 
     try {
       const { data, error } = await supabase.rpc('withdraw_tokens_secure', {
@@ -122,16 +173,17 @@ export default function WalletPage() {
       });
 
       if (error || (data && data.error)) {
-        setAlert({ type: 'error', text: error?.message || data?.error || 'Withdrawal execution failed.' });
+        toast.error(error?.message || data?.error || 'Withdrawal failed.');
         return;
       }
 
-      setAlert({ type: 'success', text: `Successfully withdrew -${withdrawAmount} TKN to external ledger.` });
+      toast.success(`Withdrawal request for ₹${withdrawAmount} submitted! Payout processing to ${upiId || 'registered UPI ID'}.`);
+      setShowWithdrawModal(false);
       await refreshWallet();
       await loadTransactions();
     } catch (e) {
       console.error(e);
-      setAlert({ type: 'error', text: 'Error executing transaction.' });
+      toast.error('Error submitting withdrawal.');
     } finally {
       setActionLoading(false);
     }
@@ -154,87 +206,111 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <header className="pb-4 border-b border-outline-variant">
-        <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Wallet ledger</h2>
-        <p className="text-xs text-on-surface-variant mt-1">Manage stakes tokens balance, trace ledger history, and query charts</p>
+    <div className="space-y-6 max-w-7xl mx-auto font-sans text-white">
+      {/* Title Header */}
+      <header className="pb-4 border-b border-neutral-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-black uppercase tracking-tight text-white">Wallet & Payment Ledger</h2>
+          <p className="text-xs text-neutral-400 font-mono mt-1">Manage cash deposits, payout withdrawals, and track ledger history</p>
+        </div>
+
+        {/* State selection pill */}
+        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-xl font-mono text-xs">
+          <span className="text-neutral-400">State:</span>
+          <select 
+            value={userState} 
+            onChange={(e) => setUserState(e.target.value)}
+            className="bg-transparent text-emerald-400 font-bold focus:outline-none cursor-pointer"
+          >
+            <option value="Delhi" className="bg-neutral-900">Delhi (Allowed)</option>
+            <option value="Maharashtra" className="bg-neutral-900">Maharashtra (Allowed)</option>
+            <option value="Karnataka" className="bg-neutral-900">Karnataka (Allowed)</option>
+            <option value="Assam" className="bg-neutral-900">Assam (Restricted 🚫)</option>
+            <option value="Odisha" className="bg-neutral-900">Odisha (Restricted 🚫)</option>
+            <option value="Telangana" className="bg-neutral-900">Telangana (Restricted 🚫)</option>
+            <option value="Andhra Pradesh" className="bg-neutral-900">Andhra Pradesh (Restricted 🚫)</option>
+            <option value="Nagaland" className="bg-neutral-900">Nagaland (Restricted 🚫)</option>
+            <option value="Sikkim" className="bg-neutral-900">Sikkim (Restricted 🚫)</option>
+          </select>
+        </div>
       </header>
 
-      {alert && (
-        <div className={`border rounded-lg p-4 text-xs flex items-center gap-3 ${
-          alert.type === 'error' ? 'bg-error-container/15 border-error/50 text-error' : 'bg-primary-container/15 border-primary-container/50 text-primary-fixed'
-        }`}>
-          <span className="material-symbols-outlined text-sm">payments</span>
-          <span>{alert.text}</span>
+      {/* Restricted State Flash Warning */}
+      {isStateRestricted(userState) && (
+        <div className="bg-red-950/80 border border-red-500/50 p-4 rounded-2xl flex items-center gap-3 font-mono text-xs text-red-300">
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+          <div>
+            <span className="font-bold block uppercase text-red-400">Cash Contests Restricted in {userState}</span>
+            <span>State regulations prohibit real-money contests in {userState}. You can still play all Free & Public Study Arenas!</span>
+          </div>
         </div>
       )}
 
-      {/* Grid splits */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Columns (8 cols): Balance + Charts */}
+        {/* Left Columns (8 cols): Balance + Razorpay Checkout */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* Balance card panel */}
-          <div className="card-base p-6 md:p-8 bg-grid-pattern relative overflow-hidden group border-t-2 border-primary-fixed">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-6 relative z-10">
+          {/* Balance Card */}
+          <div className="bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-2 border-emerald-500/40 p-6 md:p-8 rounded-3xl relative overflow-hidden shadow-2xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
               <div>
-                <p className="font-label-mono text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Stake Tokens Balance</p>
-                <h3 className="font-display text-4xl md:text-5xl font-black text-primary-fixed tracking-tight mt-1.5 drop-shadow-[0_0_15px_rgba(0,255,163,0.3)]">
-                  {wallet?.balance ?? 0} <span className="text-base text-on-surface font-mono font-normal">TKN</span>
+                <span className="font-mono text-[10px] text-neutral-400 uppercase font-bold tracking-wider">AVAILABLE WALLET BALANCE</span>
+                <h3 className="font-display text-4xl md:text-5xl font-black text-emerald-400 tracking-tight mt-1">
+                  ₹{wallet?.balance ?? 0} <span className="text-base text-neutral-400 font-mono font-normal">INR / TKN</span>
                 </h3>
-                <p className="text-xs text-on-surface-variant max-w-sm mt-3">
-                  Stake tokens to enter money lobbies. Yield focus rewards during timed study sprints.
+                <p className="text-xs text-neutral-400 font-mono mt-2">
+                  100% Game of Skill • Instant UPI Deposits & Withdrawals
                 </p>
               </div>
 
-              {/* Quick Action trigger forms */}
-              <div className="flex flex-col gap-3 w-full sm:w-auto">
-                <form onSubmit={handleDeposit} className="flex gap-2">
-                  <input
-                    type="number"
-                    min={50}
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(parseInt(e.target.value))}
-                    className="bg-background border border-outline-variant rounded px-2.5 py-1.5 font-mono text-xs text-on-surface focus:outline-none w-24"
-                  />
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-[10px] font-bold px-4 rounded transition-colors cursor-pointer"
-                  >
-                    Deposit
-                  </button>
-                </form>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={() => handleRazorpayDeposit(depositAmount)}
+                  disabled={actionLoading || isStateRestricted(userState)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-950/50 disabled:opacity-50"
+                >
+                  <CreditCard className="w-4 h-4 fill-black" />
+                  Deposit Funds
+                </button>
 
-                <form onSubmit={handleWithdraw} className="flex gap-2">
-                  <input
-                    type="number"
-                    min={50}
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(parseInt(e.target.value))}
-                    className="bg-background border border-outline-variant rounded px-2.5 py-1.5 font-mono text-xs text-on-surface focus:outline-none w-24"
-                  />
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="bg-surface-variant border border-outline-variant hover:bg-surface-bright text-on-surface font-label-mono text-[10px] font-bold px-4 py-1.5 rounded transition-colors cursor-pointer"
-                  >
-                    Withdraw
-                  </button>
-                </form>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={actionLoading}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white font-mono text-xs font-bold uppercase tracking-wider border border-neutral-700 px-5 py-3 rounded-xl transition-all cursor-pointer"
+                >
+                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+                  Withdraw Cash
+                </button>
               </div>
+            </div>
+
+            {/* Quick Deposit Preset Bar */}
+            <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-center gap-3 font-mono text-xs">
+              <span className="text-neutral-400 font-bold text-[10px] uppercase">Quick Deposit Presets:</span>
+              {[100, 500, 1000].map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => {
+                    setDepositAmount(amt);
+                    handleRazorpayDeposit(amt);
+                  }}
+                  disabled={actionLoading || isStateRestricted(userState)}
+                  className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-emerald-400 hover:text-emerald-400 font-bold transition-all cursor-pointer disabled:opacity-50"
+                >
+                  +₹{amt}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Wallet charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card-base p-5 space-y-4">
-              <h4 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Study Rewards Per Day</h4>
-              <div className="h-48 w-full">
+          {/* Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono">
+            <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl space-y-4">
+              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Study Arena Rewards</h4>
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={earningsChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <XAxis dataKey="day" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
@@ -246,9 +322,9 @@ export default function WalletPage() {
               </div>
             </div>
 
-            <div className="card-base p-5 space-y-4">
-              <h4 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Balance Over Time</h4>
-              <div className="h-48 w-full">
+            <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl space-y-4">
+              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Balance Growth Trend</h4>
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={balanceChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <defs>
@@ -268,15 +344,17 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Right Column (4 cols): Ledger ledger listing */}
+        {/* Right Column (4 cols): Ledger Listing */}
         <div className="lg:col-span-4">
-          <div className="glass-panel rounded-xl p-6 flex flex-col h-[480px]">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider mb-4">Ledger History</h3>
+          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 flex flex-col h-[520px] font-mono">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4 border-b border-neutral-800 pb-2">
+              Transaction History
+            </h3>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
               {transactions.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-[10px] text-on-surface-variant font-label-mono uppercase">No ledger entries registered</p>
+                  <p className="text-[10px] text-neutral-500 uppercase">No transactions recorded</p>
                 </div>
               ) : (
                 transactions.map((tx) => {
@@ -284,17 +362,17 @@ export default function WalletPage() {
                   return (
                     <div 
                       key={tx.id}
-                      className="p-3 bg-surface-container-low border border-outline-variant/30 rounded-lg flex items-center justify-between gap-3 font-mono text-[11px]"
+                      className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center justify-between gap-3 text-[11px]"
                     >
                       <div className="min-w-0">
-                        <p className="font-bold text-on-surface truncate">{tx.description || tx.type.toUpperCase()}</p>
-                        <span className="text-[8px] text-on-surface-variant block mt-0.5">
+                        <p className="font-bold text-white truncate">{tx.description || tx.type.toUpperCase()}</p>
+                        <span className="text-[8px] text-neutral-500 block mt-0.5">
                           {new Date(tx.created_at).toLocaleDateString()} • {tx.type}
                         </span>
                       </div>
                       
-                      <span className={`font-bold font-display ${isDeposit ? 'text-primary-fixed' : 'text-error'}`}>
-                        {isDeposit ? '+' : '-'}{tx.amount}
+                      <span className={`font-bold ${isDeposit ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {isDeposit ? '+' : '-'}₹{tx.amount}
                       </span>
                     </div>
                   );
@@ -305,6 +383,65 @@ export default function WalletPage() {
         </div>
 
       </div>
+
+      {/* Withdrawal Request Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="bg-neutral-950 border border-neutral-800 p-6 rounded-3xl max-w-md w-full font-mono space-y-4 text-white">
+            <h3 className="text-lg font-bold uppercase tracking-tight flex items-center gap-2 text-emerald-400">
+              <Smartphone className="w-5 h-5 text-emerald-400" />
+              UPI Cash Payout Withdrawal
+            </h3>
+            <p className="text-xs text-neutral-400">
+              Withdraw winnings directly to your GPay / PhonePe / Paytm UPI ID.
+            </p>
+
+            <form onSubmit={handleWithdrawRequest} className="space-y-4 pt-2">
+              <div>
+                <label className="block text-[10px] uppercase text-neutral-400 font-bold mb-1">UPI ID / VPA (e.g. user@okaxis)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="name@upi"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase text-neutral-400 font-bold mb-1">Withdrawal Amount (₹)</label>
+                <input
+                  type="number"
+                  required
+                  min={50}
+                  max={wallet?.balance || 10000}
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(parseInt(e.target.value))}
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawModal(false)}
+                  className="flex-1 bg-neutral-900 border border-neutral-800 text-neutral-400 py-2.5 rounded-xl hover:text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2.5 rounded-xl transition-colors cursor-pointer"
+                >
+                  Submit Payout
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

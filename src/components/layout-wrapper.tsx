@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Header from './header';
+import Footer from './Footer';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +23,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     bodyEl.classList.add(`theme-${savedTheme}`);
   }, [pathname]);
 
-  // Route groups where the global sidebar & header are hidden
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding', '/study'];
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study/');
 
@@ -32,7 +32,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
-      {/* Main Canvas frame — full screen without sidebar */}
+      {/* Main Canvas frame */}
       <div className="flex-grow flex flex-col min-h-screen">
         {/* Top Header navbar */}
         <Header />
@@ -41,6 +41,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <main className="flex-grow pt-4 pb-12 px-4 md:px-8 w-full max-w-full mx-auto">
           {children}
         </main>
+
+        {/* Global Footer */}
+        <Footer />
       </div>
     </div>
   );
