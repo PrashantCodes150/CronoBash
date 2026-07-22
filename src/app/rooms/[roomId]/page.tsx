@@ -4,12 +4,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
 import { supabase, Room, RoomMember } from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 export default function RoomDetail() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.roomId as string;
-  const { user, refreshWallet, refreshProfile } = useAuth();
+  const { user, profile, refreshWallet, refreshProfile } = useAuth();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
