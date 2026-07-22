@@ -19,6 +19,7 @@ export default function MatchmakingPage() {
 
   useEffect(() => {
     if (!inQueue || !user) return;
+    const queueStartTime = new Date().toISOString();
 
     // Register user in the queue
     const enterQueue = async () => {
@@ -31,6 +32,16 @@ export default function MatchmakingPage() {
           status: 'searching'
         });
       toast.success("Entered the queue! Scanning for focus study peers...", { icon: '🔎' });
+
+      // Call create_match edge function to trigger pairing
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create_match`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (e) {
+        console.debug("Edge function create_match call:", e);
+      }
     };
     enterQueue();
 
@@ -47,11 +58,20 @@ export default function MatchmakingPage() {
       setQueueCount(count || 1);
       setEtaSeconds(prev => Math.max(5, prev - 2));
 
-      // 2. Check if a match was successfully created
+      // Trigger create_match check periodically
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create_match`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (e) {}
+
+      // 2. Check if a match was newly created AFTER queue entry
       const { data: activeMember } = await supabase
         .from('room_members')
-        .select('room_id')
+        .select('room_id, joined_at')
         .eq('user_id', user.id)
+        .gte('joined_at', queueStartTime)
         .order('joined_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -63,7 +83,7 @@ export default function MatchmakingPage() {
           router.push(`/study/${activeMember.room_id}`);
         }, 1500);
       }
-    }, 2000);
+    }, 2500);
 
     return () => {
       clearInterval(pollQueue);

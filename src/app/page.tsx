@@ -15,10 +15,10 @@ function GlowOrb({ position, color, speed, distort }: {
   distort: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
+  useFrame((_, delta) => {
     if (!meshRef.current) return;
-    meshRef.current.rotation.x = state.clock.elapsedTime * speed * 0.3;
-    meshRef.current.rotation.y = state.clock.elapsedTime * speed * 0.5;
+    meshRef.current.rotation.x += delta * speed * 0.3;
+    meshRef.current.rotation.y += delta * speed * 0.5;
   });
   return (
     <Float speed={speed} rotationIntensity={0.4} floatIntensity={1.4}>
@@ -50,10 +50,10 @@ function ParticleField() {
     }
     return pos;
   }, []);
-  useFrame((state) => {
+  useFrame((_, delta) => {
     if (!pointsRef.current) return;
-    pointsRef.current.rotation.y = state.clock.elapsedTime * 0.03;
-    pointsRef.current.rotation.x = state.clock.elapsedTime * 0.012;
+    pointsRef.current.rotation.y += delta * 0.03;
+    pointsRef.current.rotation.x += delta * 0.012;
   });
   return (
     <points ref={pointsRef}>

@@ -153,6 +153,11 @@ export default function RoomDetail() {
         setCountdownTime(null);
         setCountdownActive(false);
       })
+      .on('broadcast', { event: 'match-launch' }, ({ payload }) => {
+        const { shareCamera: sc, shareGraphs: sg, shareStats: ss, theme: th, playersCount: pc } = payload || {};
+        const url = `/study/${roomId}?shareCamera=${sc ?? shareCamera}&shareGraphs=${sg ?? shareGraphs}&shareStats=${ss ?? shareStats}&theme=${th ?? selectedTheme}&playersCount=${pc ?? members.length}`;
+        router.push(url);
+      })
       .on('broadcast', { event: 'request-countdown-state' }, () => {
         // If owner, broadcast state
         if (roomOwnerIdRef.current === user.id && countdownActiveRef.current && countdownTimeRef.current) {
@@ -205,7 +210,20 @@ export default function RoomDetail() {
       if (secs <= 0) {
         setSecondsLeft(0);
         setCountdownActive(false);
-        // Automatically launch to study room with configured settings!
+        // Broadcast launch event so all opponent browsers redirect simultaneously!
+        if (matchChannelRef.current) {
+          matchChannelRef.current.send({
+            type: 'broadcast',
+            event: 'match-launch',
+            payload: { 
+              shareCamera, 
+              shareGraphs, 
+              shareStats, 
+              theme: selectedTheme, 
+              playersCount: members.length 
+            }
+          });
+        }
         router.push(`/study/${roomId}?shareCamera=${shareCamera}&shareGraphs=${shareGraphs}&shareStats=${shareStats}&theme=${selectedTheme}&playersCount=${members.length}`);
       } else {
         setSecondsLeft(secs);
