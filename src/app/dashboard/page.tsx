@@ -545,30 +545,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* High-Converting Quick-Start Onboarding Banner */}
-      <div className="bg-gradient-to-r from-emerald-950/80 via-neutral-900 to-emerald-950/80 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl relative overflow-hidden">
-        <div className="space-y-1 relative z-10 max-w-xl">
-          <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            Ready for your first session?
-          </div>
-          <h3 className="text-xl sm:text-2xl font-black text-white font-display tracking-tight">
-            Start a 25-Minute AI-Tracked Study Sprint
-          </h3>
-          <p className="text-xs text-neutral-300 font-mono leading-relaxed">
-            Join live peer study rooms with WebAssembly eye-tracking, build your daily streak, and earn bonus focus tokens.
-          </p>
-        </div>
-
-        <button
-          onClick={() => router.push('/study')}
-          className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-mono text-xs font-bold px-6 py-3.5 rounded-xl transition-all cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-[1.03] shrink-0 flex items-center gap-2"
-        >
-          <span>Launch Sprint Now</span>
-          <span className="material-symbols-outlined text-base">arrow_forward</span>
-        </button>
-      </div>
-
       {/* Grid structure: Goal rings progress + Money Match Coming Soon Widget + quick stats cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
@@ -673,12 +649,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* Viral Referral Rewards Program Widget */}
-      <ReferralCard />
-
-      {/* Google AdSense / Student Banner Ad Unit */}
-      <StudentAdBanner />
 
       {/* Interactive Productivity Suite Widgets */}
       <div className="space-y-3">
