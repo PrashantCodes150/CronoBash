@@ -97,37 +97,37 @@ export default function WalletPage() {
       <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Full-Page Center Card */}
-      <div className="w-full max-w-2xl bg-surface-container border border-outline-variant/40 rounded-3xl p-6 sm:p-10 md:p-12 text-center space-y-6 md:space-y-8 shadow-2xl relative z-10 backdrop-blur-xl">
+      <div className="w-full max-w-2xl bg-gradient-to-br from-amber-500/15 via-orange-500/5 to-surface-container border border-amber-500/40 rounded-3xl p-6 sm:p-10 md:p-12 text-center space-y-6 md:space-y-8 shadow-[0_0_40px_rgba(245,158,11,0.2)] relative z-10 backdrop-blur-xl">
         
         {/* Top Header Badge */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-            <Coins className="w-7 h-7" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.35)] animate-pulse">
+            <Coins className="w-8 h-8 animate-bounce" />
           </div>
 
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.2)]">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/15 border border-amber-500/40 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
             PRODUCTION PAYMENT GATEWAY
           </span>
         </div>
 
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-display tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-display tracking-tight bg-gradient-to-r from-amber-400 via-orange-400 to-white bg-clip-text text-transparent">
             Wallet Balance &amp; Token Recharge
           </h1>
-          <p className="text-xs sm:text-sm text-on-surface-variant font-mono max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-amber-300/80 font-mono max-w-md mx-auto leading-relaxed">
             Purchase study arena entry tokens and CronoPass subscriptions using Razorpay UPI, Netbanking, or Credit Cards.
           </p>
         </div>
 
         {/* Current Balance & Plan Selector */}
-        <div className="bg-neutral-950/80 border border-neutral-800 rounded-2xl p-5 space-y-4 text-left font-mono">
+        <div className="bg-gradient-to-br from-amber-950/40 to-neutral-950/80 border border-amber-500/30 rounded-2xl p-5 space-y-4 text-left font-mono shadow-[0_0_20px_rgba(245,158,11,0.1)]">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-neutral-400 flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5 text-amber-400" /> Current Wallet Balance:
+            <span className="text-amber-300 font-semibold flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> Current Wallet Balance:
             </span>
-            <span className="text-white font-bold text-sm">{wallet?.balance ?? 0} Tokens</span>
+            <span className="text-amber-400 font-black text-base drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">{wallet?.balance ?? 0} Tokens</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
@@ -142,17 +142,17 @@ export default function WalletPage() {
                 onClick={() => setSelectedPlan(plan)}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                   selectedPlan.amount === plan.amount
-                    ? 'border-emerald-400 bg-emerald-500/10 text-white'
-                    : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700'
+                    ? 'border-emerald-400 bg-emerald-500/20 text-white shadow-[0_0_15px_rgba(0,255,163,0.3)] scale-[1.02]'
+                    : 'border-amber-500/20 bg-amber-950/20 text-amber-300/80 hover:border-amber-400 hover:scale-[1.01]'
                 }`}
               >
                 <div className="flex justify-between items-center w-full">
                   <span className="text-[11px] font-bold">{plan.title}</span>
-                  {selectedPlan.amount === plan.amount && <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />}
+                  {selectedPlan.amount === plan.amount && <CheckCircle className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
                 </div>
                 <div className="mt-2">
                   <span className="text-lg font-black text-white">₹{plan.amount}</span>
-                  <span className="text-[10px] text-neutral-400 block">{plan.tokens} Tokens</span>
+                  <span className="text-[10px] text-emerald-400 block font-bold">{plan.tokens} Tokens</span>
                 </div>
               </button>
             ))}

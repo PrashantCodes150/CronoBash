@@ -443,11 +443,11 @@ export default function RoomsLobby() {
             return (
               <div 
                 key={room.id}
-                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group hover:neon-glow-active transition-all duration-300"
+                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400 transition-all duration-300 shadow-[0_0_20px_rgba(0,255,163,0.1)] hover:shadow-[0_0_30px_rgba(0,255,163,0.2)]"
               >
                 {/* Neon glow elements for money rooms */}
                 {isMoneyRoom && (
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/5 rounded-full blur-2xl"></div>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl"></div>
                 )}
                 
                 <div>
@@ -455,10 +455,10 @@ export default function RoomsLobby() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                         isMoneyRoom 
-                          ? 'bg-amber-500/15 text-amber-400 border border-amber-500/40 font-bold' 
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' 
                           : room.type === 'private' 
-                            ? 'bg-secondary-container/10 text-secondary-fixed border border-secondary-container/30'
-                            : 'bg-surface-variant text-on-surface-variant'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_8px_rgba(0,255,163,0.3)]'
                       }`}>
                         {room.type} Arena
                       </span>
@@ -468,8 +468,8 @@ export default function RoomsLobby() {
                         </span>
                       )}
                       {room.is_active === false && !isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-error-container/20 border border-error/40 text-error flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[10px]">lock</span>
+                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[10px] animate-pulse">lock</span>
                           MATCH IN PROGRESS
                         </span>
                       )}
@@ -482,7 +482,7 @@ export default function RoomsLobby() {
                     )}
                   </div>
 
-                  <h3 className="font-display text-lg font-bold text-on-surface mb-2 truncate group-hover:text-primary-fixed transition-colors">
+                  <h3 className="font-display text-lg font-bold text-white mb-2 truncate group-hover:text-emerald-400 transition-colors">
                     {room.name}
                   </h3>
                   
@@ -490,30 +490,19 @@ export default function RoomsLobby() {
                     {room.description || 'Join this study arena to sprint focus timers together, share resources, and climb daily metrics.'}
                   </p>
 
-                  {isMoneyRoom && (
-                    <div className="relative my-2.5 w-full bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden shadow-lg select-none">
-                      <div className="py-2 px-3 flex items-center justify-center bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 relative">
-                        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-neutral-100 via-neutral-300 to-transparent shadow-[3px_0_8px_rgba(0,0,0,0.8)] transform -skew-x-6 -translate-x-2 border-r border-neutral-400 pointer-events-none z-20" />
-                        <span className="font-black text-xs tracking-widest uppercase font-display bg-gradient-to-b from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent drop-shadow">
-                          COMING SOON
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="flex flex-wrap gap-1.5 mb-6">
                     {room.subject_tags.map(tag => (
-                      <span key={tag} className="font-label-mono text-[9px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
+                      <span key={tag} className="font-label-mono text-[9px] bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded text-emerald-300 font-bold">
                         #{tag}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-outline-variant/30 pt-4 flex items-center justify-between">
-                  <div className="flex flex-col gap-1 font-label-mono text-xs text-on-surface-variant">
+                <div className="border-t border-emerald-500/20 pt-4 flex items-center justify-between">
+                  <div className="flex flex-col gap-1 font-label-mono text-xs text-emerald-300">
                     <div className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm">groups</span>
+                      <span className="material-symbols-outlined text-sm animate-pulse text-emerald-400">groups</span>
                       <span>Max: {room.max_members} spots</span>
                     </div>
                     {room.invite_code && (

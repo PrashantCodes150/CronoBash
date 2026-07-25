@@ -78,13 +78,13 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-black text-white p-6 flex flex-col gap-6 max-w-5xl mx-auto">
       
       {/* Header title */}
-      <div className="flex items-center gap-3 border-b border-neutral-800 pb-4">
-        <div className="bg-orange-500/10 p-2.5 rounded border border-orange-500/30 text-orange-500">
-          <Trophy className="w-6 h-6" />
+      <div className="flex items-center gap-3 border-b border-amber-500/20 pb-4 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-4 rounded-2xl border">
+        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 p-3 rounded-xl border border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse">
+          <Trophy className="w-6 h-6 animate-bounce" />
         </div>
         <div>
-          <h1 className="text-xl font-black tracking-wider uppercase font-mono">Global Leaderboards</h1>
-          <p className="text-[10px] text-neutral-500 font-mono">Compare your focus efficiency and total hours with the world</p>
+          <h1 className="text-2xl font-black tracking-wider uppercase font-display bg-gradient-to-r from-amber-400 via-orange-400 to-white bg-clip-text text-transparent">Global Leaderboards</h1>
+          <p className="text-xs text-amber-300/80 font-mono">Compare your focus efficiency and total hours with the world</p>
         </div>
       </div>
 
@@ -100,21 +100,21 @@ export default function LeaderboardPage() {
 
       {/* Sticky current user standings if not in top 50 */}
       {currentUser && !isSelfInTop50 && currentUserRank && (
-        <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl flex items-center justify-between">
+        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-surface-container border border-amber-500/40 p-4 rounded-xl flex items-center justify-between shadow-[0_0_15px_rgba(245,158,11,0.2)]">
           <div className="flex items-center gap-3">
-            <ArrowUpCircle className="w-5 h-5 text-orange-500" />
-            <span className="text-xs font-mono text-neutral-300">
-              You are currently ranked <strong className="text-orange-500">#{currentUserRank}</strong> out of all arena fighters!
+            <ArrowUpCircle className="w-5 h-5 text-amber-400 animate-bounce" />
+            <span className="text-xs font-mono text-white">
+              You are currently ranked <strong className="text-amber-400 font-bold">#{currentUserRank}</strong> out of all arena fighters!
             </span>
           </div>
-          <span className="text-[10px] font-mono uppercase bg-orange-500/20 text-orange-400 border border-orange-500/40 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]">
             Keep studying to hit top 50!
           </span>
         </div>
       )}
 
       {/* Leaderboard Table */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 overflow-hidden">
+      <div className="bg-gradient-to-br from-amber-500/10 via-surface-container to-surface-container border border-amber-500/30 rounded-2xl p-5 overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.5)]">
         {loading ? (
           <div className="text-center py-12 text-xs text-neutral-500 font-mono">Querying top standings...</div>
         ) : (

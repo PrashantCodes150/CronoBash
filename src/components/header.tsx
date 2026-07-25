@@ -322,11 +322,12 @@ export default function Header() {
           </div>
 
           {/* Wallet quick balance */}
-          <Link href="/wallet" className="flex items-center gap-2.5 bg-surface-container border border-outline-variant px-3 py-1.5 rounded-lg hover:border-primary-container transition-all">
-            <span className="material-symbols-outlined text-primary-container text-sm font-bold">account_balance_wallet</span>
-            <span className="font-label-mono text-xs text-on-surface-variant">Wallet:</span>
-            <span className="font-label-mono text-sm text-primary-fixed font-bold">
-              {wallet?.balance ?? 0} <span className="text-[10px] text-on-surface-variant font-normal">TKN</span>
+          <Link href="/wallet" className="flex items-center gap-2.5 bg-gradient-to-r from-amber-500/15 via-yellow-500/5 to-surface-container border border-amber-500/40 px-3.5 py-1.5 rounded-xl hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all group">
+            <span className="material-symbols-outlined text-amber-400 text-sm font-bold animate-pulse">account_balance_wallet</span>
+            <span className="font-label-mono text-xs text-amber-300 font-semibold">Wallet:</span>
+            <span className="font-label-mono text-sm text-white font-bold flex items-center gap-1">
+              <span>{wallet?.balance ?? 0}</span>
+              <span className="text-[10px] text-amber-400 font-normal">TKN</span>
             </span>
           </Link>
 
@@ -335,13 +336,13 @@ export default function Header() {
           <div className="relative">
             <button 
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="text-on-surface-variant hover:text-primary-fixed transition-colors relative cursor-pointer focus:outline-none"
+              className="text-on-surface-variant hover:text-amber-400 transition-colors relative cursor-pointer focus:outline-none p-1.5 rounded-lg hover:bg-amber-500/10 group"
             >
-              <span className="material-symbols-outlined text-[22px]">notifications</span>
+              <span className="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">notifications</span>
               {unreadCount > 0 && (
                 <>
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error animate-ping"></span>
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
                 </>
               )}
             </button>
@@ -351,13 +352,16 @@ export default function Header() {
                 {/* Click outside to close */}
                 <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)}></div>
                 
-                <div className="absolute right-0 mt-3 w-80 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/30 text-xs font-mono">
-                    <span className="font-bold text-on-surface uppercase tracking-tight">System Alerts</span>
+                <div className="absolute right-0 mt-3 w-80 bg-surface-container border border-amber-500/30 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.5)] p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20 text-xs font-mono">
+                    <span className="font-bold text-white uppercase tracking-tight flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                      <span>System Alerts</span>
+                    </span>
                     {unreadCount > 0 && (
                       <button 
                         onClick={markAllAsRead}
-                        className="text-primary-fixed hover:underline text-[9px] uppercase font-bold cursor-pointer"
+                        className="text-amber-400 hover:underline text-[9px] uppercase font-bold cursor-pointer"
                       >
                         Clear unread
                       </button>
@@ -371,20 +375,20 @@ export default function Header() {
                       notifications.map(n => (
                         <div 
                           key={n.id}
-                          className={`p-2.5 rounded-lg border text-[10px] font-mono transition-colors text-left ${
+                          className={`p-2.5 rounded-xl border text-[10px] font-mono transition-colors text-left ${
                             n.is_read 
                               ? 'bg-surface-container-low/40 border-outline-variant/10 text-on-surface-variant'
-                              : 'bg-primary-container/5 border-primary-container/20 text-on-surface'
+                              : 'bg-amber-500/10 border-amber-500/30 text-white shadow-[0_0_10px_rgba(245,158,11,0.1)]'
                           }`}
                         >
                           <div className="flex justify-between items-start gap-2">
                             <span className={`font-bold uppercase tracking-tight text-[9px] ${
-                              n.type === 'transaction' ? 'text-primary-fixed' : n.type === 'achievement' ? 'text-yellow-400' : 'text-on-surface'
+                              n.type === 'transaction' ? 'text-amber-400' : n.type === 'achievement' ? 'text-emerald-400' : 'text-cyan-300'
                             }`}>
                               {n.title}
                             </span>
                             {!n.is_read && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                             )}
                           </div>
                           <p className="mt-1 leading-normal break-words">{n.message}</p>
@@ -430,21 +434,23 @@ export default function Header() {
           </div>
 
           {/* Settings shortcut */}
-          <button onClick={() => router.push('/settings')} className="text-on-surface-variant hover:text-primary-fixed transition-colors cursor-pointer">
-            <span className="material-symbols-outlined text-[22px]">settings</span>
+          <button onClick={() => router.push('/settings')} className="text-on-surface-variant hover:text-cyan-400 transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-cyan-500/10 group">
+            <span className="material-symbols-outlined text-[22px] group-hover:rotate-90 transition-transform duration-500">settings</span>
           </button>
 
           {/* User profile picture with dropdown */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-8 h-8 rounded-full overflow-hidden border border-primary-fixed bg-surface-variant shrink-0 cursor-pointer focus:outline-none"
+              className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-500 shrink-0 cursor-pointer focus:outline-none shadow-[0_0_10px_rgba(0,255,163,0.3)] hover:scale-105 transition-transform"
             >
-              <img
-                alt="User profile"
-                className="w-full h-full object-cover"
-                src={profile?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
-              />
+              <div className="w-full h-full rounded-full overflow-hidden bg-surface-variant">
+                <img
+                  alt="User profile"
+                  className="w-full h-full object-cover"
+                  src={profile?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
+                />
+              </div>
             </button>
 
             {dropdownOpen && (
