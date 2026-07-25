@@ -695,30 +695,36 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Weekly Log (Bar Chart) - 6 cols */}
-        <div className="lg:col-span-6 card-base p-5 space-y-4">
-          <h3 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Weekly grind (Mins per Day)</h3>
+        <div className="lg:col-span-6 card-base p-5 space-y-4 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-[0_0_20px_rgba(0,255,163,0.1)] group">
+          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-emerald-400 animate-pulse">bar_chart</span>
+            <span>Weekly grind (Mins per Day)</span>
+          </h3>
           <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <XAxis dataKey="day" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
                 <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '10px' }} />
-                <Bar dataKey="minutes" fill="#00FFA3" radius={[3, 3, 0, 0]} maxBarSize={25} />
+                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#00FFA3', borderRadius: '8px', fontSize: '10px', color: '#fff' }} />
+                <Bar dataKey="minutes" fill="#00FFA3" radius={[4, 4, 0, 0]} maxBarSize={25} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Hourly Focus (Line Chart) - 6 cols */}
-        <div className="lg:col-span-6 card-base p-5 space-y-4">
-          <h3 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Hourly Focus (Mins per Hour)</h3>
+        <div className="lg:col-span-6 card-base p-5 space-y-4 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-[0_0_20px_rgba(0,229,255,0.1)] group">
+          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-cyan-400 animate-pulse">show_chart</span>
+            <span>Hourly Focus (Mins per Hour)</span>
+          </h3>
           <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={hourlyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <XAxis dataKey="name" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
                 <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '10px' }} />
-                <Line type="monotone" dataKey="minutes" stroke="#00FFA3" strokeWidth={1.5} dot={true} />
+                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#00E5FF', borderRadius: '8px', fontSize: '10px', color: '#fff' }} />
+                <Line type="monotone" dataKey="minutes" stroke="#00E5FF" strokeWidth={2} dot={{ fill: '#00E5FF', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -729,8 +735,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
         {/* Donut Chart (Focus vs Non-Focus Ratio today) - 4 cols */}
-        <div className="xl:col-span-4 card-base p-5 flex flex-col justify-between h-[360px]">
-          <h3 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider mb-2">Focus Ratio breakdown</h3>
+        <div className="xl:col-span-4 card-base p-5 flex flex-col justify-between h-[360px] bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-surface-container border border-purple-500/30 hover:border-purple-400/60 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)] group">
+          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-purple-400 animate-spin">pie_chart</span>
+            <span>Focus Ratio breakdown</span>
+          </h3>
           
           <div className="relative flex-grow flex items-center justify-center">
             <ResponsiveContainer width="100%" height={160}>
@@ -753,37 +762,40 @@ export default function Dashboard() {
             </ResponsiveContainer>
             
             <div className="absolute flex flex-col items-center">
-              <span className="font-mono text-lg font-bold text-on-surface">{focusMinsToday}m</span>
-              <span className="text-[7px] text-on-surface-variant uppercase tracking-widest font-bold">Focus</span>
+              <span className="font-mono text-lg font-bold text-white">{focusMinsToday}m</span>
+              <span className="text-[7px] text-purple-300 uppercase tracking-widest font-bold">Focus</span>
             </div>
           </div>
 
-          <div className="flex justify-around text-[10px] font-mono border-t border-outline-variant/30 pt-4">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-primary-container"></span> Focus ({focusMinsToday}m)</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-error"></span> Distracted ({distractedMinsToday}m)</span>
+          <div className="flex justify-around text-[10px] font-mono border-t border-purple-500/20 pt-4">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(0,255,163,0.6)]"></span> Focus ({focusMinsToday}m)</span>
+            <span className="flex items-center gap-1.5 text-rose-400 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Distracted ({distractedMinsToday}m)</span>
           </div>
         </div>
 
         {/* Objectives list - 4 cols */}
-        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden">
-          <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase">Sprint Objectives</h3>
-            <span className="font-label-mono text-[10px] text-on-surface-variant">{tasks.length} active</span>
+        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-surface-container border border-indigo-500/30 hover:border-indigo-400/60 transition-all shadow-[0_0_20px_rgba(99,102,241,0.1)]">
+          <div className="p-4 border-b border-indigo-500/20 flex justify-between items-center bg-indigo-950/20">
+            <h3 className="font-display text-sm font-bold text-white uppercase flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-indigo-400 animate-pulse">task_alt</span>
+              <span>Sprint Objectives</span>
+            </h3>
+            <span className="font-label-mono text-[10px] text-indigo-300 font-bold bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-800/40">{tasks.length} active</span>
           </div>
           
-          <form onSubmit={handleAddTask} className="p-3 border-b border-outline-variant bg-surface flex gap-2">
+          <form onSubmit={handleAddTask} className="p-3 border-b border-indigo-500/20 bg-surface/80 flex gap-2">
             <input
               type="text"
               required
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="New objective..."
-              className="flex-1 bg-background border border-outline-variant rounded px-2.5 py-1 text-xs text-on-surface focus:outline-none focus:border-primary-fixed"
+              className="flex-1 bg-background border border-indigo-500/30 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-400 font-mono"
             />
             <select
               value={newTaskSubject}
               onChange={(e) => setNewTaskSubject(e.target.value)}
-              className="bg-background border border-outline-variant rounded px-1 py-1 text-[10px] text-on-surface focus:outline-none font-mono"
+              className="bg-background border border-indigo-500/30 rounded px-1 py-1 text-[10px] text-white focus:outline-none font-mono"
             >
               <option value="Engineering">Eng</option>
               <option value="Mathematics">Math</option>
@@ -792,7 +804,7 @@ export default function Dashboard() {
             </select>
             <button 
               type="submit"
-              className="bg-primary-container text-on-primary px-2 rounded hover:bg-primary-fixed transition-colors flex items-center justify-center cursor-pointer"
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono font-bold px-3 rounded transition-transform hover:scale-105 flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.3)]"
             >
               <span className="material-symbols-outlined text-sm font-bold">add</span>
             </button>
@@ -801,10 +813,10 @@ export default function Dashboard() {
           <div className="p-2 flex-1 overflow-y-auto custom-scrollbar">
             {tasks.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <p className="text-[11px] text-on-surface-variant font-label-mono mb-2">No active sprint objectives</p>
+                <p className="text-[11px] text-indigo-300/80 font-label-mono mb-2">No active sprint objectives</p>
                 <button
                   onClick={() => router.push('/study')}
-                  className="bg-primary-container text-on-primary font-mono text-[10px] font-bold px-3 py-1.5 rounded hover:bg-primary-fixed transition cursor-pointer"
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono text-[10px] font-bold px-3 py-1.5 rounded transition cursor-pointer hover:scale-105 shadow-[0_0_12px_rgba(0,255,163,0.3)]"
                 >
                   + Start Free Study Session
                 </button>
@@ -814,7 +826,7 @@ export default function Dashboard() {
                 {tasks.map(task => (
                   <li 
                     key={task.id} 
-                    className={`flex items-center justify-between p-2.5 rounded-lg border border-outline-variant/35 bg-surface-container-lowest/60 hover:bg-surface-container-low transition-colors ${
+                    className={`flex items-center justify-between p-2.5 rounded-lg border border-indigo-500/20 bg-indigo-950/20 hover:bg-indigo-950/40 transition-all ${
                       task.completed ? 'opacity-40' : ''
                     }`}
                   >
@@ -823,16 +835,16 @@ export default function Dashboard() {
                         type="checkbox" 
                         checked={task.completed} 
                         onChange={() => toggleTask(task.id, task.completed)}
-                        className="w-3.5 h-3.5 text-primary-container bg-background border-outline-variant rounded focus:ring-primary-container cursor-pointer shrink-0"
+                        className="w-3.5 h-3.5 text-emerald-400 bg-background border-indigo-500/40 rounded focus:ring-emerald-400 cursor-pointer shrink-0"
                       />
                       <div 
                         onClick={() => router.push(`/study?taskTitle=${encodeURIComponent(task.title)}&taskId=${task.id}`)}
                         className="flex flex-col min-w-0 cursor-pointer group"
                       >
-                        <span className={`text-xs text-on-surface truncate group-hover:text-primary-fixed transition-colors ${task.completed ? 'line-through' : ''}`}>
+                        <span className={`text-xs text-white truncate group-hover:text-emerald-400 transition-colors ${task.completed ? 'line-through' : ''}`}>
                           {task.title}
                         </span>
-                        <span className="text-[9px] text-primary-fixed font-mono font-bold">
+                        <span className="text-[9px] text-emerald-400 font-mono font-bold">
                           Focus: {taskFocusMinutes[task.title.trim().toLowerCase()] || 0}m / {task.planned_minutes}m target ⚡ Start
                         </span>
                       </div>
@@ -840,14 +852,14 @@ export default function Dashboard() {
                     <div className="flex items-center gap-1 shrink-0">
                       <button 
                         onClick={() => router.push(`/study?taskTitle=${encodeURIComponent(task.title)}&taskId=${task.id}`)}
-                        className="bg-primary-container/20 hover:bg-primary-container text-primary-fixed hover:text-on-primary p-1 rounded transition-colors text-[10px] font-mono font-bold cursor-pointer"
+                        className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-neutral-950 p-1 rounded transition-colors text-[10px] font-mono font-bold cursor-pointer"
                         title="Start Sprint"
                       >
                         <span className="material-symbols-outlined text-xs font-bold">play_arrow</span>
                       </button>
                       <button 
                         onClick={() => deleteTask(task.id)}
-                        className="text-on-surface-variant hover:text-error transition-colors p-1 cursor-pointer"
+                        className="text-rose-400 hover:text-rose-300 transition-colors p-1 cursor-pointer"
                         title="Delete Objective"
                       >
                         <span className="material-symbols-outlined text-xs font-bold">delete</span>
@@ -861,38 +873,41 @@ export default function Dashboard() {
         </div>
 
         {/* Lobbies list (Joined Squads) - 4 cols */}
-        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden">
-          <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase">Joined Squads</h3>
-            <span className="font-label-mono text-[10px] text-on-surface-variant">{liveRooms.length} active</span>
+        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-[0_0_20px_rgba(0,255,163,0.1)]">
+          <div className="p-4 border-b border-emerald-500/20 flex justify-between items-center bg-emerald-950/20">
+            <h3 className="font-display text-sm font-bold text-white uppercase flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span>Joined Squads</span>
+            </h3>
+            <span className="font-label-mono text-[10px] text-emerald-300 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/40">{liveRooms.length} active</span>
           </div>
 
           <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-2">
             {liveRooms.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <p className="text-[11px] text-on-surface-variant font-label-mono">No active arena memberships</p>
+                <p className="text-[11px] text-emerald-300/80 font-label-mono">No active arena memberships</p>
                 <button 
                   onClick={() => router.push('/rooms')}
-                  className="mt-3 bg-secondary-container text-on-secondary px-4 py-1.5 rounded font-label-mono text-[10px] font-bold hover:bg-secondary-fixed transition-colors cursor-pointer"
+                  className="mt-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 px-4 py-1.5 rounded font-label-mono text-[10px] font-bold transition-all hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(0,255,163,0.3)]"
                 >
-                  Browse & Join Squads
+                  Browse &amp; Join Squads
                 </button>
               </div>
             ) : (
               liveRooms.map(room => (
                 <div 
                   key={room.id}
-                  className="p-3 bg-surface-container-lowest/60 border border-outline-variant/35 rounded-xl flex items-center justify-between gap-3 hover:border-secondary-fixed transition-all cursor-pointer"
+                  className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3 hover:border-emerald-400 transition-all cursor-pointer group"
                   onClick={() => router.push(`/study?roomId=${room.id}`)}
                 >
                   <div className="min-w-0">
-                    <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight">{room.name}</h4>
+                    <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{room.name}</h4>
                     <div className="flex gap-2 items-center mt-1">
-                      <span className="font-mono text-[8px] text-on-surface-variant uppercase tracking-widest inline-block font-bold">
+                      <span className="font-mono text-[8px] text-emerald-300 uppercase tracking-widest inline-block font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/40">
                         #{room.type} • {room.max_members} max
                       </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-                      <span className="font-mono text-[8px] text-primary-fixed uppercase tracking-widest inline-block font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest inline-block font-bold">
                         Focus: {roomFocusMinutes[room.id] || 0}m
                       </span>
                     </div>
@@ -902,7 +917,7 @@ export default function Dashboard() {
                       e.stopPropagation();
                       router.push(`/study?roomId=${room.id}`);
                     }}
-                    className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-[9px] font-bold py-1.5 px-3.5 rounded transition-colors cursor-pointer shrink-0"
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-[9px] font-bold py-1.5 px-3.5 rounded transition-all hover:scale-105 cursor-pointer shrink-0 shadow-[0_0_10px_rgba(0,255,163,0.3)]"
                   >
                     Launch Arena
                   </button>
@@ -918,13 +933,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Arena Battle Duels Log (6 cols) */}
-        <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden">
-          <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30 mb-4 bg-surface-container-low/10">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm text-[#00ffa3]">swords</span>
-              Arena Battle Duels
+        <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden bg-gradient-to-br from-amber-500/10 via-red-500/5 to-surface-container border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+          <div className="flex justify-between items-center pb-3 border-b border-amber-500/20 mb-4 bg-amber-950/20 p-2 rounded-lg">
+            <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-amber-400 animate-bounce">swords</span>
+              <span>Arena Battle Duels</span>
             </h3>
-            <span className="font-label-mono text-[10px] text-on-surface-variant">
+            <span className="font-label-mono text-[10px] text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-800/40">
               {allSessionsList.filter(s => s.opponent_name).length} Duels
             </span>
           </div>
@@ -932,10 +947,10 @@ export default function Dashboard() {
           <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
             {allSessionsList.filter(s => s.opponent_name).length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-2">
-                <p className="text-xs text-on-surface-variant font-mono uppercase">No duel history found.</p>
+                <p className="text-xs text-amber-300/80 font-mono uppercase">No duel history found.</p>
                 <button
                   onClick={() => setIsChallengeModalOpen(true)}
-                  className="bg-primary-container/20 text-primary-fixed border border-primary-fixed/30 hover:bg-primary-container hover:text-on-primary font-mono text-[10px] font-bold px-3 py-1.5 rounded transition cursor-pointer"
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 font-mono text-[10px] font-bold px-4 py-2 rounded transition-transform hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.3)]"
                 >
                   Challenge a Squad Member
                 </button>
@@ -946,28 +961,28 @@ export default function Dashboard() {
                 const myMins = Math.round(duel.focus_seconds / 60);
                 const oppMins = Math.round(duel.opponent_focus_seconds / 60);
                 return (
-                  <div key={duel.id} className="p-3 bg-surface-container-lowest/60 border border-outline-variant/35 rounded-xl flex items-center justify-between gap-3 font-mono">
+                  <div key={duel.id} className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl flex items-center justify-between gap-3 font-mono">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${
                           duel.is_winner 
-                            ? 'text-[#00ffa3] bg-[#00ffa3]/10 border-[#00ffa3]/30 shadow-[0_0_5px_rgba(0,255,163,0.15)]'
-                            : 'text-[#ff3b30] bg-[#ff3b30]/10 border-[#ff3b30]/30 shadow-[0_0_5px_rgba(255,59,48,0.15)]'
+                            ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_10px_rgba(0,255,163,0.3)]'
+                            : 'text-rose-400 bg-rose-500/20 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
                         }`}>
                           {duel.is_winner ? 'VICTORY' : 'DEFEAT'}
                         </span>
                         {duel.hands_down_forfeited && (
-                          <span className="text-[8px] text-on-surface-variant uppercase font-bold">(Forfeited)</span>
+                          <span className="text-[8px] text-amber-300/80 uppercase font-bold">(Forfeited)</span>
                         )}
                       </div>
-                      <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight mt-1.5">
+                      <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight mt-1.5">
                         VS {duel.opponent_name}
                       </h4>
-                      <p className="text-[9px] text-on-surface-variant uppercase mt-0.5">
+                      <p className="text-[9px] text-amber-300/90 uppercase mt-0.5">
                         You: {myMins}m | Opponent: {oppMins}m
                       </p>
                     </div>
-                    <span className="text-[9px] text-on-surface-variant shrink-0">{date}</span>
+                    <span className="text-[9px] text-amber-300/70 shrink-0">{date}</span>
                   </div>
                 );
               })
@@ -981,19 +996,22 @@ export default function Dashboard() {
           const recentTwoDaySessions = allSessionsList.filter(s => new Date(s.start_time) >= twoDaysAgo);
 
           return (
-            <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden">
-              <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30 mb-4 bg-surface-container-low/10">
-                <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider">Recent Study Sessions</h3>
-                <span className="font-label-mono text-[10px] text-on-surface-variant">{recentTwoDaySessions.length} in last 48h</span>
+            <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+              <div className="flex justify-between items-center pb-3 border-b border-cyan-500/20 mb-4 bg-cyan-950/20 p-2 rounded-lg">
+                <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm text-cyan-400 animate-spin">history</span>
+                  <span>Recent Study Sessions</span>
+                </h3>
+                <span className="font-label-mono text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/40">{recentTwoDaySessions.length} in last 48h</span>
               </div>
 
               <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
                 {recentTwoDaySessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-2">
-                    <p className="text-xs text-on-surface-variant font-mono">No study sessions recorded in the last 2 days.</p>
+                    <p className="text-xs text-cyan-300/80 font-mono">No study sessions recorded in the last 2 days.</p>
                     <button
                       onClick={() => router.push('/study')}
-                      className="bg-primary-container text-on-primary font-mono text-[10px] font-bold px-4 py-2 rounded hover:bg-primary-fixed transition cursor-pointer"
+                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono text-[10px] font-bold px-4 py-2 rounded transition-transform hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(0,255,163,0.3)]"
                     >
                       Start New Session
                     </button>
@@ -1010,17 +1028,17 @@ export default function Dashboard() {
                       ? `Arena: ${roomType.charAt(0).toUpperCase() + roomType.slice(1)}` 
                       : 'Self Mode';
                     const badgeColor = roomType === 'money' 
-                      ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
+                      ? 'text-amber-400 bg-amber-500/20 border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
                       : roomType === 'private'
-                      ? 'text-purple-400 bg-purple-500/10 border-purple-500/30'
+                      ? 'text-purple-400 bg-purple-500/20 border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
                       : roomType === 'public'
-                      ? 'text-[#00ffa3] bg-[#00ffa3]/10 border-[#00ffa3]/30'
-                      : 'text-on-surface-variant bg-surface-container border-outline-variant';
+                      ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_8px_rgba(0,255,163,0.2)]'
+                      : 'text-cyan-300 bg-cyan-950/80 border-cyan-800/40';
 
                     return (
                       <div 
                         key={session.id} 
-                        className="p-3 bg-surface-container-lowest/60 border border-outline-variant/35 rounded-xl flex items-center justify-between gap-3 font-mono group"
+                        className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-xl flex items-center justify-between gap-3 font-mono group hover:border-cyan-400 transition-all"
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -1028,21 +1046,21 @@ export default function Dashboard() {
                               {typeLabel}
                             </span>
                           </div>
-                          <h4 className="font-display text-xs font-bold text-on-surface truncate uppercase tracking-tight">
+                          <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight group-hover:text-cyan-300 transition-colors">
                             {session.name || 'Untitled Study Session'}
                           </h4>
-                          <p className="text-[9px] text-primary-fixed uppercase tracking-wider font-bold mt-1">
+                          <p className="text-[9px] text-emerald-400 uppercase tracking-wider font-bold mt-1">
                             Focus: {focusMin}m / {totalMin}m ({ratio}%)
                           </p>
-                          <p className="text-[8px] text-on-surface-variant uppercase mt-0.5">
+                          <p className="text-[8px] text-cyan-300/70 uppercase mt-0.5">
                             🖥️ {Math.round((session.screen_focus_seconds || 0) / 60)}m / 📝 {Math.round((session.paper_focus_seconds || 0) / 60)}m
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-2 shrink-0">
-                          <span className="text-[9px] text-on-surface-variant">{date}</span>
+                          <span className="text-[9px] text-cyan-300/70">{date}</span>
                           <button
                             onClick={(e) => handleDeleteSession(session.id, e)}
-                            className="text-red-400/80 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 px-2 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[9px] font-bold"
+                            className="text-rose-400/90 hover:text-white bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30 px-2 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[9px] font-bold"
                             title="Delete Session Record"
                           >
                             <span className="material-symbols-outlined text-[12px]">delete</span>
