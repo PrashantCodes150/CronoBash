@@ -294,48 +294,55 @@ export default function RoomsLobby() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 select-none">
       {/* Top Banner Lobbies controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Study Arenas</h2>
-          <p className="text-xs text-on-surface-variant mt-1">Join study arenas or stake tokens in high-stakes money contests</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-purple-500/30 bg-gradient-to-r from-pink-500/15 via-purple-500/10 to-cyan-500/15 p-6 rounded-3xl shadow-[0_0_35px_rgba(168,85,247,0.2)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-pink-500 animate-ping"></span>
+            <span className="font-mono text-xs text-pink-400 font-extrabold tracking-widest uppercase">REAL-TIME MULTIPLAYER COHORTS</span>
+          </div>
+          <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+            Study Arenas Lobbies
+          </h2>
+          <p className="text-xs text-purple-300/80 font-mono mt-1">Join active focus rooms or create your own custom study battleground</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary-container text-on-primary font-label-mono text-xs font-bold py-2.5 px-6 rounded-lg hover:bg-primary-fixed transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,163,0.2)] cursor-pointer"
+          className="relative z-10 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-400 hover:to-cyan-400 text-white font-label-mono text-xs font-black py-3 px-7 rounded-2xl hover:scale-105 transition-all flex items-center gap-2 shadow-[0_0_25px_rgba(236,72,153,0.4)] cursor-pointer border border-pink-400/50"
         >
-          <span className="material-symbols-outlined text-sm font-bold">add</span>
+          <span className="material-symbols-outlined text-sm font-black animate-bounce">add</span>
           Create Arena
         </button>
       </div>
 
       {alertMsg && (
-        <div className={`border rounded-lg p-4 text-xs flex items-center gap-3 ${
-          alertMsg.type === 'error' ? 'bg-error-container/15 border-error/50 text-error' : 'bg-primary-container/15 border-primary-container/50 text-primary-fixed'
+        <div className={`border rounded-2xl p-4 text-xs flex items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.5)] ${
+          alertMsg.type === 'error' ? 'bg-rose-500/15 border-rose-500/50 text-rose-300' : 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300'
         }`}>
-          <span className="material-symbols-outlined text-sm">warning</span>
-          <span>{alertMsg.text}</span>
+          <span className="material-symbols-outlined text-sm animate-pulse">warning</span>
+          <span className="font-mono font-semibold">{alertMsg.text}</span>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-surface-container-low border border-outline-variant p-4 rounded-xl">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gradient-to-r from-pink-950/30 via-purple-950/30 to-cyan-950/30 border border-purple-500/30 p-4 rounded-2xl shadow-[0_0_25px_rgba(168,85,247,0.15)]">
         {/* Type Filter buttons */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           {(['all', 'public', 'private', 'money'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2 rounded-lg font-label-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2.5 rounded-xl font-label-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeFilter === filter
-                  ? 'bg-primary-container text-on-primary font-bold shadow-[0_0_10px_rgba(0,255,163,0.2)]'
-                  : 'bg-background hover:bg-surface-variant text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-[0_0_15px_rgba(236,72,153,0.4)] scale-105 border border-pink-400'
+                  : 'bg-neutral-950/60 hover:bg-purple-950/40 text-purple-300/80 hover:text-white border border-purple-500/20'
               }`}
             >
               <span>{filter === 'money' ? 'Money Arenas' : filter}</span>
               {filter === 'money' && (
-                <span className="text-[8px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse">
+                <span className="text-[8px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider animate-pulse">
                   COMING SOON
                 </span>
               )}
@@ -352,27 +359,27 @@ export default function RoomsLobby() {
               maxLength={6}
               value={joinCodeInput}
               onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
-              placeholder="ENTER ARENA CODE..."
-              className="bg-background border border-outline-variant rounded-lg px-3 py-2 font-mono text-xs text-on-surface focus:outline-none uppercase tracking-wider w-full sm:w-36 text-center"
+              placeholder="ARENA CODE..."
+              className="bg-neutral-950 border border-purple-500/30 rounded-xl px-3 py-2 font-mono text-xs text-white focus:outline-none focus:border-pink-400 uppercase tracking-wider w-full sm:w-36 text-center"
             />
             <button
               type="submit"
               disabled={joiningByCode}
-              className="bg-secondary-container hover:bg-secondary-fixed text-on-secondary font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer shrink-0 uppercase"
+              className="bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-[10px] font-extrabold px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0 uppercase shadow-[0_0_10px_rgba(168,85,247,0.3)] hover:scale-105"
             >
               {joiningByCode ? 'Joining...' : 'Join Code'}
             </button>
           </form>
 
           {/* Search Input bar */}
-          <div className="w-full sm:w-44 relative flex items-center bg-background border border-outline-variant rounded-lg px-3 py-2">
-            <span className="material-symbols-outlined text-on-surface-variant text-lg mr-2 select-none">search</span>
+          <div className="w-full sm:w-48 relative flex items-center bg-neutral-950 border border-purple-500/30 rounded-xl px-3 py-2">
+            <span className="material-symbols-outlined text-purple-400 text-lg mr-2 select-none animate-pulse">search</span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search study arenas..."
-              className="w-full bg-transparent text-xs text-on-surface focus:outline-none"
+              placeholder="Search arenas..."
+              className="w-full bg-transparent text-xs text-white focus:outline-none font-mono"
             />
           </div>
         </div>
@@ -380,119 +387,96 @@ export default function RoomsLobby() {
 
       {/* Rooms Grid list or Money Arenas Full-Page COMING SOON */}
       {activeFilter === 'money' ? (
-        <div className="card-base p-8 md:p-12 text-center space-y-6 relative overflow-hidden shadow-2xl backdrop-blur-xl">
+        <div className="card-base p-8 md:p-12 text-center space-y-6 relative overflow-hidden shadow-2xl backdrop-blur-xl border border-amber-500/40 bg-gradient-to-br from-amber-500/15 via-orange-500/5 to-surface-container">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-              <span className="material-symbols-outlined text-2xl font-bold">payments</span>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.35)] animate-pulse">
+              <span className="material-symbols-outlined text-3xl font-bold animate-bounce">payments</span>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.2)]">
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/15 border border-amber-500/40 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)]">
               OFFICIAL FEATURE PREVIEW
             </span>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-3xl md:text-4xl font-black text-white font-display tracking-tight">
-              High-Stakes Money Matches & Cash Contests
+            <h2 className="text-3xl md:text-4xl font-black text-white font-display tracking-tight bg-gradient-to-r from-amber-400 via-orange-400 to-white bg-clip-text text-transparent">
+              High-Stakes Money Matches &amp; Cash Contests
             </h2>
-            <p className="text-xs md:text-sm text-on-surface-variant font-mono max-w-xl mx-auto leading-relaxed">
+            <p className="text-xs md:text-sm text-amber-300/80 font-mono max-w-xl mx-auto leading-relaxed">
               Master cognitive discipline, eliminate distractions, and stake your focus in 1v1 skill-verified study duels.
             </p>
           </div>
 
           {/* Large Ripped Paper Reveal "COMING SOON" Graphic Container */}
-          <div className="w-full max-w-lg mx-auto bg-neutral-950 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl p-0.5 select-none">
-            <div className="py-6 sm:py-8 px-6 sm:px-10 flex items-center justify-center bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 relative">
-              {/* Curled / Ripped White Paper Fold Effect */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-10 bg-gradient-to-r from-neutral-100 via-neutral-300 to-transparent shadow-[4px_0_12px_rgba(0,0,0,0.8)] transform -skew-x-6 border-r border-neutral-400 pointer-events-none z-20" />
-              <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-3 bg-gradient-to-r from-neutral-400 to-transparent opacity-40 z-20 pointer-events-none" />
-
-              {/* Metallic 3D Silver "COMING SOON" Typography */}
+          <div className="w-full max-w-lg mx-auto bg-neutral-950 border border-amber-500/30 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.2)] p-0.5 select-none">
+            <div className="py-6 sm:py-8 px-6 sm:px-10 flex items-center justify-center bg-gradient-to-r from-neutral-950 via-amber-950/40 to-neutral-950 relative">
               <div className="relative z-10 text-center font-black tracking-widest uppercase font-display">
-                <span className="block text-2xl sm:text-4xl md:text-5xl bg-gradient-to-b from-white via-neutral-200 to-neutral-500 bg-clip-text text-transparent drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)]">
+                <span className="block text-2xl sm:text-4xl md:text-5xl bg-gradient-to-b from-amber-300 via-orange-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)] animate-pulse">
                   COMING SOON
                 </span>
               </div>
             </div>
           </div>
-
-          {/* Trust-Building Psychological Notice */}
-          <div className="bg-surface-container-high/60 border border-outline-variant/30 rounded-2xl p-5 text-left space-y-1.5 max-w-xl mx-auto">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-mono">
-              <span className="material-symbols-outlined text-sm text-emerald-400">verified_user</span>
-              <span>100% Skill-Verified Cognitive Esports Standard</span>
-            </div>
-            <p className="text-xs text-on-surface-variant font-mono leading-relaxed">
-              Match outcomes are strictly determined by human focus verified frame-by-frame by MediaPipe AI gaze algorithms for peak academic mastery.
-            </p>
-          </div>
         </div>
       ) : loadingRooms ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-on-surface-variant font-label-mono text-xs mt-4">FETCHING ACTIVE ARENAS...</p>
+          <div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
+          <p className="text-pink-400 font-mono text-xs mt-4 font-bold animate-pulse">FETCHING ARENA LOBBIES...</p>
         </div>
       ) : filteredRooms.length === 0 ? (
-        <div className="card-base text-center py-20 space-y-4">
-          <span className="material-symbols-outlined text-5xl text-on-surface-variant">meeting_room</span>
-          <p className="text-sm font-label-mono text-on-surface-variant">No active study arenas found</p>
+        <div className="card-base text-center py-20 space-y-4 border border-purple-500/30 bg-purple-950/10 rounded-3xl">
+          <span className="material-symbols-outlined text-5xl text-purple-400/50 animate-bounce">meeting_room</span>
+          <p className="text-sm font-mono text-purple-300">No active study arenas found</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room) => {
+          {filteredRooms.map((room, idx) => {
             const isMoneyRoom = room.type === 'money';
+            // Alternating vibe-coded neon themes per card
+            const cardGradients = [
+              'from-pink-500/15 via-purple-500/10 to-surface-container border-pink-500/40 hover:border-pink-400 shadow-[0_0_25px_rgba(236,72,153,0.15)] hover:shadow-[0_0_35px_rgba(236,72,153,0.3)]',
+              'from-cyan-500/15 via-blue-500/10 to-surface-container border-cyan-500/40 hover:border-cyan-400 shadow-[0_0_25px_rgba(0,229,255,0.15)] hover:shadow-[0_0_35px_rgba(0,229,255,0.3)]',
+              'from-emerald-500/15 via-teal-500/10 to-surface-container border-emerald-500/40 hover:border-emerald-400 shadow-[0_0_25px_rgba(0,255,163,0.15)] hover:shadow-[0_0_35px_rgba(0,255,163,0.3)]',
+              'from-amber-500/15 via-orange-500/10 to-surface-container border-amber-500/40 hover:border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.15)] hover:shadow-[0_0_35px_rgba(245,158,11,0.3)]',
+            ];
+            const activeGradient = cardGradients[idx % cardGradients.length];
+
             return (
               <div 
                 key={room.id}
-                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400 transition-all duration-300 shadow-[0_0_20px_rgba(0,255,163,0.1)] hover:shadow-[0_0_30px_rgba(0,255,163,0.2)]"
+                className={`card-base flex flex-col justify-between p-6 relative overflow-hidden group rounded-3xl bg-gradient-to-br ${activeGradient} transition-all duration-300 hover:-translate-y-1`}
               >
-                {/* Neon glow elements for money rooms */}
-                {isMoneyRoom && (
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl"></div>
-                )}
-                
                 <div>
                   <div className="flex justify-between items-start gap-4 mb-4">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      <span className={`font-label-mono text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider ${
                         isMoneyRoom 
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' 
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.3)]' 
                           : room.type === 'private' 
-                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
-                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_8px_rgba(0,255,163,0.3)]'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(0,255,163,0.3)]'
                       }`}>
                         {room.type} Arena
                       </span>
-                      {isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
-                          COMING SOON
-                        </span>
-                      )}
                       {room.is_active === false && !isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center gap-1">
+                        <span className="font-label-mono text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[10px] animate-pulse">lock</span>
                           MATCH IN PROGRESS
                         </span>
                       )}
                     </div>
-                    {isMoneyRoom && (
-                      <span className="font-label-mono text-[10px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[12px] font-bold">attach_money</span>
-                        Buy-in: {room.entry_fee} TKN
-                      </span>
-                    )}
                   </div>
 
-                  <h3 className="font-display text-lg font-bold text-white mb-2 truncate group-hover:text-emerald-400 transition-colors">
-                    {room.name}
+                  <h3 className="font-display text-xl font-black text-white mb-2 truncate group-hover:text-pink-400 transition-colors flex items-center gap-2">
+                    <span>{room.name}</span>
                   </h3>
                   
-                  <p className="text-xs text-on-surface-variant line-clamp-2 min-h-[32px] mb-3">
+                  <p className="text-xs text-on-surface-variant line-clamp-2 min-h-[32px] mb-4 leading-relaxed font-mono">
                     {room.description || 'Join this study arena to sprint focus timers together, share resources, and climb daily metrics.'}
                   </p>
 
                   <div className="flex flex-wrap gap-1.5 mb-6">
                     {room.subject_tags.map(tag => (
-                      <span key={tag} className="font-label-mono text-[9px] bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded text-emerald-300 font-bold">
+                      <span key={tag} className="font-label-mono text-[9px] bg-neutral-950/80 border border-purple-500/30 px-2.5 py-0.5 rounded-lg text-purple-300 font-bold">
                         #{tag}
                       </span>
                     ))}
@@ -523,15 +507,18 @@ export default function RoomsLobby() {
                   <button
                     disabled={room.is_active === false || isMoneyRoom}
                     onClick={() => handleJoinRoom(room)}
-                    className={`font-label-mono text-[10px] font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                    className={`font-label-mono text-xs font-extrabold px-5 py-2.5 rounded-xl transition-all cursor-pointer uppercase flex items-center justify-center gap-1.5 ${
                       isMoneyRoom
                         ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 cursor-not-allowed opacity-90'
                         : room.is_active === false
-                          ? 'bg-surface-container-high text-on-surface-variant border border-outline-variant cursor-not-allowed opacity-60'
-                          : 'bg-primary-container hover:bg-primary-fixed text-on-primary shadow-[0_0_8px_rgba(0,255,163,0.15)]'
+                          ? 'bg-neutral-900 text-neutral-500 border border-neutral-800 cursor-not-allowed opacity-60'
+                          : 'bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-400 hover:to-cyan-400 text-white shadow-[0_0_15px_rgba(236,72,153,0.3)] hover:scale-105 border border-pink-400/40'
                     }`}
                   >
-                    {isMoneyRoom ? 'COMING SOON 🔒' : room.is_active === false ? 'LOCKED 🔒' : 'Enter Arena'}
+                    <span>{isMoneyRoom ? 'COMING SOON 🔒' : room.is_active === false ? 'LOCKED 🔒' : 'Launch Arena'}</span>
+                    {!isMoneyRoom && room.is_active !== false && (
+                      <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -542,15 +529,20 @@ export default function RoomsLobby() {
 
       {/* Create Room modal overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-6">
-          <div className="w-full max-w-lg bg-surface-container border border-outline-variant rounded-2xl p-8 relative overflow-hidden shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-lg font-black text-on-surface uppercase">Configure Focus Arena</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6">
+          <div className="w-full max-w-lg bg-gradient-to-br from-pink-950/40 via-purple-950/40 to-surface-container border border-purple-500/40 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.3)]">
+            <div className="flex justify-between items-center mb-6 border-b border-purple-500/20 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-pink-500 animate-ping"></span>
+                <h3 className="font-display text-xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                  Configure Focus Arena
+                </h3>
+              </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer"
+                className="text-purple-300 hover:text-white p-1 cursor-pointer transition-colors"
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined font-bold">close</span>
               </button>
             </div>
 
