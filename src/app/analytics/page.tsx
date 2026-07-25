@@ -119,13 +119,16 @@ export default function AnalyticsPage() {
     const subjectMap: Record<string, number> = {};
     for (const s of sessions) {
       const matchingTask = tasks.find(t => t.title.trim().toLowerCase() === (s.name || '').trim().toLowerCase());
-      const subject = matchingTask ? matchingTask.subject : 'General Focus';
+      const subject = matchingTask ? matchingTask.subject : (s.name || 'General Study');
       subjectMap[subject] = (subjectMap[subject] || 0) + Math.round((s.focus_seconds || 0) / 60);
     }
-    const colors = ['#00FFA3', '#7047EB', '#FFB800', '#00C2FF', '#FF0055', '#A855F7'];
-    return Object.entries(subjectMap)
+
+    const colors = ['#00FFA3', '#00E5FF', '#A855F7', '#F59E0B', '#FF0055', '#3B82F6'];
+    const result = Object.entries(subjectMap)
       .map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
       .filter(s => s.value > 0);
+
+    return result.length > 0 ? result : [{ name: 'No Study Data', value: 0, color: '#333333' }];
   }, [sessions, tasks]);
 
   const plannedVsActual = useMemo(() => {
@@ -146,6 +149,33 @@ export default function AnalyticsPage() {
   const totalFocusHours = useMemo(() => {
     const secs = dayAgg.reduce((acc, d) => acc + d.focusSeconds, 0);
     return (secs / 3600).toFixed(1);
+  }, [dayAgg]);
+
+  const avgFocusScore = useMemo(() => {
+    const totalSecs = dayAgg.reduce((acc, d) => acc + d.totalSeconds, 0);
+    const focusSecs = dayAgg.reduce((acc, d) => acc + d.focusSeconds, 0);
+    if (totalSecs === 0) return 0;
+    return Math.round((focusSecs / totalSecs) * 100);
+  }, [dayAgg]);
+
+  const currentStreak = useMemo(() => {
+    if (dayAgg.length === 0) return 0;
+    let streak = 0;
+    const sortedDates = dayAgg.map(d => d.date).sort().reverse();
+    let checkDate = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+      const dateStr = checkDate.toISOString().split('T')[0];
+      if (sortedDates.includes(dateStr)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else if (i === 0) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
   }, [dayAgg]);
 
   const tableLogs = useMemo(() =>
@@ -171,21 +201,29 @@ export default function AnalyticsPage() {
     const totalDistracted = Math.max(0, totalTime - totalFocus);
     
     return [
-      { name: 'Deep Focus', value: Math.round(totalFocus / 60) || 45, color: '#00FFA3' },
-      { name: 'Distraction', value: Math.round(totalDistracted / 60) || 12, color: '#FF0055' },
-      { name: 'Rest / Buffer', value: Math.round(totalTime * 0.1 / 60) || 8, color: '#00E5FF' },
+      { name: 'Deep Focus', value: Math.round(totalFocus / 60), color: '#00FFA3' },
+      { name: 'Distraction', value: Math.round(totalDistracted / 60), color: '#FF0055' },
+      { name: 'Rest / Buffer', value: Math.round(totalTime * 0.1 / 60), color: '#00E5FF' },
     ];
   }, [dayAgg]);
 
-  const hourlyPeakData = useMemo(() => [
-    { hour: '00:00', focus: 15 },
-    { hour: '04:00', focus: 5 },
-    { hour: '08:00', focus: 45 },
-    { hour: '12:00', focus: 90 },
-    { hour: '16:00', focus: 110 },
-    { hour: '20:00', focus: 85 },
-    { hour: '22:00', focus: 60 },
-  ], []);
+  const hourlyPeakData = useMemo(() => {
+    const buckets: Record<string, number> = {
+      '00:00': 0, '04:00': 0, '08:00': 0, '12:00': 0, '16:00': 0, '20:00': 0, '22:00': 0
+    };
+    for (const s of sessions) {
+      const h = new Date(s.start_time).getHours();
+      let slot = '00:00';
+      if (h >= 22) slot = '22:00';
+      else if (h >= 20) slot = '20:00';
+      else if (h >= 16) slot = '16:00';
+      else if (h >= 12) slot = '12:00';
+      else if (h >= 8) slot = '08:00';
+      else if (h >= 4) slot = '04:00';
+      buckets[slot] += Math.round((s.focus_seconds || 0) / 60);
+    }
+    return Object.entries(buckets).map(([hour, focus]) => ({ hour, focus }));
+  }, [sessions]);
 
   const tooltipStyle = {
     backgroundColor: '#090d14',
@@ -256,7 +294,7 @@ export default function AnalyticsPage() {
             <span className="uppercase font-bold">Avg Focus Score</span>
             <TrendingUp className="w-4 h-4 text-cyan-400 animate-bounce" />
           </div>
-          <div className="text-3xl font-black text-white font-display">89.4%</div>
+          <div className="text-3xl font-black text-white font-display">{avgFocusScore}%</div>
           <p className="text-[10px] text-cyan-300/70 font-mono">Average focus score across sessions</p>
         </div>
 
@@ -265,7 +303,7 @@ export default function AnalyticsPage() {
             <span className="uppercase font-bold">Completed Sessions</span>
             <Award className="w-4 h-4 text-purple-400 animate-spin" />
           </div>
-          <div className="text-3xl font-black text-white font-display">{sessions.length || 18} <span className="text-xs font-mono text-purple-400 font-bold">sessions</span></div>
+          <div className="text-3xl font-black text-white font-display">{sessions.length} <span className="text-xs font-mono text-purple-400 font-bold">sessions</span></div>
           <p className="text-[10px] text-purple-300/70 font-mono">Successfully concluded focus rooms</p>
         </div>
 
@@ -274,7 +312,7 @@ export default function AnalyticsPage() {
             <span className="uppercase font-bold">Current Streak</span>
             <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
           </div>
-          <div className="text-3xl font-black text-white font-display">12 <span className="text-xs font-mono text-amber-400 font-bold">Days</span></div>
+          <div className="text-3xl font-black text-white font-display">{currentStreak} <span className="text-xs font-mono text-amber-400 font-bold">Days</span></div>
           <p className="text-[10px] text-amber-300/70 font-mono">Unbroken daily study streak</p>
         </div>
       </div>
