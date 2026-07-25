@@ -523,23 +523,27 @@ export default function Dashboard() {
       {/* Dashboard Top welcome banner */}
       <header className="pb-4 border-b border-outline-variant flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Main Command Rig</h2>
+          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2">
+            <span>Main Command Rig</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          </h2>
           <p className="text-xs text-on-surface-variant mt-1">Sprints telemetry, active task trackers, and weekly logs</p>
         </div>
         
         {/* Wallet credit display */}
         <div 
           onClick={() => router.push('/wallet')}
-          className="flex items-center gap-3 bg-surface-container border border-outline-variant rounded-xl p-3 select-none cursor-pointer hover:border-amber-500/50 transition-all"
+          className="flex items-center gap-3 bg-gradient-to-r from-amber-500/15 via-yellow-500/5 to-surface-container border border-amber-500/40 rounded-xl p-3 select-none cursor-pointer hover:border-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] transition-all group"
           title="Open Wallet"
         >
-          <div className="w-8 h-8 rounded-full bg-primary-container/15 flex items-center justify-center text-primary-fixed">
-            <span className="material-symbols-outlined text-base">payments</span>
+          <div className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+            <span className="material-symbols-outlined text-base animate-pulse">payments</span>
           </div>
           <div>
-            <p className="font-label-mono text-[8px] text-on-surface-variant uppercase font-bold tracking-widest">Stakes Balance</p>
-            <p className="font-mono text-sm font-bold text-on-surface">
-              {wallet?.balance ?? 0} <span className="text-[10px] text-on-surface-variant font-normal">TKN</span>
+            <p className="font-label-mono text-[8px] text-amber-400/90 uppercase font-bold tracking-widest">Stakes Balance</p>
+            <p className="font-mono text-sm font-bold text-white flex items-center gap-1">
+              <span>{wallet?.balance ?? 0}</span>
+              <span className="text-[10px] text-amber-400 font-normal">TKN</span>
             </p>
           </div>
         </div>
@@ -549,34 +553,37 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left Column (6 cols): Progress Circular Gauge */}
-        <div className="lg:col-span-6 card-base p-6 bg-grid-pattern relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-primary-container/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="lg:col-span-6 card-base p-6 bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 relative overflow-hidden group hover:border-emerald-400 transition-all shadow-[0_0_25px_rgba(0,255,163,0.1)]">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
           
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
             <div>
-              <h2 className="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider mb-2">Today's Focus Time</h2>
-              <div className="font-display text-4xl font-extrabold text-on-surface mb-3 flex items-baseline gap-2">
-                <span>{Math.floor(focusMinsToday / 60)}h {focusMinsToday % 60}m</span>
-                <span className="font-label-mono text-xs text-primary-fixed">/ {targetGoal}m target</span>
+              <h2 className="font-label-mono text-label-mono text-emerald-400 uppercase tracking-wider mb-2 font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm animate-spin">timelapse</span>
+                <span>Today's Focus Time</span>
+              </h2>
+              <div className="font-display text-4xl font-extrabold text-white mb-3 flex items-baseline gap-2">
+                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">{Math.floor(focusMinsToday / 60)}h {focusMinsToday % 60}m</span>
+                <span className="font-label-mono text-xs text-emerald-400/80">/ {targetGoal}m target</span>
               </div>
-              <p className="text-sm text-on-surface-variant max-w-sm mb-6 leading-relaxed">
+              <p className="text-xs text-on-surface-variant max-w-sm mb-6 leading-relaxed">
                 You are in the top 15% of users today. Complete tasks and study in squads to boost payouts.
               </p>
               <button 
                 onClick={() => router.push('/study')}
-                className="bg-surface-variant hover:bg-surface-bright text-on-surface border border-outline-variant py-2 px-6 rounded-lg font-label-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 border border-emerald-400 py-2.5 px-6 rounded-lg font-label-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:scale-[1.03] group/btn"
               >
-                Launch Focus Session
-                <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                <span>Launch Focus Session</span>
+                <span className="material-symbols-outlined text-xs group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
               </button>
             </div>
 
             {/* Circular Progress Ring */}
             <div className="relative w-40 h-40 flex-shrink-0">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle className="text-surface-variant" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeWidth="8"></circle>
+                <circle className="text-surface-variant/40" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeWidth="8"></circle>
                 <circle 
-                  className="text-primary-container drop-shadow-[0_0_6px_rgba(0,255,163,0.5)] transition-all duration-1000 ease-out" 
+                  className="text-emerald-400 drop-shadow-[0_0_10px_rgba(0,255,163,0.8)] transition-all duration-1000 ease-out" 
                   cx="50" 
                   cy="50" 
                   fill="transparent" 
@@ -589,8 +596,8 @@ export default function Dashboard() {
                 ></circle>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display text-2xl font-black text-on-surface">{progressPercent}%</span>
-                <span className="font-label-mono text-[8px] text-on-surface-variant uppercase tracking-widest font-bold">Goal</span>
+                <span className="font-display text-2xl font-black text-white">{progressPercent}%</span>
+                <span className="font-label-mono text-[8px] text-emerald-400 uppercase tracking-widest font-bold">Goal</span>
               </div>
             </div>
           </div>
@@ -603,65 +610,76 @@ export default function Dashboard() {
 
         {/* Right Column (3 cols): Quick stats cards & Level Badges */}
         <div className="lg:col-span-3 grid grid-rows-3 gap-3">
-          <div className="card-base p-3.5 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
+          
+          {/* Card 1: Verified Badge */}
+          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-purple-500/15 via-indigo-500/5 to-surface-container border border-purple-500/30 hover:border-purple-400 hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-fixed">
-                <span className="material-symbols-outlined text-sm">verified</span>
+              <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 group-hover:rotate-45 transition-transform duration-500">
+                <span className="material-symbols-outlined text-base animate-pulse">verified</span>
               </div>
               <div>
-                <p className="font-label-mono text-[9px] text-on-surface-variant uppercase font-bold">Verified Arena Badge</p>
+                <p className="font-label-mono text-[9px] text-purple-300 uppercase font-bold">Verified Arena Badge</p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="font-display text-xs font-bold text-on-surface">Level {profile?.level || 1}</span>
+                  <span className="font-display text-xs font-bold text-white">Level {profile?.level || 1}</span>
                   <VerifiedBadge level={profile?.level || 1} size="sm" showLevelNumber={false} />
                 </div>
               </div>
             </div>
-            <span className="font-label-mono text-[9px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full font-bold">
+            <span className="font-label-mono text-[9px] text-purple-300 bg-purple-950/80 border border-purple-800/60 px-2 py-0.5 rounded-full font-bold shadow-[0_0_8px_rgba(168,85,247,0.3)]">
               {profile?.points || 0} XP
             </span>
           </div>
 
-          <div className="card-base p-3.5 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
+          {/* Card 2: Current Streak */}
+          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-orange-500/15 via-amber-500/5 to-surface-container border border-orange-500/30 hover:border-orange-400 hover:shadow-[0_0_15px_rgba(249,115,22,0.2)] transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-fixed">
-                <span className="material-symbols-outlined text-sm">local_fire_department</span>
+              <div className="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-base text-orange-400 animate-bounce">local_fire_department</span>
               </div>
               <div>
-                <p className="font-label-mono text-[9px] text-on-surface-variant uppercase font-bold">Current Streak</p>
-                <p className="font-display text-sm font-black text-on-surface">{streakDays} Days</p>
+                <p className="font-label-mono text-[9px] text-orange-300 uppercase font-bold">Current Streak</p>
+                <p className="font-display text-sm font-black text-white">{streakDays} Days</p>
               </div>
             </div>
-            <span className="font-label-mono text-[9px] text-primary-fixed bg-primary-container/10 px-2 py-0.5 rounded-full font-bold">
-              {streakDays > 0 ? 'Active' : 'Start today'}
+            <span className="font-label-mono text-[9px] text-orange-300 bg-orange-950/80 border border-orange-800/60 px-2 py-0.5 rounded-full font-bold shadow-[0_0_8px_rgba(249,115,22,0.3)]">
+              {streakDays > 0 ? '🔥 Active' : 'Start today'}
             </span>
           </div>
 
-          <div className="card-base p-3.5 flex items-center justify-between hover:border-primary-fixed-dim transition-all">
+          {/* Card 3: Sessions Today */}
+          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-cyan-500/15 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-fixed">
-                <span className="material-symbols-outlined text-sm">timer</span>
+              <div className="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 group-hover:rotate-180 transition-transform duration-700">
+                <span className="material-symbols-outlined text-base animate-pulse">timer</span>
               </div>
               <div>
-                <p className="font-label-mono text-[9px] text-on-surface-variant uppercase font-bold">Sessions Today</p>
-                <p className="font-display text-sm font-black text-on-surface">{totalSessionsToday} Runs</p>
+                <p className="font-label-mono text-[9px] text-cyan-300 uppercase font-bold">Sessions Today</p>
+                <p className="font-display text-sm font-black text-white">{totalSessionsToday} Runs</p>
               </div>
             </div>
+            <span className="font-label-mono text-[9px] text-cyan-300 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full font-bold">
+              Verified
+            </span>
           </div>
+
         </div>
       </div>
 
       {/* Interactive Productivity Suite Widgets */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-primary-fixed">widgets</span>
-            Productivity Suite Controls & Widgets
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
+          <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <span className="material-symbols-outlined text-base animate-pulse">widgets</span>
+            </div>
+            <span>Productivity Suite Controls &amp; Widgets</span>
           </h3>
           <button 
             onClick={() => router.push('/tasks')}
-            className="text-xs font-mono text-primary-fixed hover:text-white transition cursor-pointer"
+            className="text-xs font-mono text-emerald-400 hover:text-cyan-400 transition cursor-pointer font-bold flex items-center gap-1 hover:translate-x-0.5 transition-transform"
           >
-            Open Full Productivity Hub →
+            <span>Open Full Productivity Hub</span>
+            <span className="material-symbols-outlined text-xs">arrow_forward</span>
           </button>
         </div>
 
