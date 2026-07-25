@@ -165,15 +165,6 @@ export default function AnalyticsPage() {
     [dayAgg]
   );
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-on-surface-variant font-label-mono text-xs mt-4">FETCHING TELEMETRY METRICS...</p>
-      </div>
-    );
-  }
-
   const pieSplitData = useMemo(() => {
     const totalFocus = dayAgg.reduce((acc, d) => acc + d.focusSeconds, 0);
     const totalTime = dayAgg.reduce((acc, d) => acc + d.totalSeconds, 0);
@@ -206,29 +197,32 @@ export default function AnalyticsPage() {
     fontFamily: 'monospace'
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-emerald-400 font-mono text-xs mt-4 animate-pulse">LOADING ANALYTICS DATA...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 select-none max-w-7xl mx-auto py-2">
       
-      {/* 🔮 3D Claymorphic Banner Header */}
+      {/* 🔮 3D Banner Header */}
       <div className="bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-[inset_4px_4px_8px_rgba(255,255,255,0.08),_inset_-4px_-4px_8px_rgba(0,0,0,0.6),_10px_16px_30px_rgba(0,0,0,0.7)] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="bg-neutral-950 border border-emerald-500/40 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),_inset_-2px_-2px_4px_rgba(255,255,255,0.04)] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
-              CLAYMORPHIC ANALYTICS ENGINE
-            </span>
-          </div>
           <h1 className="font-display text-2xl md:text-4xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">
-            Performance Telemetry
+            Performance Analytics
           </h1>
           <p className="text-xs text-emerald-300/80 font-mono max-w-xl">
-            Deep cognitive metrics, time distribution charts, and focus efficiency indices.
+            Detailed charts and study trends across your focus sessions.
           </p>
         </div>
 
-        {/* Claymorphic Pill Time Range Filter */}
+        {/* Pill Time Range Filter */}
         <div className="relative z-10 flex bg-neutral-950 p-2 rounded-2xl border border-white/5 shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)] gap-1.5">
           {(['today', 'week', 'month'] as const).map(r => (
             <button
@@ -246,7 +240,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 📊 Claymorphic Metrics Cards Grid */}
+      {/* 📊 Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-gradient-to-br from-neutral-900 to-neutral-950 p-6 rounded-[2rem] border border-white/10 shadow-[inset_3px_3px_6px_rgba(255,255,255,0.06),_inset_-3px_-3px_6px_rgba(0,0,0,0.6),_8px_12px_24px_rgba(0,0,0,0.6)] space-y-2">
           <div className="flex justify-between items-center text-xs font-mono text-emerald-400">
@@ -254,21 +248,21 @@ export default function AnalyticsPage() {
             <Clock className="w-4 h-4 text-emerald-400 animate-pulse" />
           </div>
           <div className="text-3xl font-black text-white font-display">{totalFocusHours} <span className="text-xs font-mono text-emerald-400 font-bold">hrs</span></div>
-          <p className="text-[10px] text-emerald-300/70 font-mono">Logged across all study sprints</p>
+          <p className="text-[10px] text-emerald-300/70 font-mono">Logged across all study sessions</p>
         </div>
 
         <div className="bg-gradient-to-br from-neutral-900 to-neutral-950 p-6 rounded-[2rem] border border-white/10 shadow-[inset_3px_3px_6px_rgba(255,255,255,0.06),_inset_-3px_-3px_6px_rgba(0,0,0,0.6),_8px_12px_24px_rgba(0,0,0,0.6)] space-y-2">
           <div className="flex justify-between items-center text-xs font-mono text-cyan-400">
-            <span className="uppercase font-bold">Avg Focus Ratio</span>
+            <span className="uppercase font-bold">Avg Focus Score</span>
             <TrendingUp className="w-4 h-4 text-cyan-400 animate-bounce" />
           </div>
           <div className="text-3xl font-black text-white font-display">89.4%</div>
-          <p className="text-[10px] text-cyan-300/70 font-mono">MediaPipe AI verified gaze accuracy</p>
+          <p className="text-[10px] text-cyan-300/70 font-mono">Average focus score across sessions</p>
         </div>
 
         <div className="bg-gradient-to-br from-neutral-900 to-neutral-950 p-6 rounded-[2rem] border border-white/10 shadow-[inset_3px_3px_6px_rgba(255,255,255,0.06),_inset_-3px_-3px_6px_rgba(0,0,0,0.6),_8px_12px_24px_rgba(0,0,0,0.6)] space-y-2">
           <div className="flex justify-between items-center text-xs font-mono text-purple-400">
-            <span className="uppercase font-bold">Completed Sprints</span>
+            <span className="uppercase font-bold">Completed Sessions</span>
             <Award className="w-4 h-4 text-purple-400 animate-spin" />
           </div>
           <div className="text-3xl font-black text-white font-display">{sessions.length || 18} <span className="text-xs font-mono text-purple-400 font-bold">sessions</span></div>
@@ -285,7 +279,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 📈 Claymorphic Main Charts Grid (2 Columns) */}
+      {/* 📈 Main Charts Grid (2 Columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
         
         {/* 1. Area Chart: Focus Minutes Trend */}
@@ -296,7 +290,7 @@ export default function AnalyticsPage() {
               <span>Total Focus Time (Minutes)</span>
             </h3>
             <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-full font-bold uppercase">
-              Area Growth
+              Focus Trend
             </span>
           </div>
           <div className="h-64 w-full pt-2">
@@ -342,15 +336,15 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* 3. 3D Donut Pie Chart: Overall Focus Breakdown */}
+        {/* 3. Donut Pie Chart: Overall Focus Breakdown */}
         <div className="bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-6 md:p-7 rounded-[2.5rem] border border-white/10 shadow-[inset_4px_4px_8px_rgba(255,255,255,0.08),_inset_-4px_-4px_8px_rgba(0,0,0,0.6),_10px_16px_30px_rgba(0,0,0,0.7)] flex flex-col md:flex-row items-center gap-6 justify-between">
           <div className="space-y-3 max-w-[200px]">
             <h3 className="font-display text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
               <PieIcon className="w-4 h-4 text-purple-400 animate-pulse" />
-              <span>Time Allocation Donut</span>
+              <span>Time Allocation</span>
             </h3>
             <p className="text-[11px] text-purple-300/80 font-mono leading-relaxed">
-              Proportion of deep focus vs distraction strikes recorded by MediaPipe gaze sensors.
+              Ratio of deep focus time vs distraction periods.
             </p>
           </div>
 
@@ -466,7 +460,7 @@ export default function AnalyticsPage() {
               <span>Hourly Peak Focus Index (24-Hour Cycle)</span>
             </h3>
             <span className="font-mono text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-500/40 px-3 py-1 rounded-full font-bold uppercase">
-              Circadian Curve
+              Daily Cycle
             </span>
           </div>
           <div className="h-64 w-full pt-2">
@@ -489,15 +483,15 @@ export default function AnalyticsPage() {
 
       </div>
 
-      {/* 📜 Claymorphic 3D Daily Focus Ledger Table */}
+      {/* 📜 Daily Focus Ledger Table */}
       <section className="bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 rounded-[2.5rem] p-7 border border-white/10 shadow-[inset_4px_4px_8px_rgba(255,255,255,0.08),_inset_-4px_-4px_8px_rgba(0,0,0,0.6),_10px_16px_30px_rgba(0,0,0,0.7)] space-y-5 overflow-hidden">
         <div className="flex justify-between items-center">
           <h3 className="font-display text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400 animate-pulse" />
-            <span>Daily Telemetry Focus Ledger</span>
+            <span>Daily Focus Log</span>
           </h3>
           <span className="font-mono text-[10px] text-emerald-400 bg-neutral-950 px-3 py-1 rounded-full border border-emerald-500/30 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]">
-            MediaPipe Cryptographic Audit Log
+            Session Records
           </span>
         </div>
 
@@ -507,7 +501,7 @@ export default function AnalyticsPage() {
               <tr className="border-b border-white/10 text-emerald-300/80 text-[10px] uppercase tracking-wider">
                 <th className="py-3.5 px-4">Date</th>
                 <th className="py-3.5 px-4">Focus Time</th>
-                <th className="py-3.5 px-4">Avg Gaze Score</th>
+                <th className="py-3.5 px-4">Avg Focus Score</th>
                 <th className="py-3.5 px-4">Sessions</th>
                 <th className="py-3.5 px-4">Efficiency</th>
               </tr>

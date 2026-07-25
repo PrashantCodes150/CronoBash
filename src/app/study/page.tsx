@@ -2827,7 +2827,7 @@ function StudySessionContent() {
             <div className="bg-surface-container/80 border border-outline-variant/30 rounded-2xl p-6 space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30 font-mono text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">
                 <span>Player 1 Value</span>
-                <span className="text-center">50 Cyberpunk Telemetry Match-ups</span>
+                <span className="text-center">50 Focus Duel Metrics</span>
                 <span>Player 2 Value</span>
               </div>
               <div className="space-y-2.5 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
