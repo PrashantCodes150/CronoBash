@@ -20,14 +20,19 @@ export default function MarketplacePage() {
     <div className="max-w-6xl mx-auto space-y-8 py-4 animate-in fade-in slide-in-from-bottom-6 duration-500 select-none text-left">
       
       {/* Title Panel */}
-      <div className="glass-panel rounded-2xl p-6 md:p-8 border-l-4 border-primary-fixed bg-grid-pattern relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      <div className="glass-panel rounded-3xl p-6 md:p-8 border border-emerald-500/40 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-surface-container relative overflow-hidden shadow-[0_0_30px_rgba(0,255,163,0.15)]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10 space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-primary-fixed text-3xl animate-bounce">storefront</span>
-            <h1 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Arena Marketplace</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(0,255,163,0.3)] animate-pulse">
+              <span className="material-symbols-outlined text-2xl font-bold animate-bounce">storefront</span>
+            </div>
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">Arena Marketplace</h1>
+              <p className="font-mono text-xs text-emerald-300 font-semibold">Custom Themes, Ambient Soundscapes &amp; Profile Badges</p>
+            </div>
           </div>
-          <p className="font-mono text-[10px] text-on-surface-variant max-w-xl leading-relaxed uppercase">
+          <p className="font-mono text-[10px] text-on-surface-variant max-w-xl leading-relaxed uppercase pt-1">
             UPGRADE YOUR CRONOBASH STUDY ENVIRONMENT WITH AESTHETIC HIGHLIGHTS, SPECIAL AUDIO PROFILES, AND CYBER RIG ENVIRONMENTS.
           </p>
         </div>
@@ -37,19 +42,21 @@ export default function MarketplacePage() {
       <div className="relative">
         
         {/* Glassmorphic coming soon banner overlay */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] z-10 rounded-2xl flex flex-col items-center justify-center border border-outline-variant/30 shadow-2xl p-8 text-center">
+        <div className="absolute inset-0 bg-neutral-950/80 backdrop-blur-md z-10 rounded-3xl flex flex-col items-center justify-center border border-amber-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] p-8 text-center">
           <div className="space-y-4 max-w-md">
-            <div className="inline-flex items-center gap-2 bg-[#ffaa00]/10 border border-[#ffaa00]/40 text-[#ffaa00] font-label-mono text-[10px] font-black uppercase px-3 py-1.5 rounded-full tracking-widest shadow-[0_0_15px_rgba(255,170,0,0.15)] animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-              Coming Soon
+            <div className="inline-flex items-center gap-2 bg-amber-500/15 border border-amber-500/40 text-amber-400 font-label-mono text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              Official Feature Preview
             </div>
-            <h2 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">Marketplace Under Construction</h2>
-            <p className="font-mono text-[10px] text-on-surface-variant leading-relaxed uppercase">
-              WE ARE CALIBRATING THE CRYPTO TRANSACTIONS INTEGRATION & DEVELOPING MORE EXCLUSIVE RIG COSMETICS. EXPECT LAUNCH IN EPOC B-3!
+            <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-none bg-gradient-to-r from-amber-400 via-orange-400 to-white bg-clip-text text-transparent">
+              Marketplace Under Construction
+            </h2>
+            <p className="font-mono text-xs text-amber-300/80 leading-relaxed uppercase">
+              WE ARE CALIBRATING THE REWARDS TRANSACTIONS INTEGRATION &amp; DEVELOPING MORE EXCLUSIVE RIG COSMETICS. EXPECT LAUNCH SHORTLY!
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="mt-6 bg-primary-container text-on-primary font-label-mono text-xs font-bold px-6 py-3 rounded-xl hover:bg-primary-fixed transition-colors cursor-pointer uppercase border border-primary-container"
+              className="mt-6 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold px-8 py-3.5 rounded-xl transition-all cursor-pointer uppercase border border-emerald-400 shadow-[0_0_20px_rgba(0,255,163,0.4)] hover:scale-105"
             >
               Return to Control Center
             </button>
