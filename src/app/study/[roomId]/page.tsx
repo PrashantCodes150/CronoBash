@@ -605,19 +605,34 @@ export default function StudyRoomPage() {
       )}
 
       {/* Header bar */}
-      <header className="px-6 py-4 border-b border-neutral-900 bg-neutral-950/40 backdrop-blur flex flex-wrap items-center justify-between gap-4 z-40">
+      <header className="px-6 py-4 border-b border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-surface-container backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 z-40 shadow-[0_0_25px_rgba(0,255,163,0.15)]">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-black font-sans tracking-wide text-white">{room?.name}</h1>
-          <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${room?.type === 'money' ? 'text-amber-400 bg-amber-950/40 border-amber-800/40' : room?.type === 'private' ? 'text-cyan-400 bg-cyan-950/40 border-cyan-800/40' : 'text-neutral-400 bg-neutral-900 border-neutral-800'}`}>
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(0,255,163,0.3)] animate-pulse">
+            <Flame className="w-5 h-5 animate-bounce" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black font-display tracking-wide text-white bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent flex items-center gap-2">
+              <span>{room?.name}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            </h1>
+            <p className="text-[10px] text-emerald-300/80 font-mono">ACTIVE DEEP FOCUS SPRINT LOBBY</p>
+          </div>
+          <span className={`text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full border shadow-[0_0_10px_rgba(0,255,163,0.2)] ${
+            room?.type === 'money' 
+              ? 'text-amber-400 bg-amber-500/20 border-amber-500/40 font-bold' 
+              : room?.type === 'private' 
+                ? 'text-purple-300 bg-purple-500/20 border-purple-500/40 font-bold' 
+                : 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40 font-bold'
+          }`}>
             {room?.type} ARENA
           </span>
         </div>
 
         {/* Dynamic Timer Display */}
         <div className="flex items-center gap-4">
-          <div className="bg-neutral-900/60 border border-neutral-800 rounded-lg px-4 py-1.5 flex items-center gap-2">
-            <span className="text-[10px] font-mono text-neutral-500">TIME REMAINING</span>
-            <span className="text-lg font-black font-mono tracking-widest text-emerald-400 animate-pulse">
+          <div className="bg-gradient-to-br from-emerald-950/80 to-neutral-950/80 border border-emerald-500/40 rounded-2xl px-5 py-2 flex items-center gap-3 shadow-[0_0_20px_rgba(0,255,163,0.25)]">
+            <span className="text-[10px] font-mono font-bold text-emerald-300 tracking-wider">TIME REMAINING:</span>
+            <span className="text-xl font-black font-mono tracking-widest text-emerald-400 animate-pulse drop-shadow-[0_0_10px_rgba(0,255,163,0.5)]">
               {formatTimer(secondsRemaining)}
             </span>
           </div>
@@ -627,10 +642,14 @@ export default function StudyRoomPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleAmbientSound}
-            className={`p-2 rounded-lg border transition-all ${ambientAudio ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}
+            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+              ambientAudio 
+                ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(0,255,163,0.3)] animate-pulse' 
+                : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white'
+            }`}
             title="Toggle Focus Sound Synth"
           >
-            {ambientAudio ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {ambientAudio ? <Volume2 className="w-4 h-4 animate-bounce" /> : <VolumeX className="w-4 h-4" />}
           </button>
         </div>
       </header>
