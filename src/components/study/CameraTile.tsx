@@ -71,10 +71,8 @@ export function CameraTile({
     <div 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative w-full h-full min-h-[220px] rounded-3xl overflow-hidden bg-gradient-to-br from-neutral-900 to-neutral-950 border-2 transition-all duration-300 shadow-[0_0_25px_rgba(0,0,0,0.8)] ${
-        !isFocused 
-          ? 'border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.4)] animate-pulse' 
-          : 'border-emerald-500/40 hover:border-cyan-400 shadow-[0_0_20px_rgba(0,255,163,0.2)]'
+      className={`relative w-full h-full min-h-[220px] rounded-2xl overflow-hidden bg-neutral-900 border-2 transition-all duration-300 shadow-xl ${
+        !isFocused ? 'border-red-500/80 shadow-red-500/20' : 'border-neutral-800 hover:border-emerald-500/50'
       }`}
     >
       {/* Video Feed */}
@@ -87,31 +85,28 @@ export function CameraTile({
           className={`w-full h-full object-cover ${isSelf ? 'transform -scale-x-100' : ''}`}
         />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 text-neutral-400 p-4 text-center select-none">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-white font-black text-2xl mb-2 shadow-[0_0_15px_rgba(0,255,163,0.3)] animate-pulse">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-950 text-neutral-500 p-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold text-xl mb-2">
             {name.substring(0, 2).toUpperCase()}
           </div>
-          <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">{name}</span>
-          <span className="text-[10px] text-cyan-400 font-mono mt-1 font-semibold flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
-            CAMERA STANDBY
-          </span>
+          <span className="text-xs font-mono font-semibold">{name}</span>
+          <span className="text-[10px] text-neutral-600 font-mono mt-1">CAMERA OFF</span>
         </div>
       )}
 
       {/* Top Left Tag: Name & Verified Badge */}
-      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-neutral-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-emerald-500/40 shadow-[0_0_12px_rgba(0,255,163,0.2)]">
-        <span className="text-xs font-black text-white font-sans max-w-[120px] truncate">{name}</span>
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+        <span className="text-xs font-bold text-white font-sans max-w-[120px] truncate">{name}</span>
         <VerifiedBadge level={level} size="sm" showLevelNumber={false} />
         {isSelf && (
-          <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/40 shadow-[0_0_8px_rgba(0,255,163,0.3)] animate-pulse">You</span>
+          <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">You</span>
         )}
       </div>
 
       {/* Top Right Tag: Distraction Counter */}
       {distractionCount > 0 && (
-        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-rose-950/90 backdrop-blur-md border border-rose-500/60 text-rose-300 px-3 py-1 rounded-full font-mono text-[10px] font-extrabold shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-bounce">
-          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-red-950/80 backdrop-blur-md border border-red-500/50 text-red-400 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold shadow-lg">
+          <ShieldAlert className="w-3 h-3 text-red-400" />
           <span>{distractionCount} STRIKES</span>
         </div>
       )}
@@ -123,7 +118,7 @@ export function CameraTile({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute inset-x-3 top-14 z-30 bg-gradient-to-r from-rose-600 to-amber-600 backdrop-blur-md text-white text-xs font-mono font-black py-2 px-4 rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] flex items-center justify-center gap-2 border border-rose-400"
+            className="absolute inset-x-3 top-12 z-30 bg-red-600/90 backdrop-blur-md text-white text-xs font-mono font-bold py-1.5 px-3 rounded-xl shadow-xl flex items-center justify-center gap-2"
           >
             <ShieldAlert className="w-4 h-4 animate-bounce text-yellow-300" />
             <span>CONTESTANT DISTRACTED!</span>
@@ -132,11 +127,11 @@ export function CameraTile({
       </AnimatePresence>
 
       {/* Bottom Audio Status */}
-      <div className="absolute bottom-3 right-3 z-20 bg-neutral-950/80 backdrop-blur-md p-2 rounded-full border border-emerald-500/40 shadow-[0_0_10px_rgba(0,255,163,0.2)]">
+      <div className="absolute bottom-3 right-3 z-20 bg-black/60 backdrop-blur-md p-1.5 rounded-full border border-white/10">
         {isMuted ? (
-          <MicOff className="w-4 h-4 text-rose-400" />
+          <MicOff className="w-3.5 h-3.5 text-red-400" />
         ) : (
-          <Mic className="w-4 h-4 text-emerald-400 animate-pulse" />
+          <Mic className="w-3.5 h-3.5 text-emerald-400" />
         )}
       </div>
 
