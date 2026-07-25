@@ -56,10 +56,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="mb-8 flex items-center justify-between px-2">
           <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-56 shrink-0">
             <div className="font-display text-xl font-medium tracking-wide flex items-center text-primary-fixed">
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic pr-0.5 select-none">C</span>
-              <span className="text-on-surface">ogni</span>
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-              <span className="text-on-surface">weep</span>
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">C</span>
+              <span className="text-on-surface">rono</span>
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">B</span>
+              <span className="text-on-surface">ash</span>
             </div>
           </Link>
 

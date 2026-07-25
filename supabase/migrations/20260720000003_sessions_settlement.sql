@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: Completed Sessions & Settlements
+-- CronoBash Migration: Completed Sessions & Settlements
 -- ==========================================
 
 create table if not exists public.sessions (

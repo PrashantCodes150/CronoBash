@@ -1,5 +1,5 @@
 /**
- * Focus Score Calculation Helpers for CogniSweep
+ * Focus Score Calculation Helpers for CronoBash
  */
 
 /**

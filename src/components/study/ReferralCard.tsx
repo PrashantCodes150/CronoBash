@@ -51,7 +51,7 @@ export function ReferralCard() {
           <h3 className="text-sm font-extrabold uppercase tracking-wide">Referral Program</h3>
         </div>
         <p className="text-[11px] text-neutral-450 leading-relaxed">
-          Invite friends to CogniSweep! You get 20 bonus coins when they join, and they receive a 10 coin signup reward.
+          Invite friends to CronoBash! You get 20 bonus coins when they join, and they receive a 10 coin signup reward.
         </p>
       </div>
 

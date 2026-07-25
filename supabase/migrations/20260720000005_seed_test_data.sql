@@ -1,4 +1,4 @@
 -- ==========================================
--- CogniSweep Migration: Seed Data Placeholder
+-- CronoBash Migration: Seed Data Placeholder
 -- ==========================================
 -- This file is kept as an empty placeholder to satisfy CLI migration version history.

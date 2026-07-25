@@ -148,9 +148,9 @@ export default function OnboardingPage() {
         <div className="text-center mb-8">
             <div className="font-display text-2xl md:text-3xl font-medium tracking-wide flex items-center justify-center text-primary-fixed select-none">
               <span className="font-dancing text-3xl md:text-4xl font-bold italic pr-0.5 select-none">C</span>
-              <span className="text-on-surface">ogni</span>
-              <span className="font-dancing text-3xl md:text-4xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-              <span className="text-on-surface">weep</span>
+              <span className="text-on-surface">rono</span>
+              <span className="font-dancing text-3xl md:text-4xl font-bold italic pl-1 pr-0.5 select-none">B</span>
+              <span className="text-on-surface">ash</span>
             </div>
           <span className="font-mono text-xs text-primary-fixed uppercase tracking-wider font-bold bg-primary-container/10 px-3 py-1 rounded-full">
             Step 2: Initialization

@@ -1,5 +1,5 @@
 -- =========================================================================
--- CogniSweep Master Base Schema Migration (20260720000000_schema.sql)
+-- CronoBash Master Base Schema Migration (20260720000000_schema.sql)
 -- =========================================================================
 
 -- Enable UUID extension

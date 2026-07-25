@@ -1,515 +1,209 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
-import { supabase, Transaction } from '@/lib/supabaseClient';
-import { loadRazorpayScript } from '@/components/RazorpayScript';
-import { isStateRestricted, RESTRICTED_INDIAN_STATES } from '@/lib/geoBlock';
-import { VerifiedBadge } from '@/components/study/VerifiedBadge';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { CreditCard, ArrowUpRight, ShieldCheck, AlertTriangle, Smartphone, Trophy, Award, Lock } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ShieldCheck, Lock, ArrowLeft, Coins, Sparkles, CreditCard, CheckCircle, Zap } from 'lucide-react';
 
 export default function WalletPage() {
-  const { user, profile, wallet, refreshWallet } = useAuth();
-  
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { wallet, user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ amount: number; tokens: number; title: string }>({
+    amount: 199,
+    tokens: 200,
+    title: 'Starter Token Pass',
+  });
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Forms state
-  const [depositAmount, setDepositAmount] = useState(500);
-  const [withdrawAmount, setWithdrawAmount] = useState(250);
-  const [actionLoading, setActionLoading] = useState(false);
-
-  // Withdrawal modal & state
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [upiId, setUpiId] = useState('');
-  const [userState, setUserState] = useState('Delhi');
-
-  // Stats aggregation
-  const [totalWinnings, setTotalWinnings] = useState(0);
-
-  // Charts data
-  const [earningsChartData, setEarningsChartData] = useState<any[]>([]);
-  const [balanceChartData, setBalanceChartData] = useState<any[]>([]);
-
-  const loadTransactions = async () => {
-    if (!user) return;
+  const handleRazorpayPayment = async () => {
     setLoading(true);
+    setMessage(null);
+
     try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Call production order creation API route
+      const res = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: selectedPlan.amount,
+          planType: selectedPlan.title,
+          userId: user?.id,
+        }),
+      });
 
-      if (!error && data) {
-        setTransactions(data as Transaction[]);
+      const data = await res.json();
 
-        let winSum = 0;
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const earningsByDay: Record<string, number> = {};
-        const balanceByDay: Record<string, number> = {};
-
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const key = dayNames[d.getDay()];
-          earningsByDay[key] = 0;
-          balanceByDay[key] = 0;
-        }
-
-        let runningBalance = 0;
-        for (const tx of data) {
-          const txDate = new Date(tx.created_at);
-          const dayKey = dayNames[txDate.getDay()];
-          if (tx.type === 'winning') {
-            winSum += tx.amount;
-          }
-          if (tx.type === 'deposit' || tx.type === 'winning') {
-            earningsByDay[dayKey] = (earningsByDay[dayKey] || 0) + tx.amount;
-            runningBalance += tx.amount;
-          } else if (tx.type === 'withdrawal' || tx.type === 'entry_fee') {
-            runningBalance -= tx.amount;
-          }
-          balanceByDay[dayKey] = runningBalance;
-        }
-
-        setTotalWinnings(winSum);
-        setEarningsChartData(
-          Object.entries(earningsByDay).map(([day, Winnings]) => ({ day, Winnings }))
-        );
-        setBalanceChartData(
-          Object.entries(balanceByDay).map(([day, Balance]) => ({ day, Balance }))
-        );
+      if (!res.ok || !data.success) {
+        setMessage({
+          type: 'error',
+          text: data.error || 'Razorpay environment credentials unconfigured. Add RAZORPAY_KEY_ID to .env.local',
+        });
+        setLoading(false);
+        return;
       }
-    } catch (e) {
-      console.error(e);
+
+      // Load Razorpay Checkout JS SDK if available
+      const options = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'CronoBash Platform',
+        description: selectedPlan.title,
+        order_id: data.orderId,
+        handler: async function (response: any) {
+          // Verify payment signature on backend
+          const verifyRes = await fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              userId: user?.id,
+              amount: selectedPlan.amount,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setMessage({ type: 'success', text: `Payment verified! Ref: ${response.razorpay_payment_id}` });
+          }
+        },
+        prefill: {
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#00FFA3',
+        },
+      };
+
+      if ((window as any).Razorpay) {
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else {
+        setMessage({ type: 'success', text: `Order created: ${data.orderId}. Connect Razorpay SDK in prod.` });
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Payment initiation error.' });
     } finally {
       setLoading(false);
     }
   };
 
-  // Razorpay Checkout Launcher (Test Mode with Server RPC Verification)
-  const handleRazorpayDeposit = async (amount: number) => {
-    if (!user) return;
-    if (amount <= 0 || isNaN(amount)) {
-      toast.error('Deposit amount must be greater than zero.');
-      return;
-    }
-    
-    // Geo-block state check
-    if (isStateRestricted(userState)) {
-      toast.error(`Cash deposits are legally restricted in ${userState}.`, { icon: '🚫' });
-      return;
-    }
-
-    setActionLoading(true);
-
-    const res = await loadRazorpayScript();
-    if (!res) {
-      toast.error('Failed to load Razorpay Payment Gateway SDK.');
-      setActionLoading(false);
-      return;
-    }
-
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || 'rzp_test_5123456789',
-      amount: amount * 100, // Amount in paise
-      currency: 'INR',
-      name: 'Focus Arena',
-      description: `Deposit +${amount} Tokens into Wallet`,
-      image: profile?.avatar_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=150',
-      handler: async function (response: any) {
-        toast.success(`Payment Success! Credit ID: ${response.razorpay_payment_id || 'PAY-TEST'}`);
-        try {
-          // Execute server-side Security Definer RPC
-          const { data, error } = await supabase.rpc('deposit_tokens_secure', {
-            p_user_id: user.id,
-            p_amount: Math.floor(amount)
-          });
-
-          if (error || (data && data.error)) {
-            toast.error(error?.message || data?.error || 'Deposit verification failed.');
-            return;
-          }
-
-          toast.success(`Successfully credited +₹${amount} to your wallet!`);
-          await refreshWallet();
-          await loadTransactions();
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setActionLoading(false);
-        }
-      },
-      prefill: {
-        name: profile?.name || user.email?.split('@')[0],
-        email: user.email,
-        contact: '9999999999'
-      },
-      theme: {
-        color: '#00FFA3'
-      }
-    };
-
-    try {
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
-    } catch (e) {
-      // Fallback for local simulation
-      const { data, error } = await supabase.rpc('deposit_tokens_secure', {
-        p_user_id: user.id,
-        p_amount: Math.floor(amount)
-      });
-      if (!error && (!data || !data.error)) {
-        toast.success(`[Test Mode] Credited +₹${amount} to wallet!`);
-        await refreshWallet();
-        await loadTransactions();
-      } else {
-        toast.error(error?.message || data?.error || 'Deposit failed');
-      }
-      setActionLoading(false);
-    }
-  };
-
-  const handleWithdrawRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    if (withdrawAmount <= 0 || isNaN(withdrawAmount)) {
-      toast.error('Withdrawal amount must be greater than zero.');
-      return;
-    }
-    if (withdrawAmount > (wallet?.balance || 0)) {
-      toast.error('Insufficient wallet balance!');
-      return;
-    }
-    setActionLoading(true);
-
-    try {
-      // Execute server-side Security Definer RPC
-      const { data, error } = await supabase.rpc('withdraw_tokens_secure', {
-        p_user_id: user.id,
-        p_amount: Math.floor(withdrawAmount)
-      });
-
-      if (error || (data && data.error)) {
-        toast.error(error?.message || data?.error || 'Withdrawal failed.');
-        return;
-      }
-
-      toast.success(`Withdrawal request for ₹${withdrawAmount} submitted! Processing payout to ${upiId || 'registered UPI ID'}.`);
-      setShowWithdrawModal(false);
-      await refreshWallet();
-      await loadTransactions();
-    } catch (e) {
-      console.error(e);
-      toast.error('Error submitting withdrawal.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      loadTransactions();
-      refreshWallet();
-    }
-  }, [user]);
-
-  if (loading && transactions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-neutral-400 font-mono text-xs mt-4">SECURELY LOADING WALLET LEDGER...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans text-white">
-      
-      {/* Dynamic Arena Profile & Wallet Command Header */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left z-10">
-          
-          {/* Avatar with Verified Ring */}
-          <div className="relative">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-emerald-500 shadow-lg" />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-neutral-800 border-2 border-emerald-500 flex items-center justify-center text-2xl font-black text-white">
-                {(profile?.name || user?.email || 'A').substring(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 border border-neutral-700">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            </div>
-          </div>
+    <div className="w-full py-8 px-4 select-none relative overflow-y-auto max-w-4xl mx-auto flex flex-col items-center justify-center">
+      {/* Background Ambient Glow Effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          {/* User Details & Arena Stats */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">{profile?.name || user?.email?.split('@')[0]}</h2>
-              <VerifiedBadge 
-                level={profile?.level || 1} 
-                followersCount={profile?.followers_count || 0} 
-                isVerified={profile?.is_verified} 
-                size="md" 
-                showLevelNumber={true} 
-              />
-            </div>
-            
-            <p className="text-xs text-neutral-400 font-mono">{user?.email}</p>
-
-            <div className="flex items-center gap-3 pt-1 text-[11px] font-mono justify-center sm:justify-start flex-wrap">
-              <span className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold">
-                Lv.{profile?.level || 1} Fighter
-              </span>
-              <span className="bg-neutral-800 text-neutral-300 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-amber-400" />
-                {profile?.points || 0} XP
-              </span>
-              <span className="bg-neutral-800 text-neutral-300 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                <Trophy className="w-3.5 h-3.5 text-emerald-400" />
-                ₹{totalWinnings} Won
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* State Selection Selector */}
-        <div className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 px-4 py-2 rounded-2xl font-mono text-xs z-10">
-          <span className="text-neutral-400">State:</span>
-          <select 
-            value={userState} 
-            onChange={(e) => setUserState(e.target.value)}
-            className="bg-transparent text-emerald-400 font-bold focus:outline-none cursor-pointer"
-          >
-            <option value="Delhi" className="bg-neutral-900">Delhi (Allowed)</option>
-            <option value="Maharashtra" className="bg-neutral-900">Maharashtra (Allowed)</option>
-            <option value="Karnataka" className="bg-neutral-900">Karnataka (Allowed)</option>
-            <option value="Assam" className="bg-neutral-900">Assam (Restricted 🚫)</option>
-            <option value="Odisha" className="bg-neutral-900">Odisha (Restricted 🚫)</option>
-            <option value="Telangana" className="bg-neutral-900">Telangana (Restricted 🚫)</option>
-            <option value="Andhra Pradesh" className="bg-neutral-900">Andhra Pradesh (Restricted 🚫)</option>
-            <option value="Nagaland" className="bg-neutral-900">Nagaland (Restricted 🚫)</option>
-            <option value="Sikkim" className="bg-neutral-900">Sikkim (Restricted 🚫)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Restricted State Warning */}
-      {isStateRestricted(userState) && (
-        <div className="bg-red-950/80 border border-red-500/50 p-4 rounded-2xl flex items-center gap-3 font-mono text-xs text-red-300">
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
-          <div>
-            <span className="font-bold block uppercase text-red-400">Cash Contests Restricted in {userState}</span>
-            <span>State regulations prohibit real-money contests in {userState}. You can still play all Free & Public Study Arenas!</span>
-          </div>
-        </div>
-      )}
-
-      {/* Main Wallet Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Full-Page Center Card */}
+      <div className="w-full max-w-2xl bg-surface-container border border-outline-variant/40 rounded-3xl p-6 sm:p-10 md:p-12 text-center space-y-6 md:space-y-8 shadow-2xl relative z-10 backdrop-blur-xl">
         
-        {/* Left Columns (8 cols): Balance + Razorpay Checkout */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Balance Card */}
-          <div className="bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-2 border-emerald-500/50 p-6 md:p-8 rounded-3xl relative overflow-hidden shadow-2xl">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
-              <div>
-                <span className="font-mono text-[10px] text-neutral-400 uppercase font-bold tracking-wider flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-emerald-400" /> SECURE WALLET LEDGER
-                </span>
-                <h3 className="font-display text-4xl md:text-5xl font-black text-emerald-400 tracking-tight mt-1">
-                  ₹{wallet?.balance ?? 0} <span className="text-base text-neutral-400 font-mono font-normal">INR</span>
-                </h3>
-                <p className="text-xs text-neutral-400 font-mono mt-2 flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  100% Anti-Hack Protected • Security Definer Server RPCs
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={() => handleRazorpayDeposit(depositAmount)}
-                  disabled={actionLoading || isStateRestricted(userState)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-950/50 disabled:opacity-50"
-                >
-                  <CreditCard className="w-4 h-4 fill-black" />
-                  Deposit Cash
-                </button>
-
-                <button
-                  onClick={() => setShowWithdrawModal(true)}
-                  disabled={actionLoading}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white font-mono text-xs font-bold uppercase tracking-wider border border-neutral-700 px-5 py-3 rounded-xl transition-all cursor-pointer"
-                >
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-                  Withdraw Cash
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Deposit Preset Bar */}
-            <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-center gap-3 font-mono text-xs">
-              <span className="text-neutral-400 font-bold text-[10px] uppercase">Quick Presets:</span>
-              {[100, 500, 1000].map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => {
-                    setDepositAmount(amt);
-                    handleRazorpayDeposit(amt);
-                  }}
-                  disabled={actionLoading || isStateRestricted(userState)}
-                  className="px-3.5 py-1.5 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-emerald-400 hover:text-emerald-400 font-bold transition-all cursor-pointer disabled:opacity-50"
-                >
-                  +₹{amt}
-                </button>
-              ))}
-            </div>
+        {/* Top Header Badge */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
+            <Coins className="w-7 h-7" />
           </div>
 
-          {/* Wallet Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono">
-            <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-3xl space-y-4">
-              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Study Arena Rewards</h4>
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={earningsChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <XAxis dataKey="day" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '10px' }} />
-                    <Bar dataKey="Winnings" fill="#00FFA3" radius={[3, 3, 0, 0]} maxBarSize={20} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.2)]">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            PRODUCTION PAYMENT GATEWAY
+          </span>
+        </div>
 
-            <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-3xl space-y-4">
-              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Balance Growth Trend</h4>
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={balanceChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="balGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#7047EB" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#7047EB" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="day" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '10px' }} />
-                    <Area type="monotone" dataKey="Balance" stroke="#7047EB" strokeWidth={1.5} fillOpacity={1} fill="url(#balGlow)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+        {/* Title */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-display tracking-tight">
+            Wallet Balance &amp; Token Recharge
+          </h1>
+          <p className="text-xs sm:text-sm text-on-surface-variant font-mono max-w-md mx-auto leading-relaxed">
+            Purchase study arena entry tokens and CronoPass subscriptions using Razorpay UPI, Netbanking, or Credit Cards.
+          </p>
+        </div>
+
+        {/* Current Balance & Plan Selector */}
+        <div className="bg-neutral-950/80 border border-neutral-800 rounded-2xl p-5 space-y-4 text-left font-mono">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-neutral-400 flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 text-amber-400" /> Current Wallet Balance:
+            </span>
+            <span className="text-white font-bold text-sm">{wallet?.balance ?? 0} Tokens</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            {[
+              { amount: 99, tokens: 100, title: 'Mini Token Pass' },
+              { amount: 199, tokens: 250, title: 'Pro Token Pass' },
+              { amount: 499, tokens: 700, title: 'Master Token Pass' },
+            ].map((plan) => (
+              <button
+                key={plan.amount}
+                type="button"
+                onClick={() => setSelectedPlan(plan)}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                  selectedPlan.amount === plan.amount
+                    ? 'border-emerald-400 bg-emerald-500/10 text-white'
+                    : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700'
+                }`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[11px] font-bold">{plan.title}</span>
+                  {selectedPlan.amount === plan.amount && <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />}
+                </div>
+                <div className="mt-2">
+                  <span className="text-lg font-black text-white">₹{plan.amount}</span>
+                  <span className="text-[10px] text-neutral-400 block">{plan.tokens} Tokens</span>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Right Column (4 cols): Ledger Listing */}
-        <div className="lg:col-span-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 flex flex-col h-[520px] font-mono">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4 border-b border-neutral-800 pb-2 flex items-center justify-between">
-              <span>Transaction History</span>
-              <span className="text-[9px] text-emerald-400 font-bold">100% SECURE</span>
-            </h3>
-            
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
-              {transactions.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-[10px] text-neutral-500 uppercase">No transactions recorded</p>
-                </div>
-              ) : (
-                transactions.map((tx) => {
-                  const isDeposit = tx.type === 'deposit' || tx.type === 'winning';
-                  return (
-                    <div 
-                      key={tx.id}
-                      className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center justify-between gap-3 text-[11px]"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-bold text-white truncate">{tx.description || tx.type.toUpperCase()}</p>
-                        <span className="text-[8px] text-neutral-500 block mt-0.5">
-                          {new Date(tx.created_at).toLocaleDateString()} • {tx.type}
-                        </span>
-                      </div>
-                      
-                      <span className={`font-bold ${isDeposit ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {isDeposit ? '+' : '-'}₹{tx.amount}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+        {/* Status Notification Message */}
+        {message && (
+          <div
+            className={`p-3 rounded-xl text-xs font-mono text-left border ${
+              message.type === 'success'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+            }`}
+          >
+            {message.text}
           </div>
+        )}
+
+        {/* High-Trust Positive Verification Guarantee */}
+        <div className="bg-surface-container-high/60 border border-outline-variant/30 rounded-2xl p-4 text-left space-y-1.5 max-w-lg mx-auto">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-mono">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Verified Razorpay Escrow Architecture</span>
+          </div>
+          <p className="text-[11px] text-on-surface-variant font-mono leading-relaxed">
+            Transactions are processed via Razorpay API endpoints with HMAC-SHA256 signature verification and PostgreSQL <span className="text-white font-bold">SECURITY DEFINER</span> database ledgers.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <button
+            onClick={handleRazorpayPayment}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-mono text-xs font-bold px-6 py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02]"
+          >
+            <CreditCard className="w-4 h-4" />
+            {loading ? 'Initiating Razorpay...' : `Pay ₹${selectedPlan.amount} via Razorpay`}
+          </button>
+
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center justify-center gap-2 bg-surface-variant hover:bg-surface-bright border border-outline-variant text-white font-mono text-xs font-bold px-6 py-3 rounded-xl transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Return to Dashboard
+          </button>
         </div>
 
       </div>
-
-      {/* Withdrawal Request Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-800 p-6 rounded-3xl max-w-md w-full font-mono space-y-4 text-white">
-            <h3 className="text-lg font-bold uppercase tracking-tight flex items-center gap-2 text-emerald-400">
-              <Smartphone className="w-5 h-5 text-emerald-400" />
-              UPI Cash Payout Withdrawal
-            </h3>
-            <p className="text-xs text-neutral-400">
-              Withdraw winnings directly to your GPay / PhonePe / Paytm UPI ID.
-            </p>
-
-            <form onSubmit={handleWithdrawRequest} className="space-y-4 pt-2">
-              <div>
-                <label className="block text-[10px] uppercase text-neutral-400 font-bold mb-1">UPI ID / VPA (e.g. user@okaxis)</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="name@upi"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase text-neutral-400 font-bold mb-1">Withdrawal Amount (₹)</label>
-                <input
-                  type="number"
-                  required
-                  min={50}
-                  max={wallet?.balance || 10000}
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(parseInt(e.target.value))}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowWithdrawModal(false)}
-                  className="flex-1 bg-neutral-900 border border-neutral-800 text-neutral-400 py-2.5 rounded-xl hover:text-white transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2.5 rounded-xl transition-colors cursor-pointer"
-                >
-                  Submit Payout
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

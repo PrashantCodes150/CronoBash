@@ -15,7 +15,7 @@ interface ShareSessionCardProps {
 }
 
 export function ShareSessionCard({ durationMinutes, focusScore }: ShareSessionCardProps) {
-  const shareText = `I just focused for ${durationMinutes} minutes and scored ${focusScore} points in CogniSweep Focus Arena! Join my study room: ${window.location.origin}`;
+  const shareText = `I just focused for ${durationMinutes} minutes and scored ${focusScore} points in CronoBash Focus Arena! Join my study room: ${window.location.origin}`;
 
   const shareTwitter = () => {
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;

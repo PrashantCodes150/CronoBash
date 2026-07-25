@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: Sync Logs & Anti-Cheat Reporting
+-- CronoBash Migration: Sync Logs & Anti-Cheat Reporting
 -- ==========================================
 
 -- 1. Sync Logs Table (Realtime telemetry debugging)

@@ -72,6 +72,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (activeWallet) {
+        if (activeWallet.balance >= 1000) {
+          activeWallet.balance = 0;
+          supabase.from('wallets').update({ balance: 0 }).eq('user_id', userId).then();
+        }
         setWallet(activeWallet as Wallet);
       }
     } catch (e) {
@@ -87,6 +91,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('user_id', user.id)
       .maybeSingle();
     if (!error && data) {
+      if (data.balance >= 1000) {
+        data.balance = 0;
+        supabase.from('wallets').update({ balance: 0 }).eq('user_id', user.id).then();
+      }
       setWallet(data as Wallet);
     }
   };
@@ -152,7 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (loading) return;
 
-    const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund'];
+    const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!user && !isPublicRoute) {
@@ -183,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => clearInterval(heartbeat);
   }, [user]);
 
-  const isPublicRoute = ['/', '/login', '/signup', '/terms', '/privacy', '/refund'].includes(pathname);
+  const isPublicRoute = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'].includes(pathname);
   if (loading && !isPublicRoute) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-on-background">

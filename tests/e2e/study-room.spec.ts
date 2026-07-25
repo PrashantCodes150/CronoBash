@@ -1,7 +1,7 @@
 // tests/e2e/study-room.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.describe('CogniSweep Study Room E2E and Anti-Cheat Tests', () => {
+test.describe('CronoBash Study Room E2E and Anti-Cheat Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     // Inject mock camera stream for media testing

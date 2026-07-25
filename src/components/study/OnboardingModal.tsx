@@ -54,7 +54,7 @@ export default function OnboardingModal({ userId, onComplete }: OnboardingModalP
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white font-sans flex items-center gap-2">
             <Shield className="w-6 h-6 text-emerald-500" />
-            Welcome to CogniSweep Arena
+            Welcome to CronoBash Arena
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
             Rules, Fair Play policies, and camera focus requirements.

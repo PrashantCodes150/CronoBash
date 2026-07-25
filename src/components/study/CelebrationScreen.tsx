@@ -121,7 +121,7 @@ export default function CelebrationScreen({
   };
 
   const handleShare = () => {
-    const text = `🏆 Locked in on CogniSweep Study Arena! Focused for ${formatTime(winner?.focusSeconds || 0)} inside ${roomName}. Beat the clock with Antigravity focus!`;
+    const text = `🏆 Locked in on CronoBash Study Arena! Focused for ${formatTime(winner?.focusSeconds || 0)} inside ${roomName}. Beat the clock with Antigravity focus!`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

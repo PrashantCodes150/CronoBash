@@ -1106,7 +1106,7 @@ function StudySessionContent() {
       "Cognitive Lock Strength", "Sprint Engagement Coefficient", "Mental Endurance Yield", "Telemetry Precision Jitter",
       "Rig Calibration Match", "Gaze Vector Alignment", "Optimal Gaze Threshold", "Decay Penalty Dampening",
       "Alpha Wave Synchrony", "Deep State Immersion Index", "Focus Sprint Acceleration", "Attention Retention Depth",
-      "Visual Anchor Stability", "Distraction Immunity Ratio", "Cognitive Sweep Rate", "Task Progress Yield",
+      "Visual Anchor Stability", "Distraction Immunity Ratio", "Crono Sweep Rate", "Task Progress Yield",
       "Streak Acceleration Constant", "Engagement Jitter Shield", "Focus Horizon Index", "Sustained Attention Density",
       "Morning Study Affinity", "Rig Power Efficiency Score", "Telemetry Jitter Filtration", "Synaptic Load Balance",
       "Flow State Recovery Constant", "Focus Anchor Efficiency", "Iris Tracking Precision", "Drift Correction Velocity",
@@ -1620,7 +1620,7 @@ function StudySessionContent() {
 
   // Load study theme configuration on page mount (independent of global theme)
   useEffect(() => {
-    const saved = localStorage.getItem('cognisweep-study-theme');
+    const saved = localStorage.getItem('cronobash-study-theme');
     if (saved && ['dark', 'pink', 'green', 'water'].includes(saved)) {
       setSelectedTheme(saved);
       setSelectedAmbient(saved);
@@ -1630,7 +1630,7 @@ function StudySessionContent() {
   const handleThemeSelect = (tId: string) => {
     setSelectedTheme(tId);
     setSelectedAmbient(tId);
-    localStorage.setItem('cognisweep-study-theme', tId);
+    localStorage.setItem('cronobash-study-theme', tId);
     if (ambientPlaying) {
       startAmbientSynth(tId);
     }
@@ -1909,7 +1909,7 @@ function StudySessionContent() {
           <div className="w-full flex justify-between items-center py-3 px-6 bg-gradient-to-b from-black/80 to-transparent relative z-30 shrink-0">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary-fixed text-sm">military_tech</span>
-              <span className="font-mono text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">COGNISWEEP ARENA DEPLOYMENT</span>
+              <span className="font-mono text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">CRONOBASH ARENA DEPLOYMENT</span>
             </div>
             
             <div className="text-center">

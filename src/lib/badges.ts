@@ -61,7 +61,7 @@ export const BADGES: Badge[] = Array.from({ length: 100 }).map((_, i) => {
   return {
     id: `badge_${reqLevel}`,
     name: badgeNames[i] || `Level ${reqLevel} Badge`,
-    description: `Unlocked at Level ${reqLevel} by completing focus study sprints in CogniSweep Arenas.`,
+    description: `Unlocked at Level ${reqLevel} by completing focus study sprints in CronoBash Arenas.`,
     shape: shapes[i % shapes.length],
     color: gradients[i % gradients.length],
     icon: icons[i % icons.length],

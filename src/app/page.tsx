@@ -272,10 +272,10 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-background/70 backdrop-blur-lg border-b border-outline-variant/50">
         <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-64 shrink-0">
           <div className="font-display text-xl md:text-2xl font-medium tracking-wide flex items-center text-primary-fixed">
-            <span className="font-dancing text-2xl md:text-3xl font-bold italic pr-0.5 select-none">C</span>
-            <span className="text-on-surface">ogni</span>
-            <span className="font-dancing text-2xl md:text-3xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-            <span className="text-on-surface">weep</span>
+            <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">C</span>
+            <span className="text-on-surface">rono</span>
+            <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">B</span>
+            <span className="text-on-surface">ash</span>
           </div>
         </Link>
         <div className="hidden md:flex space-x-8">
@@ -310,13 +310,13 @@ export default function LandingPage() {
 
           <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.1 }}
             className="font-display text-5xl md:text-7xl font-black text-on-surface leading-tight">
-            Turn study time into a{' '}
-            <span className="text-primary-fixed glow-text-primary">competitive game</span>
+            Eliminate Distractions.{' '}
+            <span className="text-primary-fixed glow-text-primary">Master Absolute Focus.</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.2 }}
             className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Track focus, stake tokens, challenge friends, and climb the leaderboard. Step into the arena and elevate your productivity to esports levels.
+            Engineered for students driven by perfection and unstoppable academic ambition. Powered by real-time computer vision focus tracking.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.3 }}

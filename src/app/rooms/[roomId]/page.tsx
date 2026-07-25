@@ -1511,7 +1511,7 @@ function VsScreenOverlay({
 
       {/* Footer bar */}
       <div className="w-full text-center py-4 border-t border-white/10 relative z-10 animate-[slideUp_0.6s_ease-out] flex justify-between items-center px-4 font-mono text-[9px] text-white/50">
-        <span>COGNISWEEP SYSTEM STAKES © 2026</span>
+        <span>CRONOBASH SYSTEM STAKES © 2026</span>
         <button 
           onClick={onClose}
           className="bg-white/10 hover:bg-white/20 text-white font-mono text-[10px] px-6 py-2 rounded-lg border border-white/20 transition-all cursor-pointer hover:border-white/50 active:scale-95"

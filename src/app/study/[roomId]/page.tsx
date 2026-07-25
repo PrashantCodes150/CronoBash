@@ -497,7 +497,7 @@ export default function StudyRoomPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-mono">
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-xs tracking-widest text-neutral-400">CONNECTING COGNISWEEP ROUTER...</p>
+        <p className="mt-4 text-xs tracking-widest text-neutral-400">CONNECTING CRONOBASH ROUTER...</p>
       </div>
     );
   }

@@ -52,7 +52,7 @@ export default function Header() {
         const fallbackData = [
           {
             id: 'demo-1',
-            title: 'Welcome to CogniSweep!',
+            title: 'Welcome to CronoBash!',
             message: 'Complete study sprints together, earn token winnings, and configure aesthetic rig dashboard themes!',
             type: 'info',
             is_read: false,
@@ -142,7 +142,7 @@ export default function Header() {
     }
   };
 
-  const handleJoinLobby = async (notificationId: string, inviteCode: string) => {
+  const handleJoinLobby = async (notificationId: string, metadata: any) => {
     try {
       await supabase
         .from('notifications')
@@ -152,7 +152,14 @@ export default function Header() {
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
       setNotificationsOpen(false);
-      router.push(`/rooms?code=${inviteCode}`);
+
+      if (metadata?.room_id) {
+        router.push(`/rooms/${metadata.room_id}`);
+      } else if (metadata?.invite_code) {
+        router.push(`/rooms?code=${metadata.invite_code}`);
+      } else {
+        router.push('/rooms');
+      }
     } catch (e) {
       console.error(e);
     }
@@ -259,10 +266,10 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center group cursor-pointer select-none no-underline shrink-0">
             <div className="font-display text-lg md:text-xl font-medium tracking-wide flex items-center text-primary-fixed">
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic pr-0.5 select-none">C</span>
-              <span className="text-on-surface">ogni</span>
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-              <span className="text-on-surface">weep</span>
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">C</span>
+              <span className="text-on-surface">rono</span>
+              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">B</span>
+              <span className="text-on-surface">ash</span>
             </div>
           </Link>
         </div>
@@ -399,13 +406,13 @@ export default function Header() {
                             </div>
                           )}
 
-                          {n.type === 'invite' && n.metadata?.invite_code && !n.is_read && (
+                          {n.type === 'invite' && (n.metadata?.invite_code || n.metadata?.room_id) && !n.is_read && (
                             <div className="flex gap-1.5 mt-2 pt-2 border-t border-outline-variant/10">
                               <button
-                                onClick={() => handleJoinLobby(n.id, n.metadata.invite_code)}
-                                className="bg-primary-container hover:bg-primary-fixed text-on-primary font-bold text-[8px] uppercase px-2 py-1 rounded border border-primary-container cursor-pointer animate-pulse"
+                                onClick={() => handleJoinLobby(n.id, n.metadata)}
+                                className="bg-[#00ffa3] text-black font-extrabold text-[9px] uppercase px-3 py-1.5 rounded-lg border border-[#00ffa3] hover:bg-[#00ffa3]/80 cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.3)] animate-pulse flex items-center gap-1"
                               >
-                                Join Lobby
+                                ⚔️ Join Arena Room
                               </button>
                             </div>
                           )}
@@ -499,9 +506,9 @@ export default function Header() {
         <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-44 shrink-0">
           <div className="font-display text-lg font-medium tracking-wide flex items-center text-primary-fixed">
             <span className="font-dancing text-xl md:text-2xl font-bold italic pr-0.5 select-none">C</span>
-            <span className="text-on-surface">ogni</span>
-            <span className="font-dancing text-xl md:text-2xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-            <span className="text-on-surface">weep</span>
+            <span className="text-on-surface">rono</span>
+            <span className="font-dancing text-xl md:text-2xl font-bold italic pl-1 pr-0.5 select-none">B</span>
+            <span className="text-on-surface">ash</span>
           </div>
         </Link>
         <div className="flex items-center gap-4">

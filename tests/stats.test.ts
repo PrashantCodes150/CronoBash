@@ -1,8 +1,8 @@
 // tests/stats.test.ts
 /// <reference types="jest" />
-// Unit tests auditing the CogniSweep focus score formula
+// Unit tests auditing the CronoBash focus score formula
 
-describe("CogniSweep Focus Score Calculation Tests", () => {
+describe("CronoBash Focus Score Calculation Tests", () => {
   
   // Scoring formula: (effectiveFocusSeconds / (distractions + 1)) * consistencyMultiplier
   const calculateScore = (

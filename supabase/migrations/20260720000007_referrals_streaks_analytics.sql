@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: Streaks & Analytics Tracking Tables
+-- CronoBash Migration: Streaks & Analytics Tracking Tables
 -- ==========================================
 
 -- 1. Streaks Table

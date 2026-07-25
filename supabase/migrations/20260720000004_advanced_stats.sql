@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: Advanced Focus Stats Tables
+-- CronoBash Migration: Advanced Focus Stats Tables
 -- ==========================================
 
 -- 1. Distraction Logs Table

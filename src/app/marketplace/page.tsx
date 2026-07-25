@@ -28,7 +28,7 @@ export default function MarketplacePage() {
             <h1 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Arena Marketplace</h1>
           </div>
           <p className="font-mono text-[10px] text-on-surface-variant max-w-xl leading-relaxed uppercase">
-            UPGRADE YOUR COGNISWEEP STUDY ENVIRONMENT WITH AESTHETIC HIGHLIGHTS, SPECIAL AUDIO PROFILES, AND CYBER RIG ENVIRONMENTS.
+            UPGRADE YOUR CRONOBASH STUDY ENVIRONMENT WITH AESTHETIC HIGHLIGHTS, SPECIAL AUDIO PROFILES, AND CYBER RIG ENVIRONMENTS.
           </p>
         </div>
       </div>

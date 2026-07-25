@@ -21,7 +21,7 @@ export default function SignupPage() {
     setErrorMsg('');
 
     if (!agree) {
-      setErrorMsg('You must agree to the Terms & Conditions.');
+      setErrorMsg('You must agree to the Privacy Policy & Terms of Service before creating an account.');
       return;
     }
     if (password !== confirmPassword) {
@@ -64,6 +64,11 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!agree) {
+      setErrorMsg('You must agree to the Privacy Policy & Terms of Service before signing up.');
+      return;
+    }
+
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://focus-arena-gamma.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
@@ -89,9 +94,9 @@ export default function SignupPage() {
         <div className="text-center mb-8">
             <div className="font-display text-3xl md:text-4xl font-medium tracking-wide flex items-center justify-center text-primary-fixed select-none">
               <span className="font-dancing text-4xl md:text-5xl font-bold italic pr-0.5 select-none">C</span>
-              <span className="text-on-surface">ogni</span>
-              <span className="font-dancing text-4xl md:text-5xl font-bold italic pl-1 pr-0.5 select-none">S</span>
-              <span className="text-on-surface">weep</span>
+              <span className="text-on-surface">rono</span>
+              <span className="font-dancing text-4xl md:text-5xl font-bold italic pl-1 pr-0.5 select-none">B</span>
+              <span className="text-on-surface">ash</span>
             </div>
           <p className="font-label-mono text-xs text-on-surface-variant mt-2">
             Create Your Rig &amp; Deploy Profile
@@ -129,7 +134,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="fighter@cognisweep.com"
+              placeholder="fighter@cronobash.com"
               className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed transition-all"
             />
           </div>
@@ -162,16 +167,25 @@ export default function SignupPage() {
             />
           </div>
 
+          {/* Tier 1 DPDP Consent Checkbox */}
           <div className="flex items-start gap-3 pt-2">
             <input
               id="terms"
               type="checkbox"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-outline-variant bg-background text-primary-container focus:ring-primary-container"
+              className="mt-1 w-4 h-4 rounded border-outline-variant bg-background text-primary-container focus:ring-primary-container shrink-0 cursor-pointer"
             />
-            <label htmlFor="terms" className="text-[11px] text-on-surface-variant font-mono leading-tight select-none">
-              I have read and agree to the Terms & Conditions, Rules & Regulations, and Privacy Policy.
+            <label htmlFor="terms" className="text-[11px] text-on-surface-variant font-mono leading-tight select-none cursor-pointer">
+              I have read and agree to the{' '}
+              <Link href="/privacy" target="_blank" className="text-primary-fixed hover:underline font-bold">
+                Privacy Policy
+              </Link>{' '}
+              &amp;{' '}
+              <Link href="/terms" target="_blank" className="text-primary-fixed hover:underline font-bold">
+                Terms of Service
+              </Link>
+              .
             </label>
           </div>
 

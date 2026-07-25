@@ -16,6 +16,7 @@ interface LeaderboardRowProps {
     verified_badge?: boolean;
     level?: number;
     points?: number;
+    followers_count?: number;
   };
   isCurrentUser?: boolean;
 }

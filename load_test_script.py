@@ -1,5 +1,5 @@
 # load_test_script.py
-# Simulates concurrent users matching and joining study chambers in CogniSweep.
+# Simulates concurrent users matching and joining study chambers in CronoBash.
 # Install: pip install locust
 # Run: locust -f load_test_script.py --host=http://localhost:3000
 
@@ -8,7 +8,7 @@ import json
 import random
 from locust import HttpUser, task, between
 
-class CogniSweepUser(HttpUser):
+class CronoBashUser(HttpUser):
     # Think time between tasks: 1 to 3 seconds
     wait_time = between(1, 3)
 

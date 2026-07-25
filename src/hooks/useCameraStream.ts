@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { getWebRTCConfig } from '@/lib/webrtcConfig';
 
 export function useCameraStream(
   roomId: string,
@@ -18,13 +19,7 @@ export function useCameraStream(
     if (!roomId || !userId) return;
     let channel: any;
 
-    const config: RTCConfiguration = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-      ],
-    };
+    const config: RTCConfiguration = getWebRTCConfig();
 
     const createPeerConnection = (peerId: string) => {
       // Close existing connection if present to prevent duplicate state

@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: Matchmaking, Referrals, & Daily Challenges
+-- CronoBash Migration: Matchmaking, Referrals, & Daily Challenges
 -- ==========================================
 
 -- 1. Matchmaking Queue Table

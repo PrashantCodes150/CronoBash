@@ -1,5 +1,5 @@
 -- ==========================================
--- CogniSweep Migration: User Challenges Progress Table
+-- CronoBash Migration: User Challenges Progress Table
 -- ==========================================
 
 create table if not exists public.user_challenge_progress (

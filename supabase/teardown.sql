@@ -1,8 +1,8 @@
 -- ==========================================
--- CogniSweep Schema Teardown
+-- CronoBash Schema Teardown
 -- ==========================================
 -- Run this BEFORE schema.sql to cleanly re-create everything.
--- WARNING: This destroys all data in the CogniSweep tables.
+-- WARNING: This destroys all data in the CronoBash tables.
 
 -- Drop tables first (CASCADE removes triggers automatically)
 drop table if exists public.room_presence cascade;

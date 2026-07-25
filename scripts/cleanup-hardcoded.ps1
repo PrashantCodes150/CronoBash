@@ -1,7 +1,7 @@
 # scripts/cleanup-hardcoded.ps1
 # Verification script to ensure no test user mocks or placeholder text remains in src/
 
-Write-Output "Starting CogniSweep Production Code Audit Scanner..."
+Write-Output "Starting CronoBash Production Code Audit Scanner..."
 Write-Output "====================================================="
 
 $targets = @("Test User", "Lorem ipsum", "testuser", "example.com")

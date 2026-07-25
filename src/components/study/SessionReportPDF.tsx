@@ -50,7 +50,7 @@ export function SessionReportPDF({
     const htmlContent = `
       <html>
         <head>
-          <title>CogniSweep - Study Session Report</title>
+          <title>CronoBash - Study Session Report</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f2937; padding: 40px; line-height: 1.5; }
             .header { border-bottom: 2px solid #f97316; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
@@ -72,7 +72,7 @@ export function SessionReportPDF({
         </head>
         <body>
           <div class="header">
-            <div class="logo">COGNISWEEP</div>
+            <div class="logo">CRONOBASH</div>
             <div class="title">Session Report Log</div>
           </div>
           
@@ -143,7 +143,7 @@ export function SessionReportPDF({
           </div>
 
           <div style="margin-top: 50px; text-align: center; font-size: 10px; color: #9ca3af;">
-            Generated automatically by CogniSweep Focus Analytics Engine.
+            Generated automatically by CronoBash Focus Analytics Engine.
           </div>
 
           <script>

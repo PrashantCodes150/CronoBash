@@ -1,4 +1,4 @@
-# CogniSweep Database Setup Guide
+# CronoBash Database Setup Guide
 
 ## Prerequisites
 
@@ -131,7 +131,7 @@ In Supabase Dashboard → Authentication → Providers:
 ## File Structure
 
 ```
-cognisweep/
+cronobash/
 ├── schema.sql                          # Main database schema + functions
 ├── .env.local                          # Supabase credentials (gitignored)
 ├── supabase/

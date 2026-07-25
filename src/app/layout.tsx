@@ -25,7 +25,7 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "CogniSweep — Study with Friends, Compete Globally",
+  title: "CronoBash — Study with Friends, Compete Globally",
   description: "Join 1v1 study battles, track focus with AI, climb leaderboards, and earn rewards.",
 };
 
