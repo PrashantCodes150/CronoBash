@@ -681,22 +681,24 @@ export default function RoomDetail() {
   const isMoneyRoom = room.type === 'money';
 
   return (
-    <div className="space-y-6">
-      {/* Top Header Section */}
-      <header className="pb-6 border-b border-outline-variant">
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-          <div>
+    <div className="space-y-6 select-none">
+      {/* Top Header Section with Claymorphic & Neumorphic 3D styling */}
+      <header className="pb-6 border-b border-emerald-500/20">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border border-emerald-500/30 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-6.5 rounded-3xl shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+          <div className="relative z-10">
             <div className="flex flex-wrap items-center gap-4 mb-3">
-              <h2 className="font-display text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight">
-                {room.name}
+              <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent flex items-center gap-2">
+                <span>{room.name}</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
               </h2>
               
-              <span className={`font-label-mono text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
+              <span className={`font-label-mono text-xs font-bold px-4 py-1.5 rounded-full border flex items-center gap-1.5 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),_inset_-2px_-2px_4px_rgba(255,255,255,0.03),_0_0_12px_rgba(0,255,163,0.2)] ${
                 isMoneyRoom 
-                  ? 'bg-primary-container/10 text-primary-fixed border-primary-container/30 glow-primary'
-                  : 'bg-secondary-container/10 text-secondary-fixed border-secondary-container/30'
+                  ? 'bg-amber-950/60 text-amber-400 border-amber-500/40 font-bold'
+                  : 'bg-emerald-950/60 text-emerald-400 border-emerald-500/40 font-bold'
               }`}>
-                <span className="material-symbols-outlined text-sm">
+                <span className="material-symbols-outlined text-sm font-bold animate-pulse">
                   {isMoneyRoom ? 'attach_money' : 'groups'}
                 </span>
                 {isMoneyRoom ? 'Money Room Challenge' : `${room.type.toUpperCase()} LOBBY`}
@@ -705,23 +707,23 @@ export default function RoomDetail() {
 
             <div className="flex gap-2 mb-4">
               {room.subject_tags.map(tag => (
-                <span key={tag} className="text-on-surface-variant font-label-mono text-[10px] uppercase font-bold bg-surface-container px-2.5 py-1 rounded border border-outline-variant/30">
+                <span key={tag} className="text-emerald-300 font-label-mono text-[10px] uppercase font-bold bg-neutral-950 px-3 py-1 rounded-xl border border-emerald-500/30 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]">
                   #{tag}
                 </span>
               ))}
             </div>
 
-            <p className="text-sm text-on-surface-variant max-w-3xl leading-relaxed">
+            <p className="text-xs text-emerald-300/80 font-mono max-w-3xl leading-relaxed">
               {room.description || 'Sprint timer lobbies designed for absolute cognitive focus. Maintain top averages, log daily study hours, and compete on the active leaderboards.'}
             </p>
           </div>
-          <div className="flex gap-3 shrink-0">
+          <div className="flex gap-3 shrink-0 relative z-10">
             {concludedSessions.length > 0 ? (
               <button
                 onClick={() => router.push('/dashboard')}
-                className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-xs font-bold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 cursor-pointer select-none glow-primary animate-pulse"
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3 px-5 rounded-2xl transition-all flex items-center gap-2 cursor-pointer select-none shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] hover:scale-105 border border-emerald-400 animate-pulse"
               >
-                <span className="material-symbols-outlined text-sm">dashboard</span>
+                <span className="material-symbols-outlined text-sm font-bold">dashboard</span>
                 RETURN TO DASHBOARD
               </button>
             ) : (
@@ -729,7 +731,7 @@ export default function RoomDetail() {
                 {room.owner_id === user?.id && room.type !== 'money' && (
                   <button
                     onClick={handleDeleteRoom}
-                    className="bg-error/15 hover:bg-error/25 border border-error/40 text-error font-label-mono text-xs font-bold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 cursor-pointer select-none"
+                    className="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-label-mono text-xs font-bold py-3 px-5 rounded-2xl transition-all flex items-center gap-2 cursor-pointer select-none shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)]"
                     title="Delete this room space permanently"
                   >
                     <span className="material-symbols-outlined text-sm">delete</span>
@@ -738,10 +740,10 @@ export default function RoomDetail() {
                 )}
                 <button
                   onClick={() => setShowVsIntro(true)}
-                  className="bg-surface-container-high hover:bg-surface-container border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-xs font-bold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 cursor-pointer select-none"
+                  className="bg-neutral-950 hover:bg-neutral-900 border border-emerald-500/30 text-white hover:text-emerald-400 font-label-mono text-xs font-bold py-3 px-5 rounded-2xl transition-all flex items-center gap-2 cursor-pointer select-none shadow-[-4px_-4px_12px_rgba(255,255,255,0.02),_6px_6px_16px_rgba(0,0,0,0.8)] hover:scale-105"
                   title="Replay Tekken-style VS screen intro animation"
                 >
-                  <span className="material-symbols-outlined text-sm">swords</span>
+                  <span className="material-symbols-outlined text-sm font-bold animate-bounce">swords</span>
                   REPLAY VS INTRO
                 </button>
               </>
@@ -755,20 +757,20 @@ export default function RoomDetail() {
         {/* Left Columns: Leaderboard, Recent Sprints & Rules */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* Live Leaderboard */}
-          <section className="glass-panel rounded-xl p-6">
+          {/* Live Leaderboard with Claymorphic & Neumorphic 3D Container */}
+          <section className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)]">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
-                <span className={`relative flex h-2 w-2 ${realtimePulse ? 'scale-150' : ''} transition-transform duration-300`}>
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-fixed"></span>
+              <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className={`relative flex h-2.5 w-2.5 ${realtimePulse ? 'scale-150' : ''} transition-transform duration-300`}>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
                 </span>
-                Active Leaderboard
+                <span>Active Leaderboard</span>
                 {realtimePulse && (
-                  <span className="font-label-mono text-[9px] text-primary-fixed animate-pulse">LIVE</span>
+                  <span className="font-label-mono text-[9px] text-emerald-400 animate-pulse font-bold">LIVE</span>
                 )}
               </h3>
-              <span className="font-label-mono text-[10px] text-primary-fixed font-bold bg-primary-container/10 px-2.5 py-1 rounded-lg">
+              <span className="font-label-mono text-[10px] text-emerald-400 font-bold bg-neutral-950 px-3 py-1 rounded-full border border-emerald-500/40 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]">
                 {members.length} Active Users
               </span>
             </div>
@@ -776,7 +778,7 @@ export default function RoomDetail() {
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-outline-variant font-label-mono text-[10px] text-on-surface-variant uppercase tracking-widest">
+                  <tr className="border-b border-emerald-500/20 font-label-mono text-[10px] text-emerald-300/80 uppercase tracking-widest">
                     <th className="py-3 pl-4">Rank</th>
                     <th className="py-3">Contestant</th>
                     <th className="py-3 text-right">Study Time</th>
@@ -785,7 +787,7 @@ export default function RoomDetail() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="font-mono text-xs text-on-surface">
+                <tbody className="font-mono text-xs text-white">
                   {(() => {
                     const sortedMembers = concludedSessions.length > 0
                       ? [...members].sort((a, b) => {
@@ -816,34 +818,36 @@ export default function RoomDetail() {
                       return (
                         <tr 
                           key={mbr.id} 
-                          className={`border-b border-outline-variant/30 hover:bg-surface-variant/20 transition-colors ${
-                            isCurrentUser ? 'bg-primary-container/5 border-y-2 border-primary-container' : ''
+                          className={`border-b border-emerald-500/10 hover:bg-emerald-950/20 transition-all ${
+                            isCurrentUser ? 'bg-emerald-500/10 border-y-2 border-emerald-500/40' : ''
                           }`}
                         >
                           <td className={`py-4 pl-4 font-display text-base font-extrabold ${
-                            idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-on-surface-variant'
+                            idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-600' : 'text-neutral-400'
                           }`}>
                             {idx + 1}
                           </td>
                           <td className="py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full overflow-hidden border border-outline-variant bg-surface-variant shrink-0">
-                                <img alt={name} className="w-full h-full object-cover" src={avatar} />
+                              <div className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-r from-emerald-400 to-cyan-400 shrink-0 shadow-[0_0_8px_rgba(0,255,163,0.3)]">
+                                <div className="w-full h-full rounded-full overflow-hidden bg-neutral-950">
+                                  <img alt={name} className="w-full h-full object-cover" src={avatar} />
+                                </div>
                               </div>
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`font-mono text-xs ${isCurrentUser ? 'text-primary-fixed font-bold' : 'text-on-surface'}`}>
+                                <span className={`font-mono text-xs ${isCurrentUser ? 'text-emerald-400 font-bold' : 'text-white'}`}>
                                   {name} {isCurrentUser && '(You)'}
                                 </span>
                                 {mbr.users?.is_pro && (
-                                  <span className="text-[7px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-1 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_5px_rgba(234,179,8,0.2)]">
+                                  <span className="text-[7px] bg-amber-500/20 border border-amber-500/50 text-amber-400 px-1.5 py-0.5 rounded font-black tracking-tighter uppercase shadow-[0_0_8px_rgba(245,158,11,0.3)]">
                                     PRO
                                   </span>
                                 )}
                                 {statusBadge ? (
-                                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-black tracking-widest uppercase ${
+                                  <span className={`text-[8px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase ${
                                     statusBadge.includes("WINNER") || statusBadge.includes("RANK 1")
-                                      ? "bg-emerald-500/20 border border-emerald-500/50 text-[#00ffa3] shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-pulse" 
-                                      : "bg-red-500/20 border border-red-500/50 text-red-400"
+                                      ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-[0_0_10px_rgba(0,255,163,0.3)] animate-pulse" 
+                                      : "bg-rose-500/20 border border-rose-500/50 text-rose-400"
                                   }`}>
                                     {statusBadge}
                                   </span>
@@ -853,12 +857,12 @@ export default function RoomDetail() {
                                     ? "OWNER"
                                     : (isReady ? "READY" : "PREPARING");
                                   return (
-                                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-black tracking-widest uppercase ${
+                                    <span className={`text-[8px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase ${
                                       readyBadge === "OWNER"
                                         ? "bg-amber-500/20 border border-amber-500/50 text-amber-400"
                                         : readyBadge === "READY"
-                                          ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.25)]"
-                                          : "bg-surface-variant/40 border border-outline-variant/30 text-on-surface-variant/60"
+                                          ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-[0_0_8px_rgba(0,255,163,0.3)]"
+                                          : "bg-neutral-950 border border-white/5 text-neutral-400 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]"
                                     }`}>
                                       {readyBadge}
                                     </span>
@@ -867,8 +871,8 @@ export default function RoomDetail() {
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 text-right font-bold text-on-surface-variant">
-                            <span className={isCurrentUser ? 'text-primary-fixed font-bold' : ''}>
+                          <td className="py-4 text-right font-bold text-emerald-300">
+                            <span className={isCurrentUser ? 'text-emerald-400 font-bold drop-shadow-[0_0_6px_rgba(0,255,163,0.4)]' : ''}>
                               {formatSeconds(displaySecs)}
                             </span>
                           </td>
@@ -878,13 +882,13 @@ export default function RoomDetail() {
                                 <button
                                   disabled={kickingId === mbr.user_id}
                                   onClick={() => handleKickMember(mbr.user_id)}
-                                  className="text-[10px] bg-error/10 hover:bg-error/30 text-error border border-error/30 hover:border-error rounded px-2.5 py-1 transition-all cursor-pointer font-bold font-mono tracking-wider"
+                                  className="text-[10px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 rounded-xl px-3 py-1 transition-all cursor-pointer font-bold font-mono tracking-wider shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]"
                                   title="Kick user from room"
                                 >
                                   {kickingId === mbr.user_id ? 'KICKING...' : 'KICK'}
                                 </button>
                               ) : (
-                                <span className="text-[9px] text-on-surface-variant font-bold opacity-60 font-mono tracking-wider">ADMIN</span>
+                                <span className="text-[9px] text-amber-400 font-bold opacity-80 font-mono tracking-wider">ADMIN</span>
                               )}
                             </td>
                           )}
@@ -903,15 +907,15 @@ export default function RoomDetail() {
         <div className="lg:col-span-4 space-y-6">
           {/* Lobby Arena Rig Setup configuration */}
           {members.some(m => m.user_id === user?.id) && (
-            <div className="glass-panel rounded-xl p-6 border-t-2 border-primary-fixed space-y-6">
+            <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)] space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="font-display text-sm font-bold text-on-surface uppercase">Arena Rig Setup</h3>
+                <h3 className="font-display text-sm font-bold text-white uppercase">Arena Rig Setup</h3>
                 {settingsConfigured ? (
-                  <span className="text-[8px] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-2 py-0.5 rounded font-black tracking-widest uppercase shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                  <span className="text-[8px] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-2.5 py-1 rounded-full font-black tracking-widest uppercase shadow-[0_0_8px_rgba(0,255,163,0.3)]">
                     CONFIGURED
                   </span>
                 ) : (
-                  <span className="text-[8px] bg-amber-500/20 border border-amber-500/50 text-amber-400 px-2 py-0.5 rounded font-black tracking-widest uppercase animate-pulse">
+                  <span className="text-[8px] bg-amber-500/20 border border-amber-500/50 text-amber-400 px-2.5 py-1 rounded-full font-black tracking-widest uppercase animate-pulse">
                     REQUIRED
                   </span>
                 )}
@@ -1047,46 +1051,46 @@ export default function RoomDetail() {
             </div>
           )}
 
-          <div className="glass-panel rounded-xl p-6 border-t-2 border-primary-fixed space-y-6">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase">Rig Details</h3>
+          <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)] space-y-6">
+            <h3 className="font-display text-sm font-bold text-white uppercase">Rig Details</h3>
             <div className="space-y-4 font-mono text-xs">
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30">
-                <span className="text-on-surface-variant">ENTRY STAKE</span>
-                <span className="font-display text-base font-black text-primary-fixed">
-                  {room.entry_fee} <span className="text-[10px] text-on-surface-variant font-normal">TKN</span>
+              <div className="flex justify-between items-center py-2 border-b border-emerald-500/20">
+                <span className="text-emerald-300/80">ENTRY STAKE</span>
+                <span className="font-display text-base font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(0,255,163,0.4)]">
+                  {room.entry_fee} <span className="text-[10px] text-emerald-300 font-normal">TKN</span>
                 </span>
               </div>
-              <div className="py-2 border-b border-outline-variant/30 space-y-2">
+              <div className="py-2 border-b border-emerald-500/20 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-on-surface-variant">CONTESTANTS</span>
-                  <span className="font-bold">{members.length} / {room.max_members}</span>
+                  <span className="text-emerald-300/80">CONTESTANTS</span>
+                  <span className="font-bold text-white">{members.length} / {room.max_members}</span>
                 </div>
-                <div className="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-neutral-950 rounded-full h-2 overflow-hidden shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)] border border-white/5">
                   <div 
-                    className="bg-primary-fixed h-1.5 rounded-full transition-all" 
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2 rounded-full transition-all shadow-[0_0_10px_rgba(0,255,163,0.5)]" 
                     style={{ width: `${(members.length / room.max_members) * 100}%` }}
                   ></div>
                 </div>
               </div>
               {isMoneyRoom && (
-                <div className="flex justify-between items-center py-2 border-b border-outline-variant/30">
-                  <span className="text-on-surface-variant">PRIZE POOL</span>
-                  <span className="font-display text-base font-black text-primary-fixed">
-                    ~{(room.entry_fee * members.length * 0.9).toFixed(0)} <span className="text-[10px] text-on-surface-variant font-normal">TKN</span>
+                <div className="flex justify-between items-center py-2 border-b border-emerald-500/20">
+                  <span className="text-emerald-300/80">PRIZE POOL</span>
+                  <span className="font-display text-base font-black text-amber-400">
+                    ~{(room.entry_fee * members.length * 0.9).toFixed(0)} <span className="text-[10px] text-amber-300 font-normal">TKN</span>
                   </span>
                 </div>
               )}
-              <div className="flex justify-between items-center py-2 border-b border-outline-variant/30">
-                <span className="text-on-surface-variant">PLATFORM COMM.</span>
-                <span className="font-bold text-on-surface">{room.platform_fee_percent}%</span>
+              <div className="flex justify-between items-center py-2 border-b border-emerald-500/20">
+                <span className="text-emerald-300/80">PLATFORM COMM.</span>
+                <span className="font-bold text-white">{room.platform_fee_percent}%</span>
               </div>
             </div>
 
             {alertMsg && (
-              <div className={`p-3 rounded-lg text-xs font-mono border ${
+              <div className={`p-3 rounded-2xl text-xs font-mono border shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)] ${
                 alertMsg.type === 'success' 
-                  ? 'bg-primary-container/10 border-primary-container text-primary-fixed' 
-                  : 'bg-error/10 border-error text-error'
+                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' 
+                  : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
               }`}>
                 {alertMsg.text}
               </div>
@@ -1095,7 +1099,7 @@ export default function RoomDetail() {
             {concludedSessions.length > 0 ? (
               <button
                 onClick={() => router.push('/dashboard')}
-                className="w-full bg-primary-container text-on-primary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-primary-fixed transition-all hover:scale-[1.02] glow-primary flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider animate-pulse"
+                className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3.5 rounded-2xl transition-all hover:scale-105 shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider animate-pulse border border-emerald-400"
               >
                 <span className="material-symbols-outlined">dashboard</span>
                 Return to Dashboard
@@ -1106,7 +1110,7 @@ export default function RoomDetail() {
                   countdownActive ? (
                     <button
                       onClick={cancelCountdown}
-                      className="w-full bg-error/20 border border-error/50 hover:bg-error/30 text-error font-label-mono text-xs font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+                      className="w-full bg-rose-500/20 border border-rose-500/50 hover:bg-rose-500/30 text-rose-300 font-label-mono text-xs font-bold py-3.5 rounded-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)]"
                     >
                       <span className="material-symbols-outlined">cancel</span>
                       Cancel Launch Countdown
@@ -1115,7 +1119,7 @@ export default function RoomDetail() {
                     <button
                       disabled={!settingsConfigured}
                       onClick={startCountdown}
-                      className="w-full bg-primary-container text-on-primary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-primary-fixed transition-all hover:scale-[1.02] glow-primary flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3.5 rounded-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] border border-emerald-400"
                     >
                       <span className="material-symbols-outlined">
                         {settingsConfigured ? 'timer' : 'lock'}
@@ -1127,10 +1131,10 @@ export default function RoomDetail() {
                   <button
                     disabled={countdownActive}
                     onClick={toggleReady}
-                    className={`w-full font-label-mono text-xs font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider ${
+                    className={`w-full font-label-mono text-xs font-bold py-3.5 rounded-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider ${
                       selfReady
-                        ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400'
-                        : 'bg-surface-container-high border border-outline-variant text-on-surface hover:border-primary-fixed hover:text-primary-fixed'
+                        ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-[0_0_12px_rgba(0,255,163,0.3)]'
+                        : 'bg-neutral-950 border border-white/5 text-white hover:border-emerald-400 hover:text-emerald-400 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)]'
                     }`}
                   >
                     <span className="material-symbols-outlined">
@@ -1142,7 +1146,7 @@ export default function RoomDetail() {
                 <button
                   disabled={leaving || countdownActive}
                   onClick={handleLeaveRoom}
-                  className="w-full bg-surface-container-high border border-outline-variant text-on-surface hover:text-error hover:border-error font-label-mono text-[10px] font-bold py-2 rounded-lg transition-colors cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-neutral-950 border border-white/5 text-neutral-400 hover:text-rose-400 hover:border-rose-500/40 font-label-mono text-[10px] font-bold py-2.5 rounded-2xl transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8)]"
                 >
                   {leaving ? 'Leaving...' : 'Leave Room'}
                 </button>
@@ -1151,9 +1155,9 @@ export default function RoomDetail() {
               <button
                 disabled={joining}
                 onClick={handleJoinRoom}
-                className="w-full bg-secondary-container text-on-secondary font-label-mono text-xs font-bold py-3.5 rounded-xl hover:bg-secondary-fixed transition-all hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
+                className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3.5 rounded-2xl transition-all hover:scale-105 flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] border border-emerald-400"
               >
-                <span className="material-symbols-outlined">group_add</span>
+                <span className="material-symbols-outlined font-bold">group_add</span>
                 {joining 
                   ? 'Joining...' 
                   : isMoneyRoom 
@@ -1165,26 +1169,26 @@ export default function RoomDetail() {
           </div>
 
           {/* Invitation block */}
-          <div className="glass-panel rounded-xl p-6 space-y-4">
-            <h4 className="font-display text-xs font-bold text-on-surface uppercase">Invite Cohorts</h4>
+          <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)] space-y-4">
+            <h4 className="font-display text-xs font-bold text-white uppercase">Invite Cohorts</h4>
 
             {/* Invite Code */}
             {room.invite_code && (
-              <div className="space-y-1">
-                <label className="font-label-mono text-[9px] text-on-surface-variant uppercase font-bold block text-left">Room Code</label>
+              <div className="space-y-1.5">
+                <label className="font-label-mono text-[9px] text-emerald-300/80 uppercase font-bold block text-left">Room Code</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     readOnly
                     value={room.invite_code}
-                    className="flex-1 bg-background border border-outline-variant rounded-lg px-3 py-2 font-mono text-[10px] text-on-surface-variant focus:outline-none focus:border-primary-fixed uppercase text-center font-bold tracking-widest text-primary-fixed"
+                    className="flex-1 bg-neutral-950 border border-emerald-500/40 rounded-2xl px-3.5 py-2 font-mono text-xs text-emerald-400 focus:outline-none uppercase text-center font-bold tracking-widest shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)]"
                   />
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(room.invite_code || '');
                       setAlertMsg({ type: 'success', text: `Room code ${room.invite_code} copied!` });
                     }}
-                    className="bg-surface-container-high hover:bg-surface-container border border-outline-variant hover:border-primary-fixed hover:text-primary-fixed text-on-surface font-label-mono text-[10px] px-3.5 rounded-lg transition-all cursor-pointer"
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-[10px] font-extrabold px-4 rounded-2xl transition-all cursor-pointer shadow-[-3px_-3px_8px_rgba(255,255,255,0.05),_4px_4px_12px_rgba(0,0,0,0.8)] hover:scale-105"
                   >
                     Copy
                   </button>
@@ -1193,13 +1197,16 @@ export default function RoomDetail() {
             )}
           </div>
 
-          {/* Live Chat Panel */}
-          <div className="glass-panel rounded-xl p-6 flex flex-col h-[320px]">
+          {/* Live Chat Panel with Claymorphic & Neumorphic styling */}
+          <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.08)] flex flex-col h-[340px]">
             <div className="flex justify-between items-center mb-3">
-              <h4 className="font-display text-xs font-bold text-on-surface uppercase tracking-wider">Live Chat</h4>
+              <h4 className="font-display text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-emerald-400 animate-pulse">forum</span>
+                <span>Live Chat</span>
+              </h4>
               <button 
                 onClick={() => setChatCollapsed(!chatCollapsed)}
-                className="text-on-surface-variant hover:text-primary-fixed cursor-pointer"
+                className="text-neutral-400 hover:text-white cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">
                   {chatCollapsed ? 'expand_more' : 'expand_less'}
@@ -1212,23 +1219,23 @@ export default function RoomDetail() {
                 <div className="flex-grow overflow-y-auto custom-scrollbar space-y-3 mb-4 pr-1 font-mono text-[10px]">
                   {messages.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
-                      <p className="text-on-surface-variant uppercase tracking-tight text-center">No messages yet. Send one!</p>
+                      <p className="text-emerald-300/60 uppercase tracking-tight text-center">No messages yet. Send one!</p>
                     </div>
                   ) : (
                     messages.map((msg, index) => {
                       const isMe = msg.user_id === user?.id;
                       return (
                         <div key={msg.id || index} className={`flex items-start gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                          <div className="w-5 h-5 rounded-full overflow-hidden border border-outline-variant bg-surface-variant shrink-0">
+                          <div className="w-5 h-5 rounded-full overflow-hidden border border-emerald-500/40 bg-neutral-950 shrink-0">
                             <img alt="User avatar" className="w-full h-full object-cover" src={msg.users?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100'} />
                           </div>
-                          <div className={`max-w-[75%] rounded-lg p-2 ${
-                            isMe ? 'bg-primary-container text-on-primary border border-primary-container/40' : 'bg-surface-container-high border border-outline-variant text-on-surface'
+                          <div className={`max-w-[75%] rounded-2xl p-2.5 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.05),_4px_4px_10px_rgba(0,0,0,0.6)] ${
+                            isMe ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white border border-emerald-500/40' : 'bg-neutral-950 border border-white/5 text-neutral-200'
                           }`}>
                             <div className="flex items-center gap-1 mb-0.5">
-                              <span className="font-bold text-[8px] opacity-70 truncate max-w-[80px]">{msg.users?.name || 'Contestant'}</span>
+                              <span className="font-bold text-[8px] text-emerald-400 truncate max-w-[80px]">{msg.users?.name || 'Contestant'}</span>
                               {msg.users?.is_pro && (
-                                <span className="text-[6px] bg-yellow-500/10 border border-yellow-500/50 text-yellow-400 px-0.5 rounded font-black tracking-tighter uppercase shrink-0">
+                                <span className="text-[6px] bg-amber-500/20 border border-amber-500/50 text-amber-400 px-1 rounded font-black tracking-tighter uppercase shrink-0">
                                   PRO
                                 </span>
                               )}
@@ -1248,11 +1255,11 @@ export default function RoomDetail() {
                     placeholder="Say something..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-grow bg-background border border-outline-variant rounded-lg px-3 py-1.5 font-mono text-[10px] text-on-surface focus:outline-none focus:border-primary-fixed"
+                    className="flex-1 bg-neutral-950 border border-emerald-500/30 rounded-2xl px-3.5 py-2 font-mono text-[10px] text-white focus:outline-none focus:border-emerald-400 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)]"
                   />
                   <button
                     type="submit"
-                    className="bg-primary-container text-on-primary font-bold text-[10px] px-3.5 rounded-lg hover:bg-primary-fixed cursor-pointer shrink-0"
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-neutral-950 font-bold text-[10px] px-3.5 py-2 rounded-2xl uppercase shadow-[-2px_-2px_6px_rgba(255,255,255,0.05),_3px_3px_8px_rgba(0,0,0,0.8)] hover:scale-105 cursor-pointer"
                   >
                     Send
                   </button>

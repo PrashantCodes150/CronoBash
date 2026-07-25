@@ -447,62 +447,15 @@ export default function RoomsLobby() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room, idx) => {
+          {filteredRooms.map((room) => {
             const isMoneyRoom = room.type === 'money';
-            const themeIndex = room.type === 'money' ? 3 : room.type === 'private' ? 1 : idx % 3;
-            
-            const cardThemes = [
-              {
-                bg: 'from-emerald-500/20 via-cyan-500/10 to-surface-container',
-                border: 'border-emerald-500/50 hover:border-emerald-400',
-                shadow: 'shadow-[0_0_25px_rgba(0,255,163,0.2)] hover:shadow-[0_0_35px_rgba(0,255,163,0.4)]',
-                glow: 'bg-emerald-500/20 group-hover:bg-cyan-500/30',
-                tagBg: 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300',
-                titleHover: 'group-hover:text-emerald-400',
-                textSub: 'text-emerald-300/90',
-                btn: 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 shadow-[0_0_15px_rgba(0,255,163,0.4)] border-emerald-400'
-              },
-              {
-                bg: 'from-purple-500/20 via-pink-500/10 to-surface-container',
-                border: 'border-purple-500/50 hover:border-pink-400',
-                shadow: 'shadow-[0_0_25px_rgba(168,85,247,0.2)] hover:shadow-[0_0_35px_rgba(168,85,247,0.4)]',
-                glow: 'bg-purple-500/20 group-hover:bg-pink-500/30',
-                tagBg: 'bg-purple-950/80 border-purple-500/40 text-purple-300',
-                titleHover: 'group-hover:text-pink-400',
-                textSub: 'text-purple-300/90',
-                btn: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] border-purple-400'
-              },
-              {
-                bg: 'from-cyan-500/20 via-blue-500/10 to-surface-container',
-                border: 'border-cyan-500/50 hover:border-cyan-400',
-                shadow: 'shadow-[0_0_25px_rgba(0,229,255,0.2)] hover:shadow-[0_0_35px_rgba(0,229,255,0.4)]',
-                glow: 'bg-cyan-500/20 group-hover:bg-blue-500/30',
-                tagBg: 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300',
-                titleHover: 'group-hover:text-cyan-300',
-                textSub: 'text-cyan-300/90',
-                btn: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-neutral-950 shadow-[0_0_15px_rgba(0,229,255,0.4)] border-cyan-400'
-              },
-              {
-                bg: 'from-amber-500/25 via-orange-500/10 to-surface-container',
-                border: 'border-amber-500/50 hover:border-amber-400',
-                shadow: 'shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:shadow-[0_0_35px_rgba(245,158,11,0.45)]',
-                glow: 'bg-amber-500/20 group-hover:bg-orange-500/30',
-                tagBg: 'bg-amber-950/80 border-amber-500/40 text-amber-300',
-                titleHover: 'group-hover:text-amber-400',
-                textSub: 'text-amber-300/90',
-                btn: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 shadow-[0_0_15px_rgba(245,158,11,0.4)] border-amber-400'
-              }
-            ];
-
-            const theme = cardThemes[themeIndex];
-
             return (
               <div 
                 key={room.id}
-                className={`card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br ${theme.bg} border ${theme.border} rounded-3xl transition-all duration-300 ${theme.shadow} hover:-translate-y-1`}
+                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 hover:border-emerald-500/40 rounded-3xl transition-all duration-300 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[-8px_-8px_25px_rgba(255,255,255,0.04),_10px_10px_30px_rgba(0,0,0,0.9),_0_0_25px_rgba(0,255,163,0.25)] hover:-translate-y-1"
               >
                 {/* Background Ambient Glow Accent */}
-                <div className={`absolute top-0 right-0 w-36 h-36 ${theme.glow} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 transition-all pointer-events-none`}></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all pointer-events-none"></div>
                 
                 <div>
                   <div className="flex justify-between items-start gap-4 mb-4 relative z-10">
@@ -517,7 +470,7 @@ export default function RoomsLobby() {
                         {room.type} Arena
                       </span>
                       {isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
+                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
                           COMING SOON
                         </span>
                       )}
@@ -536,25 +489,25 @@ export default function RoomsLobby() {
                     )}
                   </div>
 
-                  <h3 className={`font-display text-xl font-black text-white mb-2 truncate ${theme.titleHover} transition-colors tracking-tight`}>
+                  <h3 className="font-display text-xl font-black text-white mb-2 truncate group-hover:text-cyan-400 transition-colors tracking-tight">
                     {room.name}
                   </h3>
                   
-                  <p className={`text-xs ${theme.textSub} font-mono line-clamp-2 min-h-[32px] mb-4 leading-relaxed`}>
+                  <p className="text-xs text-emerald-300/80 font-mono line-clamp-2 min-h-[32px] mb-4 leading-relaxed">
                     {room.description || 'Join this study arena to sprint focus timers together, share resources, and climb daily metrics.'}
                   </p>
 
                   <div className="flex flex-wrap gap-1.5 mb-6">
                     {room.subject_tags.map(tag => (
-                      <span key={tag} className={`font-label-mono text-[9px] ${theme.tagBg} px-2.5 py-0.5 rounded-md font-bold shadow-[0_0_6px_rgba(0,0,0,0.2)]`}>
+                      <span key={tag} className="font-label-mono text-[9px] bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 rounded-md text-emerald-300 font-bold shadow-[0_0_6px_rgba(0,255,163,0.15)]">
                         #{tag}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-4 flex items-center justify-between relative z-10">
-                  <div className="flex flex-col gap-1 font-label-mono text-xs text-white">
+                <div className="border-t border-emerald-500/20 pt-4 flex items-center justify-between relative z-10">
+                  <div className="flex flex-col gap-1 font-label-mono text-xs text-emerald-300">
                     <div className="flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-sm animate-pulse text-emerald-400">groups</span>
                       <span className="font-bold">Max: {room.max_members} spots</span>
@@ -566,7 +519,7 @@ export default function RoomsLobby() {
                           navigator.clipboard.writeText(room.invite_code || '');
                           setAlertMsg({ type: 'success', text: `Arena code ${room.invite_code} copied to clipboard!` });
                         }}
-                        className="text-[10px] text-cyan-300 hover:text-white bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-md cursor-pointer transition-all w-fit select-none font-bold font-mono tracking-wider mt-1 shadow-[0_0_8px_rgba(0,229,255,0.2)]"
+                        className="text-[10px] text-cyan-300 hover:text-white bg-cyan-950/60 border border-cyan-500/40 px-2 py-0.5 rounded-md cursor-pointer transition-all w-fit select-none font-bold font-mono tracking-wider mt-1 shadow-[0_0_8px_rgba(0,229,255,0.2)]"
                         title="Click to copy code"
                       >
                         CODE: {room.invite_code}
@@ -582,7 +535,7 @@ export default function RoomsLobby() {
                         ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 cursor-not-allowed opacity-90'
                         : room.is_active === false
                           ? 'bg-neutral-900 text-neutral-500 border border-neutral-800 cursor-not-allowed opacity-60'
-                          : `${theme.btn} hover:scale-105`
+                          : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:scale-105 border border-emerald-400'
                     }`}
                   >
                     {isMoneyRoom ? 'COMING SOON 🔒' : room.is_active === false ? 'LOCKED 🔒' : 'Enter Arena'}
