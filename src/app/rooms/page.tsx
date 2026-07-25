@@ -296,49 +296,50 @@ export default function RoomsLobby() {
   return (
     <div className="space-y-6 select-none">
       {/* Top Banner Lobbies controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-surface-container p-6 rounded-3xl shadow-[0_0_30px_rgba(0,255,163,0.15)]">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-emerald-500/30 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-6.5 rounded-3xl shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.8),_inset_1px_1px_1px_rgba(255,255,255,0.08)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div className="relative z-10">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 px-3 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(0,255,163,0.3)]">
+            <span className="bg-neutral-950 border border-emerald-500/40 text-emerald-400 px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),_inset_-2px_-2px_4px_rgba(255,255,255,0.03),_0_0_12px_rgba(0,255,163,0.2)]">
               LIVE ARENA NETWORK
             </span>
           </div>
-          <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight mt-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">
+          <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight mt-2 bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">
             Study Arenas Hub
           </h2>
           <p className="text-xs text-emerald-300/80 font-mono mt-0.5">Join live study arenas or stake tokens in high-stakes money contests</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3 px-6 rounded-2xl hover:scale-105 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,163,0.4)] cursor-pointer border border-emerald-400"
+          className="group bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3.5 px-6 rounded-2xl hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] cursor-pointer border border-emerald-400 shrink-0"
         >
-          <span className="material-symbols-outlined text-sm font-bold animate-spin">add</span>
-          Create Arena
+          <span className="material-symbols-outlined text-base font-bold transition-transform duration-300 group-hover:rotate-90">add</span>
+          <span>Create Arena</span>
         </button>
       </div>
 
       {alertMsg && (
-        <div className={`border rounded-2xl p-4 text-xs flex items-center gap-3 font-mono shadow-[0_0_15px_rgba(0,0,0,0.5)] ${
-          alertMsg.type === 'error' ? 'bg-rose-500/15 border-rose-500/50 text-rose-300' : 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300'
+        <div className={`border rounded-2xl p-4 text-xs flex items-center gap-3 font-mono shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),_inset_-2px_-2px_6px_rgba(255,255,255,0.03)] ${
+          alertMsg.type === 'error' ? 'bg-rose-950/40 border-rose-500/50 text-rose-300' : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
         }`}>
           <span className="material-symbols-outlined text-sm animate-bounce">warning</span>
           <span>{alertMsg.text}</span>
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 p-4 rounded-2xl shadow-[0_0_20px_rgba(0,255,163,0.1)]">
+      {/* Neumorphic Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gradient-to-br from-neutral-900 to-neutral-950 border border-white/5 p-4.5 rounded-3xl shadow-[-6px_-6px_16px_rgba(255,255,255,0.02),_6px_6px_18px_rgba(0,0,0,0.8)]">
         {/* Type Filter buttons */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           {(['all', 'public', 'private', 'money'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2.5 rounded-xl font-label-mono text-xs font-bold uppercase transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2.5 rounded-2xl font-label-mono text-xs font-bold uppercase transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
                 activeFilter === filter
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-neutral-950 font-extrabold shadow-[0_0_15px_rgba(0,255,163,0.4)] scale-105 border border-emerald-400'
-                  : 'bg-neutral-950/80 hover:bg-neutral-900 text-neutral-300 hover:text-white border border-emerald-500/20'
+                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-neutral-950 font-extrabold shadow-[-3px_-3px_8px_rgba(255,255,255,0.05),_4px_4px_12px_rgba(0,0,0,0.8),_0_0_15px_rgba(0,255,163,0.4)] scale-105 border border-emerald-400'
+                  : 'bg-neutral-950 text-neutral-400 hover:text-white border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),_inset_-2px_-2px_5px_rgba(255,255,255,0.02)]'
               }`}
             >
               <span>{filter === 'money' ? 'Money Arenas' : filter}</span>
@@ -361,19 +362,19 @@ export default function RoomsLobby() {
               value={joinCodeInput}
               onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
               placeholder="ENTER ARENA CODE..."
-              className="bg-neutral-950 border border-emerald-500/30 rounded-xl px-3.5 py-2 font-mono text-xs text-white focus:outline-none focus:border-emerald-400 uppercase tracking-wider w-full sm:w-40 text-center"
+              className="bg-neutral-950 border border-emerald-500/30 rounded-2xl px-3.5 py-2.5 font-mono text-xs text-white focus:outline-none focus:border-emerald-400 uppercase tracking-wider w-full sm:w-40 text-center shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)]"
             />
             <button
               type="submit"
               disabled={joiningByCode}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-neutral-950 font-label-mono text-[10px] font-extrabold px-4 py-2 rounded-xl transition-all hover:scale-105 cursor-pointer shrink-0 uppercase shadow-[0_0_10px_rgba(0,229,255,0.3)]"
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-neutral-950 font-label-mono text-[10px] font-extrabold px-4 py-2.5 rounded-2xl transition-all hover:scale-105 cursor-pointer shrink-0 uppercase shadow-[-3px_-3px_8px_rgba(255,255,255,0.05),_4px_4px_12px_rgba(0,0,0,0.8),_0_0_12px_rgba(0,229,255,0.3)]"
             >
               {joiningByCode ? 'Joining...' : 'Join Code'}
             </button>
           </form>
 
           {/* Search Input bar */}
-          <div className="w-full sm:w-48 relative flex items-center bg-neutral-950 border border-emerald-500/30 rounded-xl px-3.5 py-2">
+          <div className="w-full sm:w-48 relative flex items-center bg-neutral-950 border border-emerald-500/30 rounded-2xl px-3.5 py-2.5 shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)]">
             <span className="material-symbols-outlined text-emerald-400 text-lg mr-2 select-none animate-pulse">search</span>
             <input
               type="text"
@@ -451,10 +452,10 @@ export default function RoomsLobby() {
             return (
               <div 
                 key={room.id}
-                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-emerald-500/15 via-cyan-500/5 to-surface-container border border-emerald-500/40 hover:border-cyan-400 rounded-3xl transition-all duration-300 shadow-[0_0_20px_rgba(0,255,163,0.15)] hover:shadow-[0_0_35px_rgba(0,255,163,0.3)] hover:-translate-y-1"
+                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 hover:border-emerald-500/40 rounded-3xl transition-all duration-300 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[-8px_-8px_25px_rgba(255,255,255,0.04),_10px_10px_30px_rgba(0,0,0,0.9),_0_0_25px_rgba(0,255,163,0.25)] hover:-translate-y-1"
               >
                 {/* Background Ambient Glow Accent */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/25 transition-all"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all pointer-events-none"></div>
                 
                 <div>
                   <div className="flex justify-between items-start gap-4 mb-4 relative z-10">
