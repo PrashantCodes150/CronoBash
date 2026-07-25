@@ -67,25 +67,25 @@ export default function AICoachDashboard() {
     <div className="min-h-screen bg-black text-white p-6 max-w-5xl mx-auto space-y-6">
       
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-neutral-850 pb-4">
-        <div className="bg-orange-500/10 p-2.5 rounded border border-orange-500/30 text-orange-500">
-          <Zap className="w-6 h-6" />
+      <div className="flex items-center gap-3 border-b border-cyan-500/20 pb-4 bg-gradient-to-r from-cyan-500/15 via-blue-500/5 to-transparent p-4 rounded-2xl border border-cyan-500/30 shadow-[0_0_30px_rgba(0,229,255,0.15)]">
+        <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 p-3 rounded-xl border border-cyan-500/40 text-cyan-400 shadow-[0_0_15px_rgba(0,229,255,0.3)] animate-pulse">
+          <Zap className="w-6 h-6 animate-bounce" />
         </div>
         <div>
-          <h1 className="text-xl font-black tracking-wider uppercase font-mono">Coach Analytics Dashboard</h1>
-          <p className="text-[10px] text-neutral-500 font-mono">Cognitive reports & personalized recommendations</p>
+          <h1 className="text-2xl font-black tracking-wider uppercase font-display bg-gradient-to-r from-cyan-400 via-blue-400 to-white bg-clip-text text-transparent">Coach Analytics Dashboard</h1>
+          <p className="text-xs text-cyan-300/80 font-mono">Cognitive reports &amp; personalized recommendations</p>
         </div>
       </div>
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-xl flex items-center gap-3.5">
-          <div className="bg-emerald-500/10 p-2 text-emerald-400 rounded">
+        <div className="bg-gradient-to-br from-emerald-500/15 via-cyan-500/5 to-surface-container border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(0,255,163,0.15)]">
+          <div className="bg-emerald-500/20 p-2.5 text-emerald-400 rounded-xl border border-emerald-500/40 animate-pulse">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div className="font-mono text-xs">
-            <span className="text-neutral-500 block uppercase text-[10px]">Avg Focus Ratio</span>
-            <span className="text-lg font-black text-white mt-0.5">{stats.avgFocus}%</span>
+            <span className="text-emerald-300/80 block uppercase text-[10px] font-bold">Avg Focus Ratio</span>
+            <span className="text-xl font-black text-white mt-0.5">{stats.avgFocus}%</span>
           </div>
         </div>
 

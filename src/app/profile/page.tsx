@@ -261,9 +261,12 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <header className="pb-4 border-b border-outline-variant">
-        <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Contestant Rig Profile</h2>
-        <p className="text-xs text-on-surface-variant mt-1">Trace lifetime focus hours, active ranks, and unlocked achievements</p>
+      <header className="pb-4 border-b border-emerald-500/20">
+        <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent flex items-center gap-2">
+          <span>Contestant Rig Profile</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+        </h2>
+        <p className="text-xs text-emerald-300/80 font-mono mt-1">Trace lifetime focus hours, active ranks, and unlocked achievements</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -271,14 +274,14 @@ export default function ProfilePage() {
           <div className="lg:col-span-8 space-y-6">
             
             {/* User profile stats card */}
-            <div className="card-base p-6 md:p-8 relative overflow-hidden group border-l-2 border-primary-fixed bg-grid-pattern">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="card-base p-6 md:p-8 relative overflow-hidden group border border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-cyan-500/10 to-surface-container shadow-[0_0_30px_rgba(0,255,163,0.15)]">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               
               {/* Edit Profile & Badges trigger buttons */}
               <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
                 <button 
                   onClick={() => setEditModalOpen(true)}
-                  className="flex items-center gap-1.5 bg-surface-container-high hover:bg-surface-container hover:text-primary-fixed border border-outline-variant hover:border-primary-fixed text-on-surface font-label-mono text-[9px] font-bold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 font-label-mono text-[9px] font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.2)] hover:scale-105"
                 >
                   <span className="material-symbols-outlined text-xs">edit</span>
                   Edit Profile

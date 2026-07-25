@@ -275,14 +275,19 @@ export default function BuddiesPage() {
   return (
     <div className="space-y-6">
       {/* Title Panel */}
-      <div className="glass-panel rounded-2xl p-6 md:p-8 border-l-4 border-[#00ffa3] bg-grid-pattern relative overflow-hidden text-left">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      <div className="glass-panel rounded-3xl p-6 md:p-8 border border-emerald-500/40 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-surface-container relative overflow-hidden shadow-[0_0_30px_rgba(0,255,163,0.15)] text-left">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10 space-y-2.5">
-          <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-primary-fixed text-3xl">groups</span>
-            <h1 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Study Buddies</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(0,255,163,0.3)] animate-pulse">
+              <span className="material-symbols-outlined text-2xl font-bold animate-bounce">groups</span>
+            </div>
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">Study Buddies</h1>
+              <p className="font-mono text-xs text-emerald-300 font-semibold">Global Squad Network &amp; Real-time Contenders</p>
+            </div>
           </div>
-          <p className="font-mono text-[10px] text-on-surface-variant max-w-xl leading-relaxed uppercase">
+          <p className="font-mono text-[10px] text-on-surface-variant max-w-xl leading-relaxed uppercase pt-1">
             CONNECT WITH PLAYERS GLOBALLY, INVITE ONLINE CONTENDERS TO YOUR FOCUS ROOMS, AND TRACK ACTIVE LEAGUE FRIENDS.
           </p>
         </div>
@@ -293,12 +298,12 @@ export default function BuddiesPage() {
         <div className="lg:col-span-8 space-y-6">
           
           {/* Search users & follow */}
-          <div className="glass-panel rounded-xl p-6 space-y-4">
-            <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm text-primary-fixed">person_search</span>
-              Locate Focus Cohorts
+          <div className="glass-panel rounded-2xl p-6 space-y-4 bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 shadow-[0_0_20px_rgba(0,255,163,0.1)]">
+            <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-emerald-400 animate-pulse">person_search</span>
+              <span>Locate Focus Cohorts</span>
             </h3>
-            <p className="text-[10px] text-on-surface-variant font-mono">SEARCH CONTESTANTS BY DISPLAY NAME OR EMAIL ADDRESS TO FOLLOW THEM</p>
+            <p className="text-[10px] text-emerald-300/80 font-mono">SEARCH CONTESTANTS BY DISPLAY NAME OR EMAIL ADDRESS TO FOLLOW THEM</p>
             
             <div className="flex gap-2">
               <input
@@ -307,11 +312,11 @@ export default function BuddiesPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()}
-                className="flex-grow bg-background border border-outline-variant rounded-lg px-3 py-2 font-mono text-xs text-on-surface focus:outline-none focus:border-primary-fixed"
+                className="flex-grow bg-background border border-emerald-500/30 rounded-xl px-3.5 py-2 font-mono text-xs text-white focus:outline-none focus:border-emerald-400"
               />
               <button
                 onClick={handleSearchUsers}
-                className="bg-primary-container text-on-primary font-label-mono text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary-fixed transition-colors cursor-pointer uppercase shrink-0"
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold px-5 py-2 rounded-xl transition-all hover:scale-105 cursor-pointer uppercase shrink-0 shadow-[0_0_12px_rgba(0,255,163,0.3)]"
               >
                 Search
               </button>

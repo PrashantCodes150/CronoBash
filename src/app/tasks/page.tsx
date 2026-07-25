@@ -36,23 +36,23 @@ function ProductivityHubContent() {
   return (
     <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-surface-container p-6 rounded-3xl shadow-[0_0_30px_rgba(0,255,163,0.15)]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="bg-primary/10 border border-primary/20 text-primary-fixed px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> Productivity Suite
+            <span className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 px-3.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,255,163,0.3)] animate-pulse">
+              <Sparkles className="w-3.5 h-3.5 animate-spin text-emerald-400" /> Productivity Suite
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display tracking-tight mt-2">
+          <h1 className="text-3xl md:text-4xl font-black text-white font-display tracking-tight mt-2 bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">
             Productivity Hub
           </h1>
-          <p className="text-on-surface-variant text-sm mt-1">
+          <p className="text-emerald-300/80 font-mono text-xs mt-1">
             Manage your daily task workflow, schedule exams on calendar, track deep focus sessions, and organize notes.
           </p>
         </div>
 
         {/* Tab Switcher Pills */}
-        <div className="flex flex-wrap items-center bg-surface-container-high p-1.5 rounded-2xl border border-outline-variant/40 shadow-inner gap-1">
+        <div className="flex flex-wrap items-center bg-neutral-950/80 p-2 rounded-2xl border border-emerald-500/30 shadow-[0_0_20px_rgba(0,0,0,0.5)] gap-1.5">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -60,13 +60,13 @@ function ProductivityHubContent() {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer ${
                   isActive
-                    ? 'bg-primary text-on-primary shadow-[0_0_20px_rgba(0,255,163,0.25)] scale-[1.02]'
-                    : 'text-on-surface-variant hover:text-white hover:bg-surface-variant'
+                    ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-neutral-950 shadow-[0_0_20px_rgba(0,255,163,0.4)] scale-105 border border-emerald-400 font-extrabold'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-900/80'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-on-primary' : tab.color}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-neutral-950 animate-pulse' : tab.color}`} />
                 <span>{tab.name}</span>
               </button>
             );
