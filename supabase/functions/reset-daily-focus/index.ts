@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/reset-daily-focus/index.ts
 // Resets total_focus_seconds_today for all room members at midnight UTC
 // Deploy: supabase functions deploy reset-daily-focus

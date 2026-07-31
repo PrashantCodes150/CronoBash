@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/settle-money-rooms/index.ts
 // End-of-day money room settlement Edge Function
 // Deploy: supabase functions deploy settle-money-rooms

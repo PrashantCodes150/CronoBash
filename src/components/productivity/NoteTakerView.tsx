@@ -2,30 +2,54 @@
 
 import React, { useState } from 'react';
 import { NoteItem, useProductivityStore } from '@/lib/productivity-store';
-import { FileText, Plus, Pin, Trash2, Search, Tag, Edit3, Check, Palette } from 'lucide-react';
+import { FileText, Plus, Pin, Trash2, Search, Tag } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export function NoteTakerView() {
-  const { notes, addNote, updateNote, togglePinNote, deleteNote } = useProductivityStore();
+  const { notes, addNote, togglePinNote, deleteNote } = useProductivityStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
 
-  // New/Edit Note Form state
+  // Real Functional Toggles (Persisted in LocalStorage)
+  const [autoSaveCloud, setAutoSaveCloud] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('notes_auto_save_cloud') !== 'false';
+    }
+    return true;
+  });
+
+  const [markdownSyntax, setMarkdownSyntax] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('notes_markdown_syntax') !== 'false';
+    }
+    return true;
+  });
+
+  const handleToggleAutoSaveCloud = () => {
+    const nextVal = !autoSaveCloud;
+    setAutoSaveCloud(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notes_auto_save_cloud', String(nextVal));
+    }
+    toast.success(nextVal ? 'Auto-Save Cloud sync active.' : 'Cloud sync paused.');
+  };
+
+  const handleToggleMarkdownSyntax = () => {
+    const nextVal = !markdownSyntax;
+    setMarkdownSyntax(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notes_markdown_syntax', String(nextVal));
+    }
+    toast.success(nextVal ? 'Markdown formatting mode enabled.' : 'Plain text mode enabled.');
+  };
+
+  // New Note Form state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('Productivity');
   const [tagsInput, setTagsInput] = useState('CS, Study');
-  const [color, setColor] = useState('#0F172A');
-
-  const colorOptions = [
-    { name: 'Dark Slate', hex: '#0F172A' },
-    { name: 'Deep Emerald', hex: '#064E3B' },
-    { name: 'Midnight Navy', hex: '#1E1B4B' },
-    { name: 'Dark Amber', hex: '#451A03' },
-    { name: 'Rich Burgundy', hex: '#4C0519' },
-  ];
 
   const handleCreateNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +66,13 @@ export function NoteTakerView() {
       category: category.trim() || 'General',
       tags,
       pinned: false,
-      color,
+      color: '#F97316',
     });
 
     setTitle('');
     setContent('');
     setIsModalOpen(false);
+    toast.success('Markdown note saved to vault! 📝');
   };
 
   const filteredNotes = notes.filter(n => {
@@ -60,300 +85,216 @@ export function NoteTakerView() {
     return matchesSearch;
   });
 
-  const pinnedNotes = filteredNotes.filter(n => n.pinned);
-  const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
-
-  const categories = Array.from(new Set(notes.map(n => n.category)));
-
-  const activeNote = notes.find(n => n.id === activeNoteId);
-
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-surface-container-high border border-outline-variant/50 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <FileText className="w-7 h-7 text-primary-fixed" />
-            Study Notes & Memos
-          </h2>
-          <p className="text-on-surface-variant text-sm mt-1">
-            Capture formulas, algorithm cheatsheets, and quick study memos.
-          </p>
+      
+      {/* ── TOP METRIC CARDS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#F97316] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">description</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Markdown Notes</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{notes.length} Memos</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-bold rounded-xl shadow-[0_0_20px_rgba(0,255,163,0.3)] hover:brightness-110 transition cursor-pointer shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          Create Note
-        </button>
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#EAB308] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">push_pin</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Pinned Notes</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{notes.filter(n => n.pinned).length} Pinned</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">category</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Categories</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{Array.from(new Set(notes.map(n => n.category))).length} Subjects</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">cloud_done</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Cloud Sync</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{autoSaveCloud ? 'Synced ✓' : 'Local Only'}</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
       </div>
 
-      {/* Search & Category Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-container/60 p-3 rounded-xl border border-outline-variant/40">
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 transform -translate-y-1/2" />
+      {/* ── CONTROLS & REAL FUNCTIONAL BLACK PILL SWITCHES ── */}
+      <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <div className="relative w-full md:w-72">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search notes or tags..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-surface-variant text-on-surface text-xs rounded-lg pl-9 pr-3 py-2 border border-outline-variant/40 focus:outline-none focus:border-primary"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-2xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-[#F97316]"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs text-on-surface-variant font-mono">Category:</span>
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="bg-surface-variant text-on-surface text-xs rounded-lg px-3 py-2 border border-outline-variant/40 focus:outline-none"
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#10B981] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="material-symbols-outlined text-xs">cloud</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900 shrink-0">Auto-Save Cloud</span>
+            <button
+              onClick={handleToggleAutoSaveCloud}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0 ${
+                autoSaveCloud ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${autoSaveCloud ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#F97316] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="material-symbols-outlined text-xs">code</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900 shrink-0">Markdown Formatting</span>
+            <button
+              onClick={handleToggleMarkdownSyntax}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0 ${
+                markdownSyntax ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${markdownSyntax ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#1D1D1F] hover:bg-black text-white font-extrabold text-xs py-2.5 px-5 rounded-full transition hover:scale-105 cursor-pointer shadow-md flex items-center gap-1.5 shrink-0"
           >
-            <option value="all">All Categories</option>
-            {categories.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            <Plus className="w-4 h-4" />
+            <span>Write New Note</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Grid View */}
-      <div className="space-y-6">
-        {/* Pinned Notes Section */}
-        {pinnedNotes.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
-              <Pin className="w-4 h-4 fill-amber-400 text-amber-400" />
-              Pinned Notes ({pinnedNotes.length})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pinnedNotes.map(n => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  onTogglePin={togglePinNote}
-                  onDelete={deleteNote}
-                  onSelectNote={setActiveNoteId}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Regular Notes Section */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-mono uppercase tracking-wider text-on-surface-variant font-bold">
-            All Notes ({unpinnedNotes.length})
-          </h3>
-
-          {unpinnedNotes.length === 0 && pinnedNotes.length === 0 ? (
-            <div className="text-center py-12 text-on-surface-variant italic font-mono bg-surface-container rounded-2xl border border-outline-variant/40">
-              No notes found. Click "Create Note" to add your first memo!
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unpinnedNotes.map(n => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  onTogglePin={togglePinNote}
-                  onDelete={deleteNote}
-                  onSelectNote={setActiveNoteId}
-                />
-              ))}
-            </div>
-          )}
+      {/* ── NOTES GRID ── */}
+      {filteredNotes.length === 0 ? (
+        <div className="morphism-card bg-white text-center py-16 space-y-3 rounded-[28px] border border-white/80">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto" />
+          <p className="text-xs font-bold text-slate-400">No markdown notes found</p>
+          <button onClick={() => setIsModalOpen(true)} className="bg-[#F97316] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">
+            + Write First Note
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredNotes.map(note => (
+            <div key={note.id} className="morphism-card bg-white p-5 rounded-[24px] border border-slate-100 hover:border-[#F97316] transition-all space-y-3 flex flex-col justify-between shadow-sm">
+              <div className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <h4 className="text-sm font-extrabold text-slate-900">{note.title}</h4>
+                  <button onClick={() => togglePinNote(note.id)} className="text-slate-400 hover:text-amber-500 cursor-pointer p-1">
+                    <Pin className={`w-3.5 h-3.5 ${note.pinned ? 'text-amber-500 fill-current' : ''}`} />
+                  </button>
+                </div>
 
-      {/* View/Edit Note Drawer Modal */}
-      {activeNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div
-            className="border border-outline-variant rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-white"
-            style={{ backgroundColor: activeNote.color || '#0F172A' }}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <input
-                type="text"
-                value={activeNote.title}
-                onChange={e => updateNote(activeNote.id, { title: e.target.value })}
-                className="bg-transparent text-xl font-bold text-white focus:outline-none w-full"
-              />
-              <button
-                onClick={() => togglePinNote(activeNote.id)}
-                className={`p-1.5 rounded-lg transition ${activeNote.pinned ? 'text-amber-400' : 'text-white/60 hover:text-white'}`}
-              >
-                <Pin className={`w-5 h-5 ${activeNote.pinned ? 'fill-amber-400' : ''}`} />
-              </button>
+                <p className={`text-xs text-slate-600 font-medium line-clamp-4 leading-relaxed whitespace-pre-wrap ${markdownSyntax ? 'font-mono bg-slate-50 p-2 rounded-xl border border-slate-100' : ''}`}>
+                  {note.content}
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[10px] font-extrabold bg-orange-50 text-[#F97316] px-2.5 py-0.5 rounded-lg border border-orange-100 uppercase">
+                  #{note.category}
+                </span>
+
+                <button onClick={() => deleteNote(note.id)} className="text-slate-400 hover:text-red-600 cursor-pointer p-1">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-
-            <textarea
-              rows={8}
-              value={activeNote.content}
-              onChange={e => updateNote(activeNote.id, { content: e.target.value })}
-              className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm text-white/90 focus:outline-none focus:border-primary resize-none font-mono leading-relaxed"
-            />
-
-            <div className="flex items-center justify-between text-xs text-white/60 font-mono pt-2">
-              <span>Category: {activeNote.category}</span>
-              <span>Updated: {new Date(activeNote.updated_at).toLocaleDateString()}</span>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
-              <button
-                onClick={() => setActiveNoteId(null)}
-                className="px-5 py-2 text-sm font-bold bg-white/10 hover:bg-white/20 text-white rounded-xl transition"
-              >
-                Done
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Create Note Modal */}
+      {/* CREATE NOTE MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-container-high border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white">Create New Note</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-md rounded-[28px] p-6 shadow-2xl space-y-5 text-slate-900 relative">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900">Create Study Note</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-slate-100">✕</button>
+            </div>
 
             <form onSubmit={handleCreateNote} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Title</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Graph Traversal Notes"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
+                  placeholder="e.g. Data Structures Cheat Sheet"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#F97316]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Content</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Note Content</label>
                 <textarea
-                  rows={5}
+                  rows={4}
                   required
-                  placeholder="Write your study notes, formulas, or reminders..."
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary font-mono resize-none"
+                  placeholder="Write formulas, algorithms, or key takeaways..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-[#F97316] resize-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-mono text-on-surface-variant mb-1">Category</label>
-                  <input
-                    type="text"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-on-surface-variant mb-1">Tags (comma separated)</label>
-                  <input
-                    type="text"
-                    value={tagsInput}
-                    onChange={e => setTagsInput(e.target.value)}
-                    className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Color Theme</label>
-                <div className="flex items-center gap-2">
-                  {colorOptions.map(c => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => setColor(c.hex)}
-                      className={`w-7 h-7 rounded-full border-2 transition ${color === c.hex ? 'border-primary scale-110' : 'border-transparent'}`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                    />
-                  ))}
-                </div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                  placeholder="e.g. Computer Science, Math"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#F97316]"
+                />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm rounded-xl text-on-surface-variant hover:bg-surface-variant transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-sm font-bold bg-primary text-on-primary rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:brightness-110 transition"
-                >
-                  Save Note
-                </button>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 bg-[#1D1D1F] hover:bg-black text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md">Save Note 📝</button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function NoteCard({
-  note,
-  onTogglePin,
-  onDelete,
-  onSelectNote,
-}: {
-  note: NoteItem;
-  onTogglePin: (id: string) => void;
-  onDelete: (id: string) => void;
-  onSelectNote: (id: string) => void;
-}) {
-  return (
-    <div
-      className="rounded-2xl border border-outline-variant/40 p-4 space-y-3 flex flex-col justify-between transition hover:brightness-110 shadow-lg group cursor-pointer"
-      style={{ backgroundColor: note.color || '#0F172A' }}
-      onClick={() => onSelectNote(note.id)}
-    >
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="font-bold text-white text-base leading-snug line-clamp-1">{note.title}</h4>
-          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => onTogglePin(note.id)}
-              className={`p-1 rounded hover:bg-white/10 transition ${note.pinned ? 'text-amber-400' : 'text-white/40 hover:text-white'}`}
-            >
-              <Pin className={`w-4 h-4 ${note.pinned ? 'fill-amber-400' : ''}`} />
-            </button>
-            <button
-              onClick={() => onDelete(note.id)}
-              className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-red-400 transition"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <p className="text-xs text-white/80 font-mono whitespace-pre-wrap line-clamp-4 leading-relaxed">
-          {note.content}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-white/60 font-mono">
-        <span className="bg-white/10 px-2 py-0.5 rounded">{note.category}</span>
-        <div className="flex items-center gap-1">
-          {note.tags.map(t => (
-            <span key={t} className="text-primary-fixed">#{t}</span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

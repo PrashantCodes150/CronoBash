@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import InteractiveAuthBackground from '@/components/InteractiveAuthBackground';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [agree, setAgree] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
@@ -16,12 +17,6 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-
-    if (!agree) {
-      setErrorMsg('You must agree to the Privacy Policy & Terms of Service before logging in.');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -34,7 +29,24 @@ export default function LoginPage() {
         setErrorMsg(error.message);
         setLoading(false);
       } else {
-        // Immediate 1-click route transition to dashboard
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user?.id;
+
+        if (userId) {
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('has_seen_onboarding')
+            .eq('id', userId)
+            .maybeSingle();
+
+          const userLocalSeen = typeof window !== 'undefined' && localStorage.getItem(`cronobash_has_seen_onboarding_${userId}`) === 'true';
+          const dbSeen = userProfile?.has_seen_onboarding === true;
+
+          if (!userLocalSeen && !dbSeen) {
+            router.replace('/onboarding');
+            return;
+          }
+        }
         router.replace('/dashboard');
       }
     } catch (e: any) {
@@ -49,17 +61,12 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!agree) {
-      setErrorMsg('You must agree to the Privacy Policy & Terms of Service before logging in.');
-      return;
-    }
-
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://focus-arena-gamma.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/dashboard`
+          redirectTo: `${origin}/onboarding`
         }
       });
       if (error) {
@@ -71,128 +78,169 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex items-center justify-center bg-grid-pattern p-6">
-      <div className="w-full max-w-md bg-surface-container border border-outline-variant rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-        {/* Glow decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-
-        <div className="text-center mb-8">
-            <div className="font-display text-3xl md:text-4xl font-medium tracking-wide flex items-center justify-center text-primary-fixed select-none">
-              <span className="font-dancing text-4xl md:text-5xl font-bold italic pr-0.5 select-none">C</span>
-              <span className="text-on-surface">rono</span>
-              <span className="font-dancing text-4xl md:text-5xl font-bold italic pl-1 pr-0.5 select-none">B</span>
-              <span className="text-on-surface">ash</span>
-            </div>
-          <p className="font-label-mono text-xs text-on-surface-variant mt-2">
-            Enter The Arena Console
-          </p>
-        </div>
-
-        {errorMsg && (
-          <div className="bg-error-container/20 border border-error/50 rounded-lg p-3 text-xs text-error mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm font-bold">warning</span>
-            <span>{errorMsg}</span>
+    <div className="bg-[#FAFAFC] text-slate-900 min-h-screen flex flex-col justify-between font-sans selection:bg-slate-900 selection:text-white relative overflow-hidden">
+      
+      {/* Interactive Subtle Background Video Animation reacting to mouse position */}
+      <InteractiveAuthBackground totalFrames={220} />
+      
+      {/* Top Header */}
+      <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg">
+            C
           </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="fighter@cronobash.com"
-              className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed transition-all"
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="block font-label-mono text-xs text-on-surface-variant uppercase">
-                Password
-              </label>
-              <a href="#" className="font-label-mono text-[10px] text-primary-fixed hover:underline">
-                Forgot Password?
-              </a>
-            </div>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed transition-all"
-            />
-          </div>
-
-          {/* Tier 1 DPDP Consent Checkbox */}
-          <div className="flex items-start gap-3 pt-2">
-            <input
-              id="login-terms"
-              type="checkbox"
-              checked={agree}
-              onChange={(e) => setAgree(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-outline-variant bg-background text-primary-container focus:ring-primary-container shrink-0 cursor-pointer"
-            />
-            <label htmlFor="login-terms" className="text-[11px] text-on-surface-variant font-mono leading-tight select-none cursor-pointer">
-              I have read and agree to the{' '}
-              <Link href="/privacy" target="_blank" className="text-primary-fixed hover:underline font-bold">
-                Privacy Policy
-              </Link>{' '}
-              &amp;{' '}
-              <Link href="/terms" target="_blank" className="text-primary-fixed hover:underline font-bold">
-                Terms of Service
-              </Link>
-              .
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary-container text-on-primary font-label-mono text-sm font-bold py-3 rounded-lg hover:bg-primary-fixed transition-colors mt-6 shadow-[0_0_15px_rgba(0,255,163,0.25)] hover:scale-[1.01] cursor-pointer"
+          <span
+            className="text-xl font-extrabold text-slate-900 tracking-tight"
+            style={{ fontFamily: "'Syne', sans-serif" }}
           >
-            {loading ? 'Entering Arena...' : 'Enter Arena'}
-          </button>
-        </form>
+            CronoBash
+          </span>
+        </Link>
 
-        <div className="relative flex py-4 items-center">
-          <div className="flex-grow border-t border-outline-variant/30"></div>
-          <span className="flex-shrink mx-4 font-label-mono text-[9px] text-on-surface-variant uppercase font-bold">Or</span>
-          <div className="flex-grow border-t border-outline-variant/30"></div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full bg-surface-container-high border border-outline-variant text-on-surface hover:text-primary-fixed hover:border-primary-fixed font-label-mono text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
+        <Link
+          href="/"
+          className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white shadow-xs"
         >
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-          </svg>
-          Sign In with Google
-        </button>
+          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          Back to Home
+        </Link>
+      </header>
 
-        <p className="text-center text-[10px] text-on-surface-variant mt-6 leading-relaxed select-none">
-          By logging in, you agree to the{' '}
-          <Link href="/terms" target="_blank" className="hover:underline text-primary-fixed">Terms of Service</Link> and{' '}
-          <Link href="/privacy" target="_blank" className="hover:underline text-primary-fixed">Privacy Policy</Link>. Material updates will be notified in advance.
-        </p>
+      {/* Main Centered Sign-In Card with Premium Glassmorphism */}
+      <main className="relative z-10 flex-grow flex items-center justify-center px-3 py-6">
+        <div className="w-full max-w-[330px] bg-white/75 backdrop-blur-2xl border border-white/80 rounded-3xl p-5 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)]">
+          
+          <div className="mb-6 text-left">
+            <h1
+              className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1 tracking-tight"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Sign In
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">Enter your account credentials to continue.</p>
+          </div>
 
-        <p className="text-center text-xs text-on-surface-variant mt-6">
-          New study contestant?{' '}
-          <Link href="/signup" className="text-primary-fixed hover:underline">
-            Register Rig
-          </Link>
-        </p>
-      </div>
+          {errorMsg && (
+            <div className="bg-red-50/90 backdrop-blur-md border border-red-200 rounded-2xl p-3.5 text-xs text-red-600 mb-5 flex items-center gap-2 font-medium">
+              <span className="material-symbols-outlined text-base text-red-500">error</span>
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Official Google OAuth Glass Button */}
+          <div className="mb-5">
+            <button
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white/80 hover:bg-white border border-white/90 backdrop-blur-md rounded-2xl transition-all duration-150 text-xs font-bold text-slate-800 shadow-sm active:scale-[0.99]"
+              type="button"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z" />
+                <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z" />
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z" />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-grow h-px bg-slate-200/80" />
+            <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+              OR EMAIL
+            </span>
+            <div className="flex-grow h-px bg-slate-200/80" />
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 block ml-0.5" htmlFor="email">
+                Email
+              </label>
+              <input
+                className="w-full bg-white/60 border border-slate-200/80 backdrop-blur-md rounded-2xl py-3 px-4 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all duration-150 outline-none shadow-inner"
+                id="email"
+                name="email"
+                autoComplete="email"
+                placeholder="name@company.com"
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center ml-0.5">
+                <label className="text-xs font-bold text-slate-700" htmlFor="password">
+                  Password
+                </label>
+                <Link className="text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors" href="/login">
+                  Forgot?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  className="w-full bg-white/60 border border-slate-200/80 backdrop-blur-md rounded-2xl py-3 pl-4 pr-11 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all duration-150 outline-none shadow-inner"
+                  id="password"
+                  name="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none"
+                  onClick={() => setShowPassword(!showPassword)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                disabled={loading}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-4 text-xs font-semibold shadow-xs transition-all duration-150 active:scale-[0.99] disabled:opacity-50"
+                type="submit"
+              >
+                {loading ? 'Signing In...' : 'Sign In'}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6 text-center pt-4 border-t border-slate-100">
+            <p className="text-xs text-slate-500">
+              Don't have an account?{' '}
+              <Link className="font-semibold text-slate-900 hover:underline ml-0.5" href="/signup">
+                Sign Up
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-6 px-6 text-center border-t border-slate-200/50 mt-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 font-medium">
+          <span>© CronoBash Inc. All rights reserved.</span>
+          <div className="flex items-center gap-4 text-slate-400">
+            <Link href="/terms" className="hover:text-slate-600 transition-colors">Terms</Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-slate-600 transition-colors">Privacy</Link>
+            <span>•</span>
+            <Link href="/refund" className="hover:text-slate-600 transition-colors">Refunds</Link>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }

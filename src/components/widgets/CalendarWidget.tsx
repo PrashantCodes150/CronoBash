@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useProductivityStore } from '@/lib/productivity-store';
-import { Calendar as CalendarIcon, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function CalendarWidget() {
@@ -20,73 +20,65 @@ export function CalendarWidget() {
   const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'short' });
 
   return (
-    <div className="bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4 shadow-lg flex flex-col justify-between h-full hover:border-primary/40 transition">
+    <div className="morphism-card bg-white p-5 space-y-4 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:border-[#8B5CF6] transition-all">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <CalendarIcon className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#8B5CF6] text-white flex items-center justify-center shadow-sm">
+              <CalendarIcon className="w-5 h-5 font-bold" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Calendar</h3>
-              <p className="text-[11px] text-on-surface-variant font-mono">Events & Exams</p>
+              <h3 className="font-extrabold text-slate-900 text-sm">Calendar</h3>
+              <p className="text-[11px] text-slate-500 font-medium">Events &amp; Exams</p>
             </div>
           </div>
 
           <Link
             href="/tasks?tab=calendar"
-            className="text-xs text-primary-fixed hover:text-white font-mono flex items-center gap-1 transition"
+            className="text-xs text-[#8B5CF6] hover:underline font-bold flex items-center gap-1 transition"
           >
             Full View <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
         {/* Today Badge */}
-        <div className="flex items-center gap-3 bg-surface-container-high/70 p-3 rounded-xl border border-outline-variant/30">
-          <div className="bg-primary text-black font-bold px-3 py-1.5 rounded-lg flex flex-col items-center justify-center shrink-0">
-            <span className="text-[10px] uppercase font-mono leading-none">{todayMonthName}</span>
-            <span className="text-lg font-mono font-black leading-none">{todayDateNum}</span>
+        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+          <div className="bg-[#8B5CF6] text-white font-black px-3 py-1.5 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm">
+            <span className="text-[10px] uppercase leading-none font-bold">{todayMonthName}</span>
+            <span className="text-lg font-black leading-none">{todayDateNum}</span>
           </div>
           <div>
-            <span className="text-xs font-bold text-white block">{todayDayName}, Today</span>
-            <span className="text-[10px] text-on-surface-variant font-mono">
+            <span className="text-xs font-extrabold text-slate-900 block">{todayDayName}, Today</span>
+            <span className="text-[10px] text-slate-500 font-semibold">
               {upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''} upcoming
             </span>
           </div>
         </div>
 
         {/* Upcoming Events preview */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {upcomingEvents.length === 0 ? (
-            <div className="text-xs text-center text-on-surface-variant font-mono italic py-4 bg-surface-variant/40 rounded-xl">
-              No upcoming events scheduled.
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+              <p className="text-xs text-slate-400 font-medium">No upcoming schedule</p>
             </div>
           ) : (
-            upcomingEvents.map(e => (
-              <div
-                key={e.id}
-                className="p-2.5 bg-surface-container-high/60 rounded-xl border border-outline-variant/30 flex items-center justify-between"
-                style={{ borderLeftWidth: '3px', borderLeftColor: e.color || '#00FFA3' }}
-              >
-                <div className="truncate">
-                  <h4 className="text-xs font-bold text-white truncate">{e.title}</h4>
-                  <div className="flex items-center gap-1 text-[10px] text-on-surface-variant font-mono">
-                    <Clock className="w-3 h-3 text-primary-fixed" />
-                    <span>{e.start_date.split(' ')[1] || e.start_date.split('T')[0]}</span>
-                  </div>
-                </div>
-                <span
-                  className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded text-black shrink-0"
-                  style={{ backgroundColor: e.color || '#00FFA3' }}
-                >
-                  {e.category}
-                </span>
+            upcomingEvents.slice(0, 2).map(evt => (
+              <div key={evt.id} className="p-2 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-800 truncate">{evt.title}</span>
+                <span className="text-[10px] text-[#8B5CF6] font-bold shrink-0">{evt.start_date}</span>
               </div>
             ))
           )}
         </div>
       </div>
+
+      <Link
+        href="/tasks?tab=calendar"
+        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl text-xs text-center transition block shadow-sm"
+      >
+        + Add Event
+      </Link>
     </div>
   );
 }

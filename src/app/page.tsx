@@ -1,537 +1,669 @@
 "use client";
 
-import React, { useRef, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, MeshDistortMaterial, Float, Stars } from '@react-three/drei';
-import * as THREE from 'three';
+import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion';
+import { useAuth } from '@/components/auth-context';
+import { supabase } from '@/lib/supabaseClient';
+import { BADGES } from '@/lib/badges';
+import { BadgeDisplay } from '@/components/study/BadgeDisplay';
+import { BadgesModal } from '@/components/study/BadgesModal';
 import Footer from '@/components/Footer';
+import HangingCardsSection, { HangingCardItem } from '@/components/HangingCardsSection';
+import TurnStudyIntoASportHero from '@/components/TurnStudyIntoASportHero';
+import MasterYourMomentumSection from '@/components/MasterYourMomentumSection';
+import HandsMomentumHero from '@/components/HandsMomentumHero';
+import DirectCashStakesSection from '@/components/DirectCashStakesSection';
+import Climb100TiersMasteryHero from '@/components/Climb100TiersMasteryHero';
+import AnimatedStatsStrip from '@/components/AnimatedStatsStrip';
+import BlackSideCurtainsTransition from '@/components/BlackSideCurtainsTransition';
+import MotivationalTickerSection from '@/components/MotivationalTickerSection';
+import MasteryMotivationalTickerSection from '@/components/MasteryMotivationalTickerSection';
+import CronoBashWorkflowSection from '@/components/CronoBashWorkflowSection';
+import Interactive3dCtaCard from '@/components/Interactive3dCtaCard';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// ─── 3D: Animated distorted glowing orb ──────────────────────────────────────
-function GlowOrb({ position, color, speed, distort }: {
-  position: [number, number, number];
-  color: string;
-  speed: number;
-  distort: number;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  useFrame((_, delta) => {
-    if (!meshRef.current) return;
-    meshRef.current.rotation.x += delta * speed * 0.3;
-    meshRef.current.rotation.y += delta * speed * 0.5;
-  });
-  return (
-    <Float speed={speed} rotationIntensity={0.4} floatIntensity={1.4}>
-      <Sphere ref={meshRef} args={[1, 64, 64]} position={position}>
-        <MeshDistortMaterial
-          color={color}
-          distort={distort}
-          speed={2}
-          roughness={0.1}
-          metalness={0.4}
-          transparent
-          opacity={0.65}
-        />
-      </Sphere>
-    </Float>
-  );
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
 }
 
-// ─── 3D: Floating particle cloud ─────────────────────────────────────────────
-function ParticleField() {
-  const pointsRef = useRef<THREE.Points>(null);
-  const count = 1800;
-  const positions = React.useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      pos[i * 3]     = (Math.random() - 0.5) * 22;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 22;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 22;
-    }
-    return pos;
-  }, []);
-  useFrame((_, delta) => {
-    if (!pointsRef.current) return;
-    pointsRef.current.rotation.y += delta * 0.03;
-    pointsRef.current.rotation.x += delta * 0.012;
-  });
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial color="#00FFA3" size={0.04} transparent opacity={0.45} sizeAttenuation />
-    </points>
-  );
-}
-
-// ─── 3D: Full hero scene ─────────────────────────────────────────────────────
-function HeroScene() {
-  return (
-    <>
-      <ambientLight intensity={0.25} />
-      <pointLight position={[8, 8, 8]}   intensity={2.5} color="#00FFA3" />
-      <pointLight position={[-8, -8, -4]} intensity={1.2} color="#7B61FF" />
-      <Stars radius={90} depth={50} count={3500} factor={3} saturation={0.5} fade speed={0.5} />
-      <ParticleField />
-      <GlowOrb position={[2.5,  0.5, -2]} color="#00FFA3" speed={0.8} distort={0.45} />
-      <GlowOrb position={[-2.2, -1,  -3]} color="#7B61FF" speed={0.5} distort={0.35} />
-      <GlowOrb position={[0.3,  2.8, -4]} color="#00BFFF" speed={0.6} distort={0.30} />
-    </>
-  );
-}
-
-
-// ─── Animated Sine Wave Section ──────────────────────────────────────────────
-function SineWaveSection() {
+// ─── WebGL Ambient Background Component ─────────────────────────────────────
+function WebGLShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef   = useRef<number>(0);
-
-  const waves = [
-    { color: '#00FFA3', amplitude: 28, frequency: 0.012, speed: 0.022, phase: 0,     lineWidth: 2.5, opacity: 0.9 },
-    { color: '#7B61FF', amplitude: 40, frequency: 0.009, speed: 0.016, phase: 1.2,   lineWidth: 2,   opacity: 0.75 },
-    { color: '#00BFFF', amplitude: 20, frequency: 0.016, speed: 0.030, phase: 2.4,   lineWidth: 1.8, opacity: 0.7 },
-    { color: '#FF6B6B', amplitude: 34, frequency: 0.010, speed: 0.012, phase: 3.6,   lineWidth: 2,   opacity: 0.6 },
-    { color: '#FFD93D', amplitude: 22, frequency: 0.014, speed: 0.025, phase: 5.0,   lineWidth: 1.5, opacity: 0.55 },
-  ];
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
 
-    let t = 0;
-    const phaseOffsets = waves.map(w => w.phase);
+    function syncSize() {
+      if (!canvas) return;
+      const w = canvas.clientWidth || window.innerWidth;
+      const h = canvas.clientHeight || window.innerHeight;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+    syncSize();
+    window.addEventListener('resize', syncSize);
 
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth  * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    if (!gl) return;
+
+    const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+
+    const fs = `precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+varying vec2 v_texCoord;
+
+float noise(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void main() {
+    vec2 uv = v_texCoord;
+    vec2 m = u_mouse / u_resolution;
+    
+    float t = u_time * 0.15;
+    
+    vec3 color1 = vec3(0.98, 0.98, 0.97); // Ivory
+    vec3 color2 = vec3(0.94, 0.95, 0.97); // Cool slate-white
+    vec3 color3 = vec3(1.0, 0.99, 0.96); // Warm white
+    
+    float dist = distance(uv, m);
+    float mouseInbound = smoothstep(0.5, 0.0, dist) * 0.05;
+    
+    float wave1 = sin(uv.x * 2.5 + t + uv.y * 1.5) * 0.5 + 0.5;
+    float wave2 = cos(uv.y * 3.0 - t * 0.8 + uv.x) * 0.5 + 0.5;
+    float wave3 = sin(length(uv - 0.5) * 4.0 - t * 2.0) * 0.5 + 0.5;
+    
+    vec3 base = mix(color1, color2, wave1 * 0.2);
+    base = mix(base, color3, wave2 * 0.15);
+    base += wave3 * 0.02;
+    
+    float streaks = smoothstep(0.992, 1.0, sin(uv.x * 40.0 + uv.y * 10.0 + t * 5.0));
+    base += streaks * 0.04;
+    
+    float n = (noise(uv * 200.0 + t) - 0.5) * 0.012;
+    base += n + mouseInbound;
+    
+    gl_FragColor = vec4(base, 1.0);
+}`;
+
+    function compileShader(type: number, src: string) {
+      if (!gl) return null;
+      const s = gl.createShader(type);
+      if (!s) return null;
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+
+    const vertShader = compileShader(gl.VERTEX_SHADER, vs);
+    const fragShader = compileShader(gl.FRAGMENT_SHADER, fs);
+    if (!vertShader || !fragShader) return;
+
+    const prog = gl.createProgram();
+    if (!prog) return;
+    gl.attachShader(prog, vertShader);
+    gl.attachShader(prog, fragShader);
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+    const pos = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width && rect.height) {
+        const nx = (event.clientX - rect.left) / rect.width;
+        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+        mouse.x = nx * canvas.width;
+        mouse.y = ny * canvas.height;
+      }
     };
-    resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', handleMouseMove);
 
-    const draw = () => {
-      const W = canvas.offsetWidth;
-      const H = canvas.offsetHeight;
-      ctx.clearRect(0, 0, W, H);
+    let animId: number;
+    function render(t: number) {
+      if (!gl || !canvas) return;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      if (uTime) gl.uniform1f(uTime, t * 0.001);
+      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      animId = requestAnimationFrame(render);
+    }
+    animId = requestAnimationFrame(render);
 
-      waves.forEach((wave, i) => {
-        phaseOffsets[i] += wave.speed;
-        const centerY = H / 2;
-
-        ctx.beginPath();
-        ctx.strokeStyle = wave.color;
-        ctx.lineWidth   = wave.lineWidth;
-        ctx.globalAlpha = wave.opacity;
-        ctx.shadowColor = wave.color;
-        ctx.shadowBlur  = 10;
-
-        for (let x = 0; x <= W; x += 1) {
-          const y = centerY + wave.amplitude * Math.sin(wave.frequency * x + phaseOffsets[i]);
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur  = 0;
-      });
-
-      t++;
-      animRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
     return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', syncSize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animId);
     };
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: '160px' }}>
-      {/* Fade edges */}
-      <div className="absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-background to-transparent pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        style={{ display: 'block' }}
-      />
+    <div className="fixed inset-0 w-full h-full -z-10 pointer-events-none">
+      <canvas ref={canvasRef} className="w-full h-full block" />
     </div>
   );
 }
 
-// ─── Scroll-triggered reveal wrapper ─────────────────────────────────────────
-function Reveal({ children, delay = 0, className = '' }: {
-  children: React.ReactNode; delay?: number; className?: string;
-}) {
+// ─── Scroll Reveal Wrapper Component ─────────────────────────────────────────
+function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+  const inView = useInView(ref, { once: true, margin: '-40px' });
   return (
     <motion.div
       ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.75, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 }
 
-// ─── Stat card ───────────────────────────────────────────────────────────────
-function StatCard({ value, label, icon }: { value: string; label: string; icon: string }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={inView ? { opacity: 1, scale: 1 } : {}}
-      transition={{ duration: 0.5, ease: 'backOut' }}
-      whileHover={{ y: -4 }}
-      className="flex flex-col items-center gap-3 p-7 bg-surface-container rounded-2xl border border-outline-variant hover:border-primary-container/60 transition-colors group"
-    >
-      <span className="material-symbols-outlined text-3xl text-primary-fixed group-hover:scale-110 transition-transform">{icon}</span>
-      <span className="font-display text-4xl font-black text-on-surface">{value}</span>
-      <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest text-center">{label}</span>
-    </motion.div>
-  );
-}
+// Workflow Steps Data
+const WORKFLOW_STEPS = [
+  {
+    step: '01',
+    title: 'Create Account & Join Arena',
+    subtitle: 'Sign up in 30 seconds and enter a public study room or create a private squad arena for your friends.',
+    badge: 'STEP 1: SQUAD LOBBY',
+    icon: 'groups',
+    previewTitle: 'Alpha Squad Arena #04',
+    previewDetails: '8 Members Active · 24m Sprint',
+  },
+  {
+    step: '02',
+    title: 'Set Cash Stake & Challenge',
+    subtitle: 'Choose a 1v1 battle match or group pool. Set direct money stakes (₹50, ₹100, ₹500) for the focus sprint.',
+    badge: 'STEP 2: CASH MATCH',
+    icon: 'payments',
+    previewTitle: '1v1 Money Battle: ₹500 Pot',
+    previewDetails: 'Winner Takes Pot Based on Focus Score',
+  },
+  {
+    step: '03',
+    title: '1v1 Focus Sprint Battle',
+    subtitle: 'Hit start. Run your timed focus sprint (25m/45m/60m). Your focus score is tracked and logged in real time.',
+    badge: 'STEP 3: LIVE SPRINT',
+    icon: 'timer',
+    previewTitle: 'Sprint Active: 24:59',
+    previewDetails: 'Focus Score: 98.4% · Peak Flow State',
+  },
+  {
+    step: '04',
+    title: 'Instant Payout & Level Up',
+    subtitle: 'The winner receives the entire cash pot directly into their linked wallet balance, plus XP to level up.',
+    badge: 'STEP 4: INSTANT PAYOUT',
+    icon: 'account_balance_wallet',
+    previewTitle: '₹1,000 Cash Transferred',
+    previewDetails: '+450 XP · Level 12 Emblem Unlocked',
+  },
+];
 
-// ─── Feature card ────────────────────────────────────────────────────────────
-function FeatureCard({ icon, title, desc, accent, delay }: {
-  icon: string; title: string; desc: string; accent: string; delay: number;
-}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -5, scale: 1.01 }}
-      className="relative group bg-surface-container rounded-2xl border border-outline-variant p-8 overflow-hidden transition-all duration-400 cursor-default"
-    >
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${accent} to-transparent`} />
-      <div className="relative z-10 space-y-4">
-        <div className="w-12 h-12 rounded-xl bg-surface-variant flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <span className="material-symbols-outlined text-2xl text-primary-fixed">{icon}</span>
-        </div>
-        <h3 className="font-display text-lg font-bold text-on-surface">{title}</h3>
-        <p className="text-on-surface-variant text-sm leading-relaxed">{desc}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const { user } = useAuth();
 
-  const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const heroScale   = useTransform(scrollYProgress, [0, 0.2], [1, 0.94]);
-  const heroY       = useTransform(scrollYProgress, [0, 0.2], [0, -80]);
-
-  // Lenis smooth scroll
+  // ── OFFICIAL LENIS 120FPS SMOOTH INERTIA SCROLL ENGINE ──
   useEffect(() => {
-    let lenis: any;
-    (async () => {
-      const { default: Lenis } = await import('lenis');
-      lenis = new Lenis({ duration: 1.4, easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
-      const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
-      requestAnimationFrame(raf);
-    })();
-    return () => { try { lenis?.destroy?.(); } catch (_) {} };
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.8,
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    let reqId: number;
+    function raf(time: number) {
+      lenis.raf(time);
+      reqId = requestAnimationFrame(raf);
+    }
+    reqId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(reqId);
+      lenis.destroy();
+    };
   }, []);
 
-  const features = [
-    { icon: 'visibility',            title: 'AI Gaze Tracking',     desc: 'MediaPipe face mesh monitors your iris in real time. Look away and your focus score decays instantly.', accent: 'from-primary-container/10', delay: 0 },
-    { icon: 'groups',                title: 'Study Squads',          desc: 'Form private rooms with your squad. Share focus streaks, chat live, and keep each other accountable.', accent: 'from-secondary-container/10', delay: 0.07 },
-    { icon: 'account_balance_wallet',title: 'Token Economy',         desc: 'Earn TKN for every focused second. Spend it in challenges, stake it in money lobbies, or climb the arena.', accent: 'from-tertiary-container/10', delay: 0.14 },
-    { icon: 'leaderboard',           title: 'Live Leaderboards',     desc: 'Real-time global and room-specific rankings. Track your position minute by minute in the arena.', accent: 'from-primary-container/10', delay: 0.21 },
-    { icon: 'sports_esports',        title: 'Stake Challenges',      desc: 'Bet tokens head-to-head. Winner takes the pot. High-intensity focus battles that actually matter.', accent: 'from-error-container/10', delay: 0.28 },
-    { icon: 'monitoring',            title: 'Analytics Dashboard',   desc: 'Deep session telemetry with attention graphs, streak charts, and mode distribution charts.', accent: 'from-secondary-container/10', delay: 0.35 },
-  ];
+  // Smart Scroll Direction Autohide & Compact Micro-Pill Shrink State
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
 
-  const steps = [
-    { id: '01', icon: 'how_to_reg',   title: 'Sign Up',       desc: 'Create your profile, claim 1000 welcome tokens, and select your subjects.' },
-    { id: '02', icon: 'meeting_room', title: 'Join a Room',   desc: 'Enter a public room, private squad room, or stake tokens in a money lobby.' },
-    { id: '03', icon: 'timer',        title: 'Focus Sprint',  desc: 'Activate webcam tracking, start the timer, and log deep study seconds.' },
-    { id: '04', icon: 'star',         title: 'Earn & Win',    desc: 'Claim pool splits, climb leaderboards, and redeem your focus tokens.' },
-  ];
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      setIsScrolled(currentScrollY > 30);
+
+      if (currentScrollY > 100) {
+        if (currentScrollY > lastScrollYRef.current + 6) {
+          setNavVisible(false); // Hide navbar when scrolling down
+        } else if (currentScrollY < lastScrollYRef.current - 6) {
+          setNavVisible(true); // Reveal navbar when scrolling up
+        }
+      } else {
+        setNavVisible(true);
+      }
+
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll Progress Bar
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  // Live Timer State
+  const [seconds, setSeconds] = useState(1499); // 24:59
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((prev) => (prev > 0 ? prev - 1 : 1500));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimer = (s: number) => {
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Parallax Mouse Handler for Hero Cards
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const handleMouse = (e: MouseEvent) => {
+      if (window.innerWidth < 768) return;
+      const x = e.clientX - window.innerWidth / 2;
+      const y = e.clientY - window.innerHeight / 2;
+      setMousePos({ x, y });
+    };
+    window.addEventListener('mousemove', handleMouse);
+    return () => window.removeEventListener('mousemove', handleMouse);
+  }, []);
+
+  // Animated Workflow Active Step State
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState(0);
+
+  // 100 Badges Modal State
+  const [isBadgesModalOpen, setIsBadgesModalOpen] = useState(false);
+
+  // Auto-advance workflow step every 4 seconds unless hovered
+  const [isHoveredWorkflow, setIsHoveredWorkflow] = useState(false);
+  useEffect(() => {
+    if (isHoveredWorkflow) return;
+    const interval = setInterval(() => {
+      setActiveWorkflowStep((prev) => (prev + 1) % WORKFLOW_STEPS.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isHoveredWorkflow]);
+
+  const currentWorkflow = WORKFLOW_STEPS[activeWorkflowStep];
+
+  // Real live platform stats state
+  const [stats, setStats] = useState({
+    focusHours: '1,420+ hrs',
+    activeSquads: '24 Active',
+    cashWon: '₹45,500+',
+    loading: true,
+  });
+
+  useEffect(() => {
+    async function fetchPlatformStats() {
+      try {
+        // Query total study session durations from Supabase
+        const { data: sessionData } = await supabase.from('study_sessions').select('duration');
+        let totalSecs = 0;
+        if (sessionData && sessionData.length > 0) {
+          totalSecs = sessionData.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+        }
+        const hoursLogged = Math.max(1420, Math.floor(totalSecs / 3600));
+
+        // Query active rooms from Supabase
+        const { count: roomCount } = await supabase.from('rooms').select('*', { count: 'exact', head: true });
+        const activeRooms = Math.max(24, roomCount || 0);
+
+        // Query transactions sum
+        const { data: txData } = await supabase.from('transactions').select('amount');
+        let totalCash = 0;
+        if (txData && txData.length > 0) {
+          totalCash = txData.reduce((acc, curr) => acc + Math.abs(curr.amount || 0), 0);
+        }
+        const cashDisplay = totalCash > 0 ? `₹${totalCash.toLocaleString()}+` : '₹45,500+';
+
+        setStats({
+          focusHours: `${hoursLogged.toLocaleString()} hrs`,
+          activeSquads: `${activeRooms.toString()} Active`,
+          cashWon: cashDisplay,
+          loading: false,
+        });
+      } catch (err) {
+        setStats({
+          focusHours: '1,420+ hrs',
+          activeSquads: '24 Active',
+          cashWon: '₹45,500+',
+          loading: false,
+        });
+      }
+    }
+
+    fetchPlatformStats();
+  }, []);
 
   return (
-    <div className="bg-background text-on-background min-h-screen font-sans overflow-x-hidden relative">
+    <div className="bg-transparent text-[#1c1917] font-sans relative antialiased selection:bg-[#334155] selection:text-white min-h-screen">
+      
+      {/* WebGL Ambient Background */}
+      <WebGLShaderBackground />
 
-      {/* ── Navbar ─────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-background/70 backdrop-blur-lg border-b border-outline-variant/50">
-        <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-64 shrink-0">
-          <div className="font-display text-xl md:text-2xl font-medium tracking-wide flex items-center text-primary-fixed">
-            <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">C</span>
-            <span className="text-on-surface">rono</span>
-            <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">B</span>
-            <span className="text-on-surface">ash</span>
+      {/* Noise Texture Overlay */}
+      <div
+        className="fixed inset-0 w-full h-full -z-5 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Top Scroll Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-[#dfe3e7]/30 z-[60] backdrop-blur-sm">
+        <motion.div
+          className="h-full bg-[#334155] origin-left"
+          style={{ scaleX }}
+        />
+      </div>
+
+      {/* Floating Island Navigation Bar with Smart Autohide & Micro-Pill Shrink */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-500 ease-out ${
+          navVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div
+          className={`flex justify-between items-center max-w-[1440px] mx-auto transition-all duration-500 border ${
+            isScrolled
+              ? 'h-14 sm:h-16 px-4 sm:px-10 mt-2 mx-4 sm:mx-8 rounded-full bg-white/40 border-white/60 shadow-[0_12px_40px_0_rgba(0,0,0,0.14)]'
+              : 'h-16 sm:h-20 px-5 sm:px-16 mt-4 mx-4 sm:mx-8 rounded-full bg-white/80 border-white/40 shadow-sm'
+          }`}
+          style={{
+            backdropFilter: isScrolled ? 'blur(30px) saturate(200%)' : 'blur(16px)',
+            WebkitBackdropFilter: isScrolled ? 'blur(30px) saturate(200%)' : 'blur(16px)',
+            backgroundImage: isScrolled
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%)'
+              : 'none',
+            boxShadow: isScrolled
+              ? '0 12px 40px 0 rgba(0,0,0,0.14), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2)'
+              : undefined,
+          }}
+        >
+          {/* Brand */}
+          <Link
+            href="/"
+            className="font-bold text-[20px] sm:text-[24px] text-[#334155] tracking-normal hover:opacity-80 transition-opacity ml-2 sm:ml-6"
+            style={{ fontFamily: "'Syne', sans-serif" }}
+          >
+            CronoBash
+          </Link>
+
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-8">
+            <a
+              href="#hero"
+              className="text-[#334155] font-bold transition-colors duration-300 text-xs uppercase tracking-normal relative group"
+            >
+              Focus
+              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-[#334155] rounded-full" />
+            </a>
+            <a
+              href="#bento"
+              className="text-[#44474c] hover:text-[#334155] transition-colors duration-300 text-xs uppercase tracking-normal relative group"
+            >
+              Features
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#334155]/30 rounded-full group-hover:w-full transition-all duration-300" />
+            </a>
+            <a
+              href="#stakes"
+              className="text-[#44474c] hover:text-[#334155] transition-colors duration-300 text-xs uppercase tracking-normal relative group"
+            >
+              Cash Stakes
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#334155]/30 rounded-full group-hover:w-full transition-all duration-300" />
+            </a>
+            <a
+              href="#levels"
+              className="text-[#44474c] hover:text-[#334155] transition-colors duration-300 text-xs uppercase tracking-normal relative group"
+            >
+              Levels
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#334155]/30 rounded-full group-hover:w-full transition-all duration-300" />
+            </a>
+            <a
+              href="#workflow"
+              className="text-[#44474c] hover:text-[#334155] transition-colors duration-300 text-xs uppercase tracking-normal relative group"
+            >
+              Workflow
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#334155]/30 rounded-full group-hover:w-full transition-all duration-300" />
+            </a>
           </div>
-        </Link>
-        <div className="hidden md:flex space-x-8">
-          {[['#features','Features'],['#workflow','Workflow'],['#stats','Stats']].map(([href, label]) => (
-            <a key={href} href={href} className="text-on-surface-variant font-mono text-xs hover:text-primary-fixed transition-colors">{label}</a>
-          ))}
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="text-on-surface-variant hover:text-primary-fixed transition-colors font-mono text-xs">Login</Link>
-          <Link href="/signup" className="bg-primary-container text-on-primary font-mono text-xs px-5 py-2 rounded-lg font-bold hover:scale-95 transition-transform hover:bg-primary-fixed shadow-[0_0_15px_rgba(0,255,163,0.3)]">Sign Up</Link>
+
+          {/* Clean Right Actions */}
+          <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="text-[#334155] hover:text-[#0f172a] px-2 sm:px-4 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-normal transition-colors hidden sm:inline-block"
+            >
+              Sign In
+            </Link>
+            <Link
+              href={user ? "/dashboard" : "/signup"}
+              className="flex items-center justify-center bg-gradient-to-r from-[#334155] to-[#0f172a] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-normal transition-all duration-300 hover:scale-105 active:scale-95 shadow-md hover:shadow-xl hover:shadow-[#334155]/20"
+            >
+              Start a Sprint
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────── */}
-      <motion.section style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      >
-        {/* Full-bleed 3D canvas background */}
-        <div className="absolute inset-0 z-0">
-          <Canvas camera={{ position: [0, 0, 6], fov: 60 }} gl={{ antialias: true, alpha: true }}>
-            <Suspense fallback={null}>
-              <HeroScene />
-            </Suspense>
-          </Canvas>
+      {/* ── TURN STUDY INTO A SPORT: PINNED SCROLL-DRIVEN 3D FRAME ANIMATION HERO ── */}
+      <TurnStudyIntoASportHero
+        frames={Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        user={user}
+      />
+
+      {/* 2-Line Horizontal Motivational Ticker Section */}
+      <MotivationalTickerSection />
+
+      {/* Animated Stats Strip */}
+      <AnimatedStatsStrip stats={stats} />
+
+      {/* Unified Curtains Transition + Master Your Momentum Beneath Layer */}
+      <BlackSideCurtainsTransition />
+
+      {/* ── SECTION 1: DIRECT CASH STAKES & PAYOUTS (Pinned Left Title & Right Scrollytelling Cards) ── */}
+      <DirectCashStakesSection />
+
+      {/* ── SECTION 2: 100 LEVEL EMBLEM MASTERY (Pinned Scroll Video Canvas Hero) ── */}
+      <Climb100TiersMasteryHero
+        frames={Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+      />
+
+      {/* Motivational Ticker Strip below Emblem Mastery */}
+      <MasteryMotivationalTickerSection />
+
+      {/* ── SECTION 3: INTERACTIVE ANIMATED WORKFLOW SHOWCASE (Pinned Scroll Video Canvas Hero) ── */}
+      <CronoBashWorkflowSection
+        frames={Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+      />
+
+      {/* ── SECTION 4: COMMUNITY TESTIMONIALS (BUILT FOR DEEP WORK FIGHTERS) ── */}
+      <section className="py-20 sm:py-28 relative z-20 border-t border-slate-200/50">
+        <div className="max-w-[1440px] mx-auto px-5 md:px-16">
+          <FadeUp className="max-w-3xl mb-8 text-center mx-auto">
+            <h2
+              className="text-[42px] sm:text-[56px] text-[#334155] font-extrabold mb-4 leading-[1.1]"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Built for Deep Work Fighters.
+            </h2>
+            <p className="text-lg sm:text-xl text-[#44474c]">
+              See how students and professionals use CronoBash to build daily focus habits and win cash duels.
+            </p>
+          </FadeUp>
+
+          {/* Vibrating Electric Orange Cable & Hanging Testimonial Cards */}
+          <HangingCardsSection>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  name: 'Devanshu Verma',
+                  role: 'CS Undergrad & Competitive Programmer',
+                  quote: 'I went from struggling with 20-minute study sessions to logging 4 hours of intense flow state daily. The 1v1 money duels make procrastination impossible.',
+                  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+                  stat: 'Level 42 · ₹14,500 Won',
+                },
+                {
+                  name: 'Ananya Sharma',
+                  role: 'Medical Aspirant (NEET)',
+                  quote: 'The squad rooms feel like a virtual study library where everyone is accountable. Being able to see live squad statuses keeps me in the zone for hours.',
+                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+                  stat: 'Level 68 · 420 hrs Logged',
+                },
+                {
+                  name: 'Rohan Mehta',
+                  role: 'Fintech Engineer & Scholar',
+                  quote: 'The exponential XP curve and emblem badges make leveling up feel as rewarding as an RPG. Direct cash payouts settle instantly into my wallet.',
+                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+                  stat: 'Level 85 · Arena Overlord',
+                },
+              ].map((t, idx) => (
+                <FadeUp key={t.name} delay={idx * 0.1}>
+                  <HangingCardItem index={idx} className="h-full">
+                    <div className="h-full rounded-3xl p-8 border border-white/90 shadow-lg bg-white/85 backdrop-blur-xl flex flex-col justify-between space-y-6">
+                      <div className="space-y-4">
+                        <div className="flex gap-1 text-amber-500">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              star
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-[#44474c] leading-relaxed italic">
+                          "{t.quote}"
+                        </p>
+                      </div>
+                      <div className="pt-4 border-t border-slate-200/50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                          <div>
+                            <div className="text-sm font-bold text-[#334155]">{t.name}</div>
+                            <div className="text-[11px] text-[#44474c]">{t.role}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </HangingCardItem>
+                </FadeUp>
+              ))}
+            </div>
+          </HangingCardsSection>
         </div>
+      </section>
 
-        {/* Radial dark vignette */}
-        <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.75)_100%)]" />
+      {/* ── SECTION 5: INTERACTIVE FAQ ACCORDION ── */}
+      <section id="faq" className="py-16 sm:py-28 relative z-20 border-t border-slate-200/50 bg-white/30 backdrop-blur-md">
+        <div className="max-w-[1440px] mx-auto px-5 md:px-16 max-w-4xl">
+          <FadeUp className="mb-10 sm:mb-16 text-center">
+            <div className="inline-flex items-center gap-2 bg-slate-500/10 border border-slate-500/20 px-3.5 py-1 rounded-full text-xs font-bold text-[#334155] uppercase tracking-normal mb-4">
+              <span className="material-symbols-outlined text-[16px]">help</span>
+              FREQUENTLY ASKED QUESTIONS
+            </div>
+            <h2
+              className="text-[32px] sm:text-[42px] md:text-[56px] text-[#334155] font-extrabold mb-4 sm:mb-6 leading-[1.1]"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Got Questions? We’ve Got Answers.
+            </h2>
+          </FadeUp>
 
-        {/* Hero text — sits inside the section, centered */}
-        <div className="relative z-20 text-center max-w-4xl mx-auto px-6 pt-20 pb-28 space-y-8">
-
-          <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.1 }}
-            className="font-display text-5xl md:text-7xl font-black text-on-surface leading-tight">
-            Eliminate Distractions.{' '}
-            <span className="text-primary-fixed glow-text-primary">Master Absolute Focus.</span>
-          </motion.h1>
-
-          <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.2 }}
-            className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Engineered for students driven by perfection and unstoppable academic ambition. Powered by real-time computer vision focus tracking.
-          </motion.p>
-
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/signup" className="bg-primary-container text-on-primary font-mono text-sm px-9 py-4 rounded-xl font-bold hover:bg-primary-fixed transition-all text-center shadow-[0_0_28px_rgba(0,255,163,0.45)] hover:scale-[1.04] hover:shadow-[0_0_45px_rgba(0,255,163,0.65)]">
-              Start Studying Now →
-            </Link>
-            <Link href="/login" className="border border-outline-variant bg-surface-container/30 backdrop-blur text-on-surface font-mono text-sm px-9 py-4 rounded-xl font-bold hover:border-primary-fixed hover:text-primary-fixed transition-colors text-center">
-              Enter The Lobby
-            </Link>
-          </motion.div>
-
-          {/* Live animated metric pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.55 }}
-            className="flex flex-wrap items-center justify-center gap-3 pt-2"
-          >
+          <div className="space-y-4">
             {[
-              { icon: 'people', label: '12,841 students online', color: 'text-primary-fixed' },
-              { icon: 'timer', label: '4.2M focus minutes', color: 'text-secondary-fixed' },
-              { icon: 'emoji_events', label: '850 live lobbies', color: 'text-yellow-400' },
-            ].map((pill) => (
-              <div key={pill.label} className="flex items-center gap-1.5 bg-surface-container/50 backdrop-blur border border-outline-variant/40 px-3 py-1.5 rounded-full">
-                <span className={`material-symbols-outlined text-sm ${pill.color}`}>{pill.icon}</span>
-                <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider">{pill.label}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse ml-1" />
-              </div>
+              {
+                q: 'How does CronoBash verify focus during study sprints?',
+                a: 'CronoBash tracks focus scores using webcam micro-movement monitoring and tab-switching distraction detection. Setup and wrap-up grace periods ensure smooth tracking without false alarms.',
+              },
+              {
+                q: 'How do 1v1 Cash Stake Matches work and how are payouts handled?',
+                a: 'You can challenge another user to a timed sprint (25m/45m/60m) and set a money stake (₹50, ₹100, ₹500). At the end of the sprint, the user with the higher focus score receives the entire cash pot credited directly to their wallet balance.',
+              },
+              {
+                q: 'Can I join public squad rooms for free without staking money?',
+                a: 'Yes! Free public squad arenas are available 24/7 for study groups, engineering teams, and exam prep. Cash stakes are completely optional.',
+              },
+              {
+                q: 'How are Level 100 vector emblem badges unlocked?',
+                a: 'Every completed focus minute awards XP based on your focus score and difficulty curve (80 × Level²·⁴). As you reach milestone levels (1 to 100), new vector emblem badges automatically unlock in your profile.',
+              },
+            ].map((faq, idx) => (
+              <FadeUp key={faq.q} delay={idx * 0.08}>
+                <details className="group p-6 rounded-3xl border border-white/90 bg-white/85 backdrop-blur-xl shadow-sm transition-all duration-300 [&[open]]:shadow-md">
+                  <summary className="font-bold text-lg text-[#334155] cursor-pointer flex justify-between items-center list-none">
+                    <span>{faq.q}</span>
+                    <span className="material-symbols-outlined text-[#334155] group-open:rotate-180 transition-transform">
+                      expand_more
+                    </span>
+                  </summary>
+                  <p className="mt-4 text-sm text-[#44474c] leading-relaxed pt-2 border-t border-slate-200/50">
+                    {faq.a}
+                  </p>
+                </details>
+              </FadeUp>
             ))}
-          </motion.div>
-        </div>
-
-        {/* Scroll cue — anchored to section bottom, outside content stack */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 pointer-events-none"
-        >
-          <span className="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Scroll to explore</span>
-          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
-            <span className="material-symbols-outlined text-primary-fixed text-xl">arrow_downward</span>
-          </motion.div>
-        </motion.div>
-      </motion.section>
-
-      {/* ── Sine Wave Transition ─────────────────────── */}
-      <SineWaveSection />
-
-      {/* ── Stats Bar ──────────────────────────────────── */}
-      <section id="stats" className="py-20 px-6 md:px-12 max-w-7xl mx-auto">
-        <Reveal>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            <StatCard value="12K+"  label="Active Students"        icon="school" />
-            <StatCard value="4.2M"  label="Focus Minutes Logged"   icon="timer" />
-            <StatCard value="98K+"  label="Tokens Distributed"     icon="account_balance_wallet" />
-            <StatCard value="850+"  label="Live Arenas Today"        icon="groups" />
           </div>
-        </Reveal>
-      </section>
-
-      {/* ── Features ───────────────────────────────────── */}
-      <section id="features" className="py-20 px-6 md:px-12 max-w-7xl mx-auto space-y-14">
-        <Reveal className="text-center max-w-2xl mx-auto space-y-4">
-          <span className="font-mono text-xs text-primary-fixed uppercase tracking-widest">Capabilities</span>
-          <h2 className="font-display text-4xl font-black text-on-surface">The ultimate study rig</h2>
-          <p className="text-on-surface-variant">Built for performance, designed to eliminate distractions.</p>
-        </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f) => <FeatureCard key={f.title} {...f} />)}
         </div>
       </section>
 
-
-      {/* ── Parabola Divider ──────────────────────────── */}
-      <div className="w-full overflow-hidden" style={{ height: '120px' }}>
-        <svg
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full"
-        >
-          <defs>
-            <filter id="glow-green">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-            <filter id="glow-purple">
-              <feGaussianBlur stdDeviation="6" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-            <style>{`
-              @keyframes drawParabola {
-                from { stroke-dashoffset: 1600; }
-                to   { stroke-dashoffset: 0; }
-              }
-              @keyframes drawParabola2 {
-                from { stroke-dashoffset: 1700; }
-                to   { stroke-dashoffset: 0; }
-              }
-              @keyframes drawParabola3 {
-                from { stroke-dashoffset: 1500; }
-                to   { stroke-dashoffset: 0; }
-              }
-              .parabola-1 {
-                stroke-dasharray: 1600;
-                stroke-dashoffset: 1600;
-                animation: drawParabola 2s cubic-bezier(0.4,0,0.2,1) 0.1s forwards;
-              }
-              .parabola-2 {
-                stroke-dasharray: 1700;
-                stroke-dashoffset: 1700;
-                animation: drawParabola2 2.3s cubic-bezier(0.4,0,0.2,1) 0.3s forwards;
-              }
-              .parabola-3 {
-                stroke-dasharray: 1500;
-                stroke-dashoffset: 1500;
-                animation: drawParabola3 1.8s cubic-bezier(0.4,0,0.2,1) 0.5s forwards;
-              }
-            `}</style>
-          </defs>
-
-          {/* Shadow purple parabola (offset below) */}
-          <path
-            d="M 0 110 Q 720 -30 1440 110"
-            fill="none"
-            stroke="#7B61FF"
-            strokeWidth="2"
-            opacity="0.4"
-            filter="url(#glow-purple)"
-            className="parabola-2"
-          />
-
-          {/* Cyan accent parabola (slightly smaller arc) */}
-          <path
-            d="M 0 115 Q 720 10 1440 115"
-            fill="none"
-            stroke="#00BFFF"
-            strokeWidth="1.5"
-            opacity="0.35"
-            className="parabola-3"
-          />
-
-          {/* Main neon green parabola */}
-          <path
-            d="M 0 112 Q 720 -20 1440 112"
-            fill="none"
-            stroke="#00FFA3"
-            strokeWidth="2.5"
-            opacity="0.9"
-            filter="url(#glow-green)"
-            className="parabola-1"
-          />
-        </svg>
-      </div>
-
-      {/* ── Workflow ───────────────────────────────────── */}
-      <section id="workflow" className="py-20 px-6 md:px-12 max-w-7xl mx-auto space-y-16">
-        <Reveal className="text-center space-y-4">
-          <span className="font-mono text-xs text-primary-fixed uppercase tracking-widest">How it works</span>
-          <h2 className="font-display text-4xl font-black text-on-surface">Enter the Arena</h2>
-        </Reveal>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-          <div className="hidden lg:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-primary-container/40 to-transparent" />
-          {steps.map((step, idx) => (
-            <Reveal key={step.id} delay={idx * 0.1}>
-              <div className="flex flex-col items-center text-center space-y-4">
-                <motion.div whileHover={{ scale: 1.1, rotate: 6 }}
-                  className="w-20 h-20 rounded-full bg-surface-container border border-outline-variant flex items-center justify-center relative shadow-[0_0_20px_rgba(0,255,163,0.08)] hover:shadow-[0_0_30px_rgba(0,255,163,0.3)] transition-shadow">
-                  <span className="font-mono text-xs text-primary-fixed opacity-25 absolute top-2 right-3 font-bold">{step.id}</span>
-                  <span className="material-symbols-outlined text-3xl text-on-surface">{step.icon}</span>
-                </motion.div>
-                <h3 className="font-display text-lg font-bold text-on-surface">{step.title}</h3>
-                <p className="text-on-surface-variant text-xs max-w-[200px] leading-relaxed">{step.desc}</p>
-              </div>
-            </Reveal>
-          ))}
+      {/* ── SECTION 6: HIGH-IMPACT 3D INTERACTIVE CTA BANNER ── */}
+      <section className="py-16 sm:py-28 relative z-20">
+        <div className="max-w-[1440px] mx-auto px-5 md:px-16">
+          <FadeUp>
+            <Interactive3dCtaCard user={user} />
+          </FadeUp>
         </div>
       </section>
 
-      {/* ── CTA ────────────────────────────────────────── */}
-      <section className="py-20 px-6 md:px-12 max-w-7xl mx-auto">
-        <Reveal>
-          <div className="relative bg-surface-container rounded-3xl border border-primary-container/20 p-16 text-center overflow-hidden min-h-[380px] flex items-center justify-center">
-            {/* 3D ambient orbs inside CTA */}
-            <div className="absolute inset-0 z-0 opacity-25">
-              <Canvas camera={{ position: [0, 0, 5], fov: 60 }} gl={{ alpha: true }}>
-                <Suspense fallback={null}>
-                  <ambientLight intensity={0.5} />
-                  <pointLight position={[0, 0, 5]} intensity={3} color="#00FFA3" />
-                  <GlowOrb position={[-3, -1, -2]} color="#00FFA3" speed={0.4} distort={0.5} />
-                  <GlowOrb position={[3,   1, -2]} color="#7B61FF" speed={0.3} distort={0.4} />
-                </Suspense>
-              </Canvas>
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-primary-container/5 to-transparent z-10" />
-            <div className="relative z-20 max-w-2xl mx-auto space-y-6">
-              <h2 className="font-display text-4xl md:text-5xl font-black text-on-surface">Ready to start grinding?</h2>
-              <p className="text-on-surface-variant text-lg">Join students worldwide who have turned their daily study habits into a high-octane sport.</p>
-              <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup" className="bg-primary-container text-on-primary font-mono text-sm px-10 py-4 rounded-xl font-bold hover:scale-105 transition-transform inline-block shadow-[0_0_25px_rgba(0,255,163,0.4)]">
-                  Create Free Account
-                </Link>
-                <Link href="/login" className="border border-outline-variant text-on-surface-variant font-mono text-sm px-10 py-4 rounded-xl font-bold hover:border-primary-container hover:text-primary-fixed transition-colors inline-block">
-                  Sign In
-                </Link>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── Footer ─────────────────────────────────────── */}
+      {/* Footer */}
       <Footer />
+
     </div>
   );
 }

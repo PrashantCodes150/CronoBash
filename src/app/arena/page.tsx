@@ -77,7 +77,7 @@ export default function ArenaPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       {/* Page Title */}
       <header className="pb-4 border-b border-outline-variant">
         <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight">Arena Spectator Mode</h2>

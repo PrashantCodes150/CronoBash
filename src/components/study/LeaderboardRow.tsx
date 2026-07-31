@@ -73,16 +73,16 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
       </td>
 
       {/* Focus Hours */}
-      <td className="p-3 font-mono text-neutral-200">{user.total_focus_hours.toFixed(1)}h</td>
+      <td className="p-3 font-mono text-neutral-200 hidden sm:table-cell">{user.total_focus_hours.toFixed(1)}h</td>
 
       {/* Points / XP */}
-      <td className="p-3 font-mono text-emerald-400 font-bold">{user.points || 0} XP</td>
+      <td className="p-3 font-mono text-emerald-400 font-bold hidden md:table-cell">{user.points || 0} XP</td>
 
       {/* Average Focus % */}
-      <td className={`p-3 font-mono font-bold ${avgFocusColor}`}>{user.avg_focus_percent}%</td>
+      <td className={`p-3 font-mono font-bold ${avgFocusColor} hidden md:table-cell`}>{user.avg_focus_percent}%</td>
 
       {/* Match Win Rate */}
-      <td className="p-3 font-mono text-neutral-450">{user.win_rate.toFixed(1)}%</td>
+      <td className="p-3 font-mono text-neutral-450 hidden lg:table-cell">{user.win_rate.toFixed(1)}%</td>
     </tr>
   );
 }

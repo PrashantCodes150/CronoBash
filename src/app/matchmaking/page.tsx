@@ -161,12 +161,12 @@ export default function MatchmakingPage() {
             {/* Skill */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-neutral-400 font-mono">YOUR EXPERIENCE RANGE</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {(['beginner', 'intermediate', 'advanced'] as const).map(level => (
                   <button
                     key={level}
                     onClick={() => setSkillLevel(level)}
-                    className={`py-2 rounded-lg border text-xs font-mono uppercase transition-all ${skillLevel === level ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-950 border-neutral-850 text-neutral-500'}`}
+                    className={`py-2 rounded-lg border text-[10px] sm:text-xs font-mono uppercase transition-all ${skillLevel === level ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-neutral-950 border-neutral-850 text-neutral-500'}`}
                   >
                     {level}
                   </button>

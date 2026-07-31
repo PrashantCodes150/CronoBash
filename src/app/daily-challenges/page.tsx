@@ -123,7 +123,7 @@ export default function DailyChallengesPage() {
             {challenges.map(quest => (
               <div
                 key={quest.id}
-                className="bg-neutral-900/60 border border-neutral-850 p-5 rounded-xl flex items-center justify-between gap-4"
+                className="bg-neutral-900/60 border border-neutral-850 p-4 sm:p-5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4"
               >
                 <div className="flex gap-4 items-start">
                   <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">

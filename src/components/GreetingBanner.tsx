@@ -136,7 +136,7 @@ export default function GreetingBanner() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="text-xs font-semibold text-slate-700 truncate"
+                className="text-xs font-semibold text-slate-700 line-clamp-2 sm:line-clamp-1 leading-snug"
               >
                 {ann.text}
               </motion.p>

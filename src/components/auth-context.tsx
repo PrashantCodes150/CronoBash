@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   refreshWallet: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateProfileLocally: (newFields: Partial<UserProfile>) => void;
   signOut: () => Promise<void>;
 }
 
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   refreshWallet: async () => {},
   refreshProfile: async () => {},
+  updateProfileLocally: () => {},
   signOut: async () => {},
 });
 
@@ -33,7 +35,74 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const fetchProfileAndWallet = async (userId: string, email?: string, metaName?: string) => {
+  const updateProfileLocally = (newFields: Partial<UserProfile>) => {
+    setProfile(prev => {
+      if (!prev) return newFields as UserProfile;
+      return { ...prev, ...newFields };
+    });
+  };
+
+  const getMergedProfile = (rawProfile: any, userObj: User | null): UserProfile => {
+    let savedLocalOnboarding: any = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const userId = userObj?.id;
+        const raw = userId 
+          ? localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data')
+          : localStorage.getItem('cronobash_user_onboarding_data');
+        if (raw) savedLocalOnboarding = JSON.parse(raw);
+      } catch (e) {}
+    }
+
+    const userMeta = userObj?.user_metadata || {};
+
+    const name = rawProfile?.name || rawProfile?.full_name || userMeta?.name || userMeta?.full_name || savedLocalOnboarding?.name || 'Arena Fighter';
+    const full_name = rawProfile?.full_name || rawProfile?.name || userMeta?.full_name || userMeta?.name || savedLocalOnboarding?.full_name || name;
+
+    const rawAvatar = rawProfile?.avatar_url;
+    const isDefaultBottts = !rawAvatar || rawAvatar === 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
+    const avatar_url = (!isDefaultBottts ? rawAvatar : null) || userMeta?.avatar_url || savedLocalOnboarding?.avatar_url || rawAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
+
+    const username = rawProfile?.username || rawProfile?.gamer_tag || userMeta?.username || userMeta?.gamer_tag || savedLocalOnboarding?.username || savedLocalOnboarding?.gamer_tag;
+
+    const daily_goal_minutes = rawProfile?.daily_goal_minutes || userMeta?.daily_goal_minutes || savedLocalOnboarding?.daily_goal_minutes || 120;
+    const primary_discipline = rawProfile?.primary_discipline || userMeta?.primary_discipline || savedLocalOnboarding?.primary_discipline || 'Engineering & Code';
+    const preferred_stakes = rawProfile?.preferred_stakes || userMeta?.preferred_stakes || savedLocalOnboarding?.preferred_stakes || 'Micro-Stakes (₹10 - ₹50)';
+    const ai_coach_persona = rawProfile?.ai_coach_persona || userMeta?.ai_coach_persona || savedLocalOnboarding?.ai_coach_persona || 'Drill Sergeant';
+    const sound_effects = rawProfile?.sound_effects || userMeta?.sound_effects || savedLocalOnboarding?.sound_effects || 'Mechanical Key Clicks';
+    const leaderboard_privacy = rawProfile?.leaderboard_privacy || userMeta?.leaderboard_privacy || savedLocalOnboarding?.leaderboard_privacy || 'Public Profile';
+    const camera_verified = rawProfile?.camera_verified !== undefined ? rawProfile.camera_verified : (userMeta?.camera_verified !== undefined ? userMeta.camera_verified : (savedLocalOnboarding?.camera_verified !== undefined ? savedLocalOnboarding.camera_verified : true));
+    
+    // Crucial Fix: If ANY source indicates onboarding is completed, return true!
+    const has_seen_onboarding = Boolean(
+      rawProfile?.has_seen_onboarding || 
+      userMeta?.has_seen_onboarding || 
+      savedLocalOnboarding?.has_seen_onboarding
+    );
+
+    return {
+      ...rawProfile,
+      id: rawProfile?.id || userObj?.id || '',
+      email: rawProfile?.email || userObj?.email || '',
+      created_at: rawProfile?.created_at || new Date().toISOString(),
+      name,
+      full_name,
+      username,
+      gamer_tag: username,
+      avatar_url,
+      daily_goal_minutes,
+      primary_discipline,
+      preferred_stakes,
+      ai_coach_persona,
+      sound_effects,
+      leaderboard_privacy,
+      camera_verified,
+      has_seen_onboarding,
+    } as UserProfile;
+  };
+
+  const fetchProfileAndWallet = async (userId: string, email?: string, metaName?: string, userObjParam?: User | null) => {
+    const activeUserObj = userObjParam || user;
     try {
       // Parallel execution for zero latency load (<30ms)
       const [profileRes, walletRes] = await Promise.all([
@@ -45,13 +114,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       let activeWallet = walletRes.data;
 
       if (!activeProfile) {
+        let savedLocalOnboarding: any = null;
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data');
+            if (raw) savedLocalOnboarding = JSON.parse(raw);
+          } catch (e) {}
+        }
+        const initialAvatar = savedLocalOnboarding?.avatar_url || activeUserObj?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
+        const initialName = metaName || savedLocalOnboarding?.name || activeUserObj?.user_metadata?.name || 'Arena Fighter';
+
         const { data: insertedProfile } = await supabase
           .from('users')
           .insert({
             id: userId,
-            name: metaName || 'Arena Fighter',
+            name: initialName,
+            full_name: initialName,
             email: email || '',
-            avatar_url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'
+            avatar_url: initialAvatar
           })
           .select()
           .single();
@@ -67,15 +147,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (insertedWallet) activeWallet = insertedWallet;
       }
 
-      if (activeProfile) {
-        setProfile(activeProfile as UserProfile);
-      }
+      const merged = getMergedProfile(activeProfile, activeUserObj);
+      setProfile(merged);
 
       if (activeWallet) {
-        if (activeWallet.balance >= 1000) {
-          activeWallet.balance = 0;
-          supabase.from('wallets').update({ balance: 0 }).eq('user_id', userId).then();
-        }
         setWallet(activeWallet as Wallet);
       }
     } catch (e) {
@@ -91,10 +166,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('user_id', user.id)
       .maybeSingle();
     if (!error && data) {
-      if (data.balance >= 1000) {
-        data.balance = 0;
-        supabase.from('wallets').update({ balance: 0 }).eq('user_id', user.id).then();
-      }
       setWallet(data as Wallet);
     }
   };
@@ -105,9 +176,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
     if (!error && data) {
-      setProfile(data as UserProfile);
+      const merged = getMergedProfile(data, user);
+      setProfile(merged);
+    } else {
+      const merged = getMergedProfile(profile, user);
+      setProfile(merged);
     }
   };
 
@@ -126,7 +201,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name);
+          fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
         }
       } catch (e) {
         console.error("Session init error:", e);
@@ -142,7 +217,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         setUser(session.user);
         setLoading(false);
-        fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name);
+        fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
       } else {
         setUser(null);
         setProfile(null);
@@ -210,6 +285,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         refreshWallet,
         refreshProfile,
+        updateProfileLocally,
         signOut,
       }}
     >

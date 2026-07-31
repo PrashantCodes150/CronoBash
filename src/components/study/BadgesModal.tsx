@@ -3,8 +3,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BADGES } from '@/lib/badges';
-import { VerifiedBadge } from './VerifiedBadge';
-import { X, Lock, Trophy, Award, CheckCircle2 } from 'lucide-react';
+import { BadgeDisplay } from './BadgeDisplay';
+import { X, Trophy, Award } from 'lucide-react';
 
 interface BadgesModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export function BadgesModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
         {/* Click outside backdrop */}
         <div className="fixed inset-0" onClick={onClose} />
 
@@ -34,40 +34,39 @@ export function BadgesModal({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-5xl bg-neutral-950 border border-neutral-800 rounded-3xl p-6 md:p-8 shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-white font-sans"
+          className="relative w-full max-w-5xl bg-white border border-white/80 rounded-[32px] p-6 md:p-8 shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-slate-900 font-sans"
         >
           {/* Header */}
-          <div className="flex justify-between items-start border-b border-neutral-800 pb-4">
+          <div className="flex justify-between items-start border-b border-slate-100 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">100 Level Arena Badges</h2>
-                <VerifiedBadge level={userLevel} size="md" showLevelNumber={true} />
+                <Trophy className="w-6 h-6 text-[#F59E0B]" />
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">100 Level Arena Emblem Badges</h2>
               </div>
-              <p className="text-xs text-neutral-400 font-mono mt-1">
-                Earn 20 XP at noob levels to unlock verified badges. Higher levels require elite focus!
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Complete focus sprints to level up and unlock all 100 custom vector emblem medals!
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Progress Bar */}
-          <div className="my-4 bg-neutral-900 p-3 rounded-2xl border border-neutral-800/80 font-mono text-xs flex flex-col gap-2">
-            <div className="flex justify-between items-center font-bold">
-              <span className="text-emerald-400 flex items-center gap-1">
+          <div className="my-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs flex flex-col gap-2">
+            <div className="flex justify-between items-center font-extrabold">
+              <span className="text-[#10B981] flex items-center gap-1.5">
                 <Award className="w-4 h-4" />
                 COLLECTION PROGRESS: {unlockedCount} / 100 UNLOCKED
               </span>
-              <span className="text-amber-300 font-black">{progressPercent}%</span>
+              <span className="text-[#3B82F6] font-black">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-neutral-950 h-2.5 rounded-full overflow-hidden border border-neutral-800">
+            <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-amber-400 h-full transition-all duration-500 shadow-md"
+                className="bg-gradient-to-r from-[#10B981] via-[#3B82F6] to-[#F59E0B] h-full transition-all duration-500 rounded-full shadow-sm"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -75,69 +74,36 @@ export function BadgesModal({
 
           {/* 100 Badges Grid Container */}
           <div className="flex-grow overflow-y-auto custom-scrollbar p-2">
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
               {BADGES.map((badge) => {
                 const isUnlocked = badge.reqLevel <= userLevel || earnedBadgeIds.includes(badge.id);
 
                 return (
                   <div
                     key={badge.id}
-                    className={`relative flex flex-col items-center justify-between p-2.5 rounded-2xl border transition-all duration-300 group cursor-pointer ${
+                    className={`relative flex flex-col items-center justify-between p-3 rounded-2xl border transition-all duration-300 group cursor-pointer text-center ${
                       isUnlocked
-                        ? 'bg-neutral-900/90 border-emerald-500/40 hover:border-emerald-400 hover:scale-105 shadow-lg'
-                        : 'bg-neutral-950/60 border-neutral-900 opacity-40 hover:opacity-70'
+                        ? 'bg-white border-slate-200 hover:border-[#3B82F6] hover:scale-105 shadow-sm'
+                        : 'bg-slate-50 border-slate-100 opacity-50 hover:opacity-80'
                     }`}
                   >
-                    {/* Badge Icon Shape */}
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md relative ${
-                        isUnlocked ? `bg-gradient-to-br ${badge.color}` : 'bg-neutral-800 text-neutral-600'
-                      }`}
-                    >
-                      {isUnlocked ? (
-                        <CheckCircle2 className="w-5 h-5 text-white drop-shadow-md" />
-                      ) : (
-                        <Lock className="w-4 h-4 text-neutral-500" />
-                      )}
-                    </div>
+                    <BadgeDisplay badge={badge} isUnlocked={isUnlocked} size="md" />
 
-                    <span className="text-[9px] font-mono font-bold text-center mt-2 truncate w-full text-neutral-200">
-                      {badge.name}
-                    </span>
-
-                    <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded mt-1 ${
-                      isUnlocked ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/40' : 'text-neutral-500 bg-neutral-900'
-                    }`}>
-                      Lv.{badge.reqLevel}
-                    </span>
-
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 w-44 bg-neutral-900 border border-neutral-700 p-2 rounded-xl shadow-2xl text-[9px] font-mono pointer-events-none text-left">
-                      <p className="font-bold text-emerald-400 uppercase">{badge.name}</p>
-                      <p className="text-neutral-400 text-[8px] mt-0.5">{badge.description}</p>
-                      <p className="text-[8px] font-bold text-amber-300 mt-1">
-                        {isUnlocked ? '✓ UNLOCKED' : `🔒 Requires Level ${badge.reqLevel}`}
-                      </p>
+                    <div className="mt-2 space-y-0.5">
+                      <p className="text-xs font-black text-slate-900 line-clamp-1">{badge.name}</p>
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase ${
+                        isUnlocked ? 'bg-emerald-50 text-[#10B981]' : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        Level {badge.reqLevel}
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-
-          {/* Footer close button */}
-          <div className="pt-4 border-t border-neutral-800 flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Done Viewing
-            </button>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>
   );
 }
-
-export default BadgesModal;

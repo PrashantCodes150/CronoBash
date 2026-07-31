@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './auth-context';
 import { supabase } from '@/lib/supabaseClient';
+import { BADGES } from '@/lib/badges';
 import confetti from 'canvas-confetti';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
+import { BadgeDisplay } from '@/components/study/BadgeDisplay';
 
 interface AppNotification {
   id: string;
@@ -18,24 +20,140 @@ interface AppNotification {
   metadata?: any;
 }
 
+// Interactive Swipeable Notification Item Component (Touch & Mouse Drag)
+const NotificationItem = ({ 
+  n, 
+  onDelete, 
+  onAcceptBuddy, 
+  onDeclineBuddy, 
+  onJoinLobby 
+}: { 
+  n: AppNotification; 
+  onDelete: (id: string) => void;
+  onAcceptBuddy: (nid: string, cid: string) => void;
+  onDeclineBuddy: (nid: string, cid: string) => void;
+  onJoinLobby: (nid: string, meta: any) => void;
+}) => {
+  const [dragX, setDragX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const startX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    setIsSwiping(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    startX.current = clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isSwiping) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const delta = clientX - startX.current;
+    setDragX(delta);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+    if (Math.abs(dragX) > 75) {
+      onDelete(n.id);
+    } else {
+      setDragX(0);
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-xl bg-red-500/10 border border-red-500/20">
+      <div className="absolute inset-0 flex items-center justify-between px-3 text-[10px] font-bold text-red-600 pointer-events-none">
+        <span>Delete 🗑️</span>
+        <span>Delete 🗑️</span>
+      </div>
+
+      <div 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleTouchStart}
+        onMouseMove={handleTouchMove}
+        onMouseUp={handleTouchEnd}
+        style={{ transform: `translateX(${dragX}px)`, transition: isSwiping ? 'none' : 'transform 0.2s ease-out' }}
+        className={`p-3 rounded-xl border text-xs text-left relative z-10 select-none cursor-grab active:cursor-grabbing ${
+          n.is_read 
+            ? 'bg-slate-50 border-slate-200 text-slate-500'
+            : 'bg-white border-blue-200 shadow-xs text-slate-800'
+        }`}
+      >
+        <div className="flex justify-between items-start gap-2">
+          <span className={`font-bold text-[10px] ${
+            n.type === 'transaction' ? 'text-emerald-600' : n.type === 'achievement' ? 'text-amber-600' : 'text-[#3B82F6]'
+          }`}>
+            {n.title}
+          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {!n.is_read && (
+              <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(n.id);
+              }}
+              title="Delete notification"
+              className="text-slate-400 hover:text-red-500 font-extrabold text-sm leading-none p-0.5 hover:bg-slate-100 rounded cursor-pointer transition-colors"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <p className="mt-1 leading-normal break-words">{n.message}</p>
+
+        {n.type === 'buddy_request' && n.metadata?.connection_id && !n.is_read && (
+          <div className="flex gap-1.5 mt-2 pt-2 border-t border-[#E5E5E3]">
+            <button
+              onClick={() => onAcceptBuddy(n.id, n.metadata.connection_id)}
+              className="bg-[#E6F4EA] hover:bg-[#E6F4EA]/80 text-[#137333] font-bold text-[8px] uppercase px-2 py-1 rounded border border-[#137333]/30 cursor-pointer"
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => onDeclineBuddy(n.id, n.metadata.connection_id)}
+              className="bg-[#FCE8E6] hover:bg-[#FCE8E6]/80 text-[#C5221F] font-bold text-[8px] uppercase px-2 py-1 rounded border border-[#C5221F]/30 cursor-pointer"
+            >
+              Decline
+            </button>
+          </div>
+        )}
+
+        {n.type === 'invite' && (n.metadata?.invite_code || n.metadata?.room_id) && !n.is_read && (
+          <div className="flex gap-1.5 mt-2 pt-2 border-t border-[#E5E5E3]">
+            <button
+              onClick={() => onJoinLobby(n.id, n.metadata)}
+              className="bg-[#FF5A1F] text-white font-extrabold text-[9px] uppercase px-3 py-1.5 rounded-lg border border-[#FF5A1F] hover:bg-[#E04D14] cursor-pointer flex items-center gap-1"
+            >
+              ⚔️ Join Arena Room
+            </button>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mt-2 pt-1 border-t border-slate-100/60 text-[8px] text-[#70706F] font-mono">
+          <span className="text-[7px] text-slate-400">↔ Swipe left/right to clear</span>
+          <span>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, wallet, signOut, refreshWallet, refreshProfile } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Pro Modal states
-  const [proModalOpen, setProModalOpen] = useState(false);
-  const [buying, setBuying] = useState(false);
-  const [purchaseError, setPurchaseError] = useState<string | null>(null);
-
-  // Notifications states
+  // Notifications state
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const isPro = false;
 
   const loadNotifications = async () => {
     if (!user) return;
@@ -45,36 +163,19 @@ export default function Header() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(15);
 
       if (error) {
-        console.warn("Notifications table query failed, falling back to local alerts:", error.message);
-        const fallbackData = [
-          {
-            id: 'demo-1',
-            title: 'Welcome to CronoBash!',
-            message: 'Complete study sprints together, earn token winnings, and configure aesthetic rig dashboard themes!',
-            type: 'info',
-            is_read: false,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'demo-2',
-            title: 'RIG UPGRADE ACTIVE',
-            message: 'Customize your study dashboard rig to stay focused and earn token payouts!',
-            type: 'achievement',
-            is_read: false,
-            created_at: new Date(Date.now() - 3600000).toISOString()
-          }
-        ];
-        setNotifications(fallbackData);
-        setUnreadCount(fallbackData.filter(n => !n.is_read).length);
+        console.warn("Notifications query note:", error.message);
+        setNotifications([]);
+        setUnreadCount(0);
         return;
       }
 
       if (data) {
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.is_read).length);
+        const cleanData = data.filter(n => n.title !== 'Transaction Posted');
+        setNotifications(cleanData);
+        setUnreadCount(cleanData.filter(n => !n.is_read).length);
       }
     } catch (e) {
       console.error(e);
@@ -94,6 +195,35 @@ export default function Header() {
       setUnreadCount(0);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    setNotifications(prev => {
+      const target = prev.find(n => n.id === id);
+      if (target && !target.is_read) {
+        setUnreadCount(uc => Math.max(0, uc - 1));
+      }
+      return prev.filter(n => n.id !== id);
+    });
+    if (user) {
+      try {
+        await supabase.from('notifications').delete().eq('id', id);
+      } catch (e) {
+        console.error('Error deleting notification:', e);
+      }
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    setNotifications([]);
+    setUnreadCount(0);
+    if (user) {
+      try {
+        await supabase.from('notifications').delete().eq('user_id', user.id);
+      } catch (e) {
+        console.error('Error clearing all notifications:', e);
+      }
     }
   };
 
@@ -190,159 +320,116 @@ export default function Header() {
     };
   }, [user]);
 
-  const handleBuyPro = async () => {
-    if (!user || !wallet) return;
-    if (wallet.balance < 500) {
-      setPurchaseError("Insufficient TKN. Study more sessions to accumulate 500 TKN!");
-      return;
-    }
-
-    setBuying(true);
-    setPurchaseError(null);
-
-    try {
-      // 1. Deduct 500 tokens from wallet
-      const { error: walletError } = await supabase
-        .from('wallets')
-        .update({ balance: wallet.balance - 500 })
-        .eq('user_id', user.id);
-
-      if (walletError) throw new Error("Wallet transaction failed.");
-
-      // 2. Insert debit transaction
-      const { error: txnError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: user.id,
-          type: 'purchase',
-          amount: 500,
-          description: 'Rig Upgrade: PRO FOCUS MODE Unlocked'
-        });
-
-      if (txnError) throw new Error("Transaction log registration failed.");
-
-      // 3. Update auth user metadata
-      const { error: metadataError } = await supabase.auth.updateUser({
-        data: { is_pro: true }
-      });
-
-      if (metadataError) throw new Error("User metadata subscription config failed.");
-
-      // 3.5. Update public users table to make it public and visible to other users!
-      const { error: profileUpdateError } = await supabase
-        .from('users')
-        .update({ is_pro: true })
-        .eq('id', user.id);
-
-      if (profileUpdateError) throw new Error("Public profile sync config failed.");
-
-      // 4. Refresh wallet and local state
-      await refreshWallet();
-      await refreshProfile();
-      
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.4 }
-      });
-
-      setProModalOpen(false);
-    } catch (e) {
-      console.error(e);
-      setPurchaseError(e instanceof Error ? e.message : "An unexpected error occurred.");
-    } finally {
-      setBuying(false);
-    }
-  };
-
   // Hidden on root landing and auth pages for layout simplicity
   const authRoutes = ['/', '/login', '/signup', '/onboarding'];
   if (authRoutes.includes(pathname)) return null;
 
   return (
-    <>
-      {/* Desktop Top Header Bar */}
-      <header className="hidden md:flex justify-between items-center h-16 px-8 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center group cursor-pointer select-none no-underline shrink-0">
-            <div className="font-display text-lg md:text-xl font-medium tracking-wide flex items-center text-primary-fixed">
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">C</span>
-              <span className="text-on-surface">rono</span>
-              <span className="font-dancing text-2xl md:text-3xl font-bold italic select-none">B</span>
-              <span className="text-on-surface">ash</span>
-            </div>
+    <header className="sticky top-4 z-40 w-full max-w-[1440px] mx-auto px-3 sm:px-4 md:px-8 mb-4 sm:mb-6">
+      <div className="bg-white/50 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] rounded-full px-3 sm:px-5 md:px-6 py-2.5 sm:py-3.5 flex items-center justify-between" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%)' }}>
+        
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer select-none no-underline">
+            <span className="material-symbols-outlined text-[#334155] text-xl sm:text-2xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>
+              timer
+            </span>
+            <span className="text-base sm:text-xl font-bold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
+              CronoBash
+            </span>
           </Link>
         </div>
-        
-        <div className="flex items-center gap-6">
-          {/* Hover Menu Options trigger: three vertical dots (more_vert) */}
-          <div className="relative group/menu">
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary-fixed hover:bg-surface-variant transition-all cursor-pointer select-none" title="Navigation Menu">
+
+        {/* Desktop Quick Nav Links */}
+        <div className="hidden lg:flex items-center gap-1 bg-white/40 backdrop-blur-xl p-1 rounded-full border border-white/30 shadow-[0_4px_16px_0_rgba(0,0,0,0.06)] text-xs font-bold text-[#44474c]">
+          {[
+            { name: 'Dashboard', href: '/dashboard' },
+            { name: 'Focus Sprints', href: '/study' },
+            { name: 'Squad Arenas', href: '/rooms' },
+          ].map(link => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`px-4 py-2 rounded-full transition-all ${
+                  active ? 'bg-[#334155] text-white shadow-sm' : 'hover:text-[#334155] hover:bg-white/60'
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Header Action Controls */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Navigation Dropdown Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#3B82F6] hover:bg-slate-100 transition-all cursor-pointer select-none"
+              title="Navigation Menu"
+            >
               <span className="material-symbols-outlined text-[22px]">more_vert</span>
             </button>
 
-            {/* Dropdown Options shown on hover */}
-            <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 transform scale-95 group-hover/menu:scale-100 z-50">
-              <div className="w-56 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-2.5">
-                <div className="px-3 py-1.5 border-b border-outline-variant/30 mb-2 font-mono text-[9px] text-on-surface-variant uppercase tracking-widest font-black text-left">
-                  Arena Navigation
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
+                <div className="absolute right-0 top-full pt-2 z-50">
+                  <div className="w-56 bg-white border border-slate-200 shadow-2xl rounded-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-3 py-1.5 border-b border-slate-100 mb-2 font-mono text-[9px] text-slate-400 uppercase tracking-widest font-black text-left">
+                      Arena Navigation
+                    </div>
+                    <ul className="space-y-1 font-label-mono text-xs uppercase font-bold text-[#70706F] text-left">
+                      {[
+                        { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+                        { name: 'Buddies', href: '/buddies', icon: 'person_add' },
+                        { name: 'Arenas', href: '/rooms', icon: 'groups' },
+                        { name: 'Tasks', href: '/tasks', icon: 'checklist' },
+                        { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
+                        { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
+                        { name: 'Store', href: '/marketplace', icon: 'storefront' },
+                        { name: 'Profile', href: '/profile', icon: 'person' },
+                        { name: 'Settings', href: '/settings', icon: 'settings' }
+                      ].map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <li key={link.name}>
+                            <Link
+                              href={link.href}
+                              onClick={() => setMenuOpen(false)}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                isActive
+                                  ? 'text-white bg-[#3B82F6] font-bold'
+                                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-sm">{link.icon}</span>
+                              <span>{link.name}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </div>
-                <ul className="space-y-1 font-label-mono text-xs uppercase font-bold text-on-surface-variant text-left">
-                  {[
-                    { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-                    { name: 'Buddies', href: '/buddies', icon: 'person_add' },
-                    { name: 'Arenas', href: '/rooms', icon: 'groups' },
-                    { name: 'Tasks', href: '/tasks', icon: 'checklist' },
-                    { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
-                    { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
-                    { name: 'Store', href: '/marketplace', icon: 'storefront' },
-                    { name: 'Profile', href: '/profile', icon: 'person' },
-                    { name: 'Settings', href: '/settings', icon: 'settings' }
-                  ].map((link) => {
-                    const isActive = pathname === link.href;
-                    return (
-                      <li key={link.name}>
-                        <Link
-                          href={link.href}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                            isActive
-                              ? 'text-on-primary bg-primary-container font-bold'
-                              : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-sm">{link.icon}</span>
-                          <span>{link.name}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
+              </>
+            )}
           </div>
-
-          {/* Wallet quick balance */}
-          <Link href="/wallet" className="flex items-center gap-2.5 bg-gradient-to-r from-amber-500/15 via-yellow-500/5 to-surface-container border border-amber-500/40 px-3.5 py-1.5 rounded-xl hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all group">
-            <span className="material-symbols-outlined text-amber-400 text-sm font-bold animate-pulse">account_balance_wallet</span>
-            <span className="font-label-mono text-xs text-amber-300 font-semibold">Wallet:</span>
-            <span className="font-label-mono text-sm text-white font-bold flex items-center gap-1">
-              <span>{wallet?.balance ?? 0}</span>
-              <span className="text-[10px] text-amber-400 font-normal">TKN</span>
-            </span>
-          </Link>
-
 
           {/* Notification Button */}
           <div className="relative">
             <button 
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="text-on-surface-variant hover:text-amber-400 transition-colors relative cursor-pointer focus:outline-none p-1.5 rounded-lg hover:bg-amber-500/10 group"
+              className="text-[#70706F] hover:text-[#FF5A1F] transition-colors relative cursor-pointer focus:outline-none p-1.5 rounded-lg hover:bg-[#F4F4F3] group"
             >
               <span className="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">notifications</span>
               {unreadCount > 0 && (
                 <>
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF5A1F] animate-ping"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF5A1F]"></span>
                 </>
               )}
             </button>
@@ -352,79 +439,48 @@ export default function Header() {
                 {/* Click outside to close */}
                 <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)}></div>
                 
-                <div className="absolute right-0 mt-3 w-80 bg-surface-container border border-amber-500/30 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.5)] p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20 text-xs font-mono">
-                    <span className="font-bold text-white uppercase tracking-tight flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                      <span>System Alerts</span>
+                <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 text-xs">
+                    <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
+                      <span>Notifications</span>
                     </span>
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllAsRead}
-                        className="text-amber-400 hover:underline text-[9px] uppercase font-bold cursor-pointer"
-                      >
-                        Clear unread
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllAsRead}
+                          className="text-[#3B82F6] hover:underline text-[9px] uppercase font-bold cursor-pointer"
+                        >
+                          Mark read
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={clearAllNotifications}
+                          className="text-red-500 hover:underline text-[9px] uppercase font-bold cursor-pointer"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2 pr-0.5">
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2 pr-0.5">
                     {notifications.length === 0 ? (
-                      <p className="text-[10px] text-on-surface-variant font-mono text-center py-6 uppercase tracking-tight">No notifications yet</p>
+                      <div className="text-center py-8">
+                        <span className="material-symbols-outlined text-3xl text-slate-300 mb-1">notifications_off</span>
+                        <p className="text-[10px] text-slate-400 font-mono uppercase tracking-tight">No notifications</p>
+                      </div>
                     ) : (
                       notifications.map(n => (
-                        <div 
+                        <NotificationItem
                           key={n.id}
-                          className={`p-2.5 rounded-xl border text-[10px] font-mono transition-colors text-left ${
-                            n.is_read 
-                              ? 'bg-surface-container-low/40 border-outline-variant/10 text-on-surface-variant'
-                              : 'bg-amber-500/10 border-amber-500/30 text-white shadow-[0_0_10px_rgba(245,158,11,0.1)]'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <span className={`font-bold uppercase tracking-tight text-[9px] ${
-                              n.type === 'transaction' ? 'text-amber-400' : n.type === 'achievement' ? 'text-emerald-400' : 'text-cyan-300'
-                            }`}>
-                              {n.title}
-                            </span>
-                            {!n.is_read && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                            )}
-                          </div>
-                          <p className="mt-1 leading-normal break-words">{n.message}</p>
-                          
-                          {n.type === 'buddy_request' && n.metadata?.connection_id && !n.is_read && (
-                            <div className="flex gap-1.5 mt-2 pt-2 border-t border-outline-variant/10">
-                              <button
-                                onClick={() => handleAcceptBuddyRequest(n.id, n.metadata.connection_id)}
-                                className="bg-[#00ffa3]/20 hover:bg-[#00ffa3]/30 text-[#00ffa3] font-bold text-[8px] uppercase px-2 py-1 rounded border border-[#00ffa3]/30 cursor-pointer"
-                              >
-                                Accept
-                              </button>
-                              <button
-                                onClick={() => handleDeclineBuddyRequest(n.id, n.metadata.connection_id)}
-                                className="bg-error-container/20 hover:bg-error/30 text-error font-bold text-[8px] uppercase px-2 py-1 rounded border border-error/30 cursor-pointer"
-                              >
-                                Decline
-                              </button>
-                            </div>
-                          )}
-
-                          {n.type === 'invite' && (n.metadata?.invite_code || n.metadata?.room_id) && !n.is_read && (
-                            <div className="flex gap-1.5 mt-2 pt-2 border-t border-outline-variant/10">
-                              <button
-                                onClick={() => handleJoinLobby(n.id, n.metadata)}
-                                className="bg-[#00ffa3] text-black font-extrabold text-[9px] uppercase px-3 py-1.5 rounded-lg border border-[#00ffa3] hover:bg-[#00ffa3]/80 cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.3)] animate-pulse flex items-center gap-1"
-                              >
-                                ⚔️ Join Arena Room
-                              </button>
-                            </div>
-                          )}
-
-                          <p className="text-[8px] text-on-surface-variant/60 text-right mt-1.5 font-mono">
-                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
+                          n={n}
+                          onDelete={deleteNotification}
+                          onAcceptBuddy={handleAcceptBuddyRequest}
+                          onDeclineBuddy={handleDeclineBuddyRequest}
+                          onJoinLobby={handleJoinLobby}
+                        />
                       ))
                     )}
                   </div>
@@ -433,24 +489,54 @@ export default function Header() {
             )}
           </div>
 
-          {/* Settings shortcut */}
-          <button onClick={() => router.push('/settings')} className="text-on-surface-variant hover:text-cyan-400 transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-cyan-500/10 group">
-            <span className="material-symbols-outlined text-[22px] group-hover:rotate-90 transition-transform duration-500">settings</span>
-          </button>
+          {/* Dedicated Active Emblem Badge Button with Hover Popover */}
+          <div className="relative group/navbadge">
+            <Link
+              href="/profile"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center hover:scale-105 transition-transform shrink-0 p-1 shadow-xs"
+            >
+              <BadgeDisplay
+                badge={BADGES[Math.max(0, Math.min((profile?.level || 1) - 1, BADGES.length - 1))] || BADGES[0]}
+                isUnlocked={true}
+                size="sm"
+              />
+            </Link>
+
+            {/* Hover Details Card Popover */}
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white/60 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] rounded-2xl p-4 opacity-0 group-hover/navbadge:opacity-100 transition-opacity pointer-events-none z-50 space-y-2" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%)' }}>
+              <div className="flex items-center gap-3">
+                <BadgeDisplay
+                  badge={BADGES[Math.max(0, Math.min((profile?.level || 1) - 1, BADGES.length - 1))] || BADGES[0]}
+                  isUnlocked={true}
+                  size="md"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-slate-900 truncate">
+                    {(BADGES[Math.max(0, Math.min((profile?.level || 1) - 1, BADGES.length - 1))] || BADGES[0]).name}
+                  </p>
+                  <span className="text-[9px] font-extrabold bg-amber-50 text-[#F59E0B] px-2 py-0.5 rounded-md uppercase">
+                    Level {(profile?.level || 1)} Badge Unlocked ✓
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium leading-normal">
+                {(BADGES[Math.max(0, Math.min((profile?.level || 1) - 1, BADGES.length - 1))] || BADGES[0]).description}
+              </p>
+            </div>
+          </div>
 
           {/* User profile picture with dropdown */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-500 shrink-0 cursor-pointer focus:outline-none shadow-[0_0_10px_rgba(0,255,163,0.3)] hover:scale-105 transition-transform"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 border border-slate-300 shrink-0 cursor-pointer focus:outline-none hover:scale-105 transition-transform overflow-hidden shadow-xs"
+              title="View User Profile"
             >
-              <div className="w-full h-full rounded-full overflow-hidden bg-surface-variant">
-                <img
-                  alt="User profile"
-                  className="w-full h-full object-cover"
-                  src={profile?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
-                />
-              </div>
+              <img
+                alt="User profile"
+                className="w-full h-full object-cover rounded-full"
+                src={profile?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight'}
+              />
             </button>
 
             {dropdownOpen && (
@@ -458,20 +544,20 @@ export default function Header() {
                 {/* Click outside overlay to close */}
                 <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)}></div>
                 
-                <div className="absolute right-0 mt-2 w-56 bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="px-3 py-2 border-b border-outline-variant/30 text-xs font-mono">
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 shadow-2xl rounded-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-3 py-2 border-b border-slate-100 text-xs">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-on-surface truncate">{profile?.name || 'Arena Fighter'}</span>
+                      <span className="font-bold text-slate-900 truncate">{profile?.name || 'Arena Fighter'}</span>
                       <VerifiedBadge level={profile?.level || 1} followersCount={profile?.followers_count || 0} isVerified={profile?.is_verified} size="sm" showLevelNumber={true} />
                     </div>
-                    <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{profile?.email}</p>
+                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{profile?.email}</p>
                   </div>
-                  <ul className="py-1 text-xs font-label-mono uppercase font-bold text-on-surface-variant space-y-1">
+                  <ul className="py-1 text-xs font-semibold text-slate-600 space-y-0.5">
                     <li>
                       <Link 
                         href="/profile" 
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">person</span>
                         Profile
@@ -481,7 +567,7 @@ export default function Header() {
                       <Link 
                         href="/settings" 
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 hover:text-slate-900 text-slate-600 transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">settings</span>
                         Settings
@@ -493,7 +579,7 @@ export default function Header() {
                           setDropdownOpen(false);
                           signOut();
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-error-container/20 hover:text-error text-left transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-slate-600 text-left transition-colors cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-sm">logout</span>
                         Logout
@@ -505,97 +591,7 @@ export default function Header() {
             )}
           </div>
         </div>
-      </header>
-
-      {/* Mobile Top Bar */}
-      <header className="md:hidden flex justify-between items-center p-4 bg-surface-container border-b border-outline-variant fixed top-0 left-0 w-full z-50">
-        <Link href="/" className="flex items-center group cursor-pointer select-none no-underline w-44 shrink-0">
-          <div className="font-display text-lg font-medium tracking-wide flex items-center text-primary-fixed">
-            <span className="font-dancing text-xl md:text-2xl font-bold italic pr-0.5 select-none">C</span>
-            <span className="text-on-surface">rono</span>
-            <span className="font-dancing text-xl md:text-2xl font-bold italic pl-1 pr-0.5 select-none">B</span>
-            <span className="text-on-surface">ash</span>
-          </div>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/wallet" className="flex items-center gap-1 font-label-mono text-sm text-primary-fixed font-bold bg-surface-container-high px-2.5 py-1 rounded-lg border border-outline-variant">
-            <span>{wallet?.balance ?? 0}</span>
-            <span className="text-[10px] text-on-surface-variant font-normal">TKN</span>
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-on-surface hover:text-primary-fixed p-1 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[28px]">{mobileMenuOpen ? 'close' : 'menu'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Sidebar Navigation Drawer Overlay */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-45 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
-          <div
-            className="w-72 bg-surface-container border-r border-outline-variant h-full p-4 flex flex-col pt-20"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ul className="flex flex-col gap-2 flex-grow">
-              {[
-                { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-                { name: 'Buddies', href: '/buddies', icon: 'person_add' },
-                { name: 'Arenas', href: '/rooms', icon: 'groups' },
-                { name: 'Tasks', href: '/tasks', icon: 'checklist' },
-                { name: 'Wallet', href: '/wallet', icon: 'account_balance_wallet' },
-                { name: 'Analytics', href: '/analytics', icon: 'monitoring' },
-                { name: 'Store', href: '/marketplace', icon: 'storefront' },
-                { name: 'Profile', href: '/profile', icon: 'person' },
-                { name: 'Settings', href: '/settings', icon: 'settings' }
-              ].map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-lg font-label-mono text-label-mono ${
-                        isActive
-                          ? 'text-on-primary bg-primary-container font-bold'
-                          : 'text-on-surface-variant hover:bg-surface-variant'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined">{link.icon}</span>
-                      <span>{link.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="mt-auto flex flex-col gap-4 border-t border-outline-variant/30 pt-4">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  router.push('/study');
-                }}
-                className="w-full bg-primary-container text-on-primary font-bold py-3 rounded-lg font-label-mono text-label-mono flex justify-center items-center gap-2"
-              >
-                <span className="material-symbols-outlined">play_arrow</span>
-                Start Sprint
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  signOut();
-                }}
-                className="w-full border border-outline-variant hover:border-error text-on-surface hover:text-error py-2.5 rounded-lg font-label-mono text-xs flex justify-center items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm">logout</span>
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Go Pro Checkout Modal — temporarily disabled, re-enable by setting ENABLE_GOPRO = true in this file */}
-    </>
+      </div>
+    </header>
   );
 }

@@ -305,7 +305,7 @@ export default function MoneyMatchesVisionPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push('/study')}
-              className="bg-primary-container text-on-primary font-mono text-xs font-bold py-4 px-10 rounded-2xl hover:bg-primary-fixed transition shadow-[0_0_25px_rgba(0,255,163,0.4)] cursor-pointer"
+              className="bg-primary-container text-on-primary font-mono text-xs font-bold py-3 sm:py-4 px-6 sm:px-10 rounded-2xl hover:bg-primary-fixed transition shadow-[0_0_25px_rgba(0,255,163,0.4)] cursor-pointer"
             >
               Start a Free Focus Session Now →
             </motion.button>

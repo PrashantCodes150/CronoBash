@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useProductivityStore } from '@/lib/productivity-store';
-import { Timer, Play, Pause, RotateCcw, ArrowRight, Flame } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function TimeTrackerWidget() {
@@ -49,70 +49,59 @@ export function TimeTrackerWidget() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const todayMinutes = Math.round(
-    sessions.reduce((acc, s) => acc + s.duration_seconds, 0) / 60
-  );
-
   return (
-    <div className="bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4 shadow-lg flex flex-col justify-between h-full hover:border-primary/40 transition">
+    <div className="morphism-card bg-white p-5 space-y-4 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:border-[#10B981] transition-all">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Timer className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#10B981] text-white flex items-center justify-center shadow-sm">
+              <Timer className="w-5 h-5 font-bold" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Time Tracker</h3>
-              <p className="text-[11px] text-on-surface-variant font-mono">Live Focus Stopwatch</p>
+              <h3 className="font-extrabold text-slate-900 text-sm">Time Tracker</h3>
+              <p className="text-[11px] text-slate-500 font-medium">Quick Stopwatch</p>
             </div>
           </div>
 
           <Link
-            href="/tasks?tab=tracker"
-            className="text-xs text-primary-fixed hover:text-white font-mono flex items-center gap-1 transition"
+            href="/study"
+            className="text-xs text-[#10B981] hover:underline font-bold flex items-center gap-1 transition"
           >
-            Tracker Hub <ArrowRight className="w-3 h-3" />
+            Study Room <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
-        {/* Live Timer Card */}
-        <div className="bg-surface-container-high/80 p-4 rounded-xl border border-outline-variant/40 text-center space-y-2">
-          <div className="flex justify-between items-center text-[10px] font-mono text-on-surface-variant">
-            <span>Subject: {subject}</span>
-            <span className="flex items-center gap-1 text-amber-400 font-bold">
-              <Flame className="w-3 h-3" /> {todayMinutes}m today
-            </span>
-          </div>
-
-          <div className="text-3xl font-mono font-bold text-white tracking-widest my-1">
+        {/* Stopwatch Display */}
+        <div className="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex flex-col items-center justify-center space-y-1">
+          <span className="text-3xl font-black text-slate-900 tracking-tight font-mono">
             {formatTime(seconds)}
-          </div>
-
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <button
-              onClick={handleToggle}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm ${
-                isRunning
-                  ? 'bg-amber-500 text-black hover:bg-amber-400'
-                  : 'bg-primary text-on-primary hover:brightness-110'
-              }`}
-            >
-              {isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-              {isRunning ? 'Pause' : 'Start Focus'}
-            </button>
-
-            {seconds > 0 && (
-              <button
-                onClick={handleReset}
-                className="p-1.5 bg-surface-variant hover:bg-surface-container-high text-on-surface-variant hover:text-white rounded-lg transition"
-                title="Save & Reset"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          </span>
+          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+            {subject} Sprint
+          </span>
         </div>
+      </div>
+
+      {/* Control Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleToggle}
+          className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs text-white transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
+            isRunning ? 'bg-amber-500 hover:bg-amber-600' : 'bg-[#10B981] hover:bg-[#059669]'
+          }`}
+        >
+          {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          <span>{isRunning ? 'Pause' : 'Start'}</span>
+        </button>
+
+        <button
+          onClick={handleReset}
+          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
+          title="Reset timer"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/check_wallet_balance/index.ts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

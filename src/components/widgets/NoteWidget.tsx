@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useProductivityStore } from '@/lib/productivity-store';
-import { FileText, Plus, Pin, ArrowRight } from 'lucide-react';
+import { FileText, Plus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function NoteWidget() {
@@ -33,23 +33,23 @@ export function NoteWidget() {
   };
 
   return (
-    <div className="bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4 shadow-lg flex flex-col justify-between h-full hover:border-primary/40 transition">
+    <div className="morphism-card bg-white p-5 space-y-4 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:border-[#F59E0B] transition-all">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <FileText className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#F59E0B] text-gray-900 flex items-center justify-center shadow-sm">
+              <FileText className="w-5 h-5 font-bold" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Note Taker</h3>
-              <p className="text-[11px] text-on-surface-variant font-mono">{notes.length} total notes</p>
+              <h3 className="font-extrabold text-slate-900 text-sm">Note Taker</h3>
+              <p className="text-[11px] text-slate-500 font-medium">{notes.length} total notes</p>
             </div>
           </div>
 
           <Link
             href="/tasks?tab=notes"
-            className="text-xs text-primary-fixed hover:text-white font-mono flex items-center gap-1 transition"
+            className="text-xs text-[#D97706] hover:underline font-bold flex items-center gap-1 transition"
           >
             Notes Pad <ArrowRight className="w-3 h-3" />
           </Link>
@@ -57,67 +57,65 @@ export function NoteWidget() {
 
         {/* Quick Memo Creator vs Pinned Notes */}
         {isAdding ? (
-          <form onSubmit={handleSaveMemo} className="space-y-2 bg-surface-container-high/80 p-3 rounded-xl border border-outline-variant/40">
+          <form onSubmit={handleSaveMemo} className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <input
               type="text"
               required
-              placeholder="Memo title..."
               value={quickTitle}
-              onChange={e => setQuickTitle(e.target.value)}
-              className="w-full bg-surface-variant border border-outline-variant/40 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-primary"
+              onChange={(e) => setQuickTitle(e.target.value)}
+              placeholder="Memo title..."
+              className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-[#F59E0B]"
             />
             <textarea
               rows={2}
-              placeholder="Content..."
               value={quickContent}
-              onChange={e => setQuickContent(e.target.value)}
-              className="w-full bg-surface-variant border border-outline-variant/40 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary font-mono resize-none"
+              onChange={(e) => setQuickContent(e.target.value)}
+              placeholder="Memo content..."
+              className="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900 focus:outline-none focus:border-[#F59E0B] resize-none"
             />
-            <div className="flex justify-end gap-2 text-xs">
+            <div className="flex justify-end gap-1.5 pt-1">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-2 py-1 text-on-surface-variant hover:text-white"
+                className="px-2.5 py-1 text-[10px] text-slate-600 font-bold hover:bg-slate-200 rounded-lg"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-3 py-1 bg-primary text-on-primary font-bold rounded-lg hover:brightness-110"
+                className="px-3 py-1 text-[10px] bg-[#F59E0B] text-gray-900 font-extrabold rounded-lg hover:bg-amber-500"
               >
                 Save
               </button>
             </div>
           </form>
         ) : (
-          <div className="space-y-2">
-            <button
-              onClick={() => setIsAdding(true)}
-              className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl bg-surface-variant/50 hover:bg-surface-variant text-xs text-on-surface-variant hover:text-white border border-dashed border-outline-variant/40 transition font-mono"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Write Quick Memo
-            </button>
-
-            {displayNotes.map(n => (
-              <div
-                key={n.id}
-                className="p-2.5 rounded-xl border border-white/10 space-y-1"
-                style={{ backgroundColor: n.color || '#0F172A' }}
-              >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-white truncate flex items-center gap-1">
-                    {n.pinned && <Pin className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />}
-                    {n.title}
-                  </h4>
-                  <span className="text-[9px] font-mono text-white/50">{n.category}</span>
-                </div>
-                <p className="text-[11px] text-white/70 font-mono line-clamp-2">{n.content}</p>
+          <div className="space-y-1.5">
+            {displayNotes.length === 0 ? (
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                <p className="text-xs text-slate-400 font-medium">No notes recorded yet</p>
               </div>
-            ))}
+            ) : (
+              displayNotes.map(n => (
+                <div key={n.id} className="p-2 bg-slate-50 border border-slate-100 rounded-xl space-y-0.5">
+                  <span className="font-bold text-slate-900 text-xs truncate block">{n.title}</span>
+                  <p className="text-[10px] text-slate-500 line-clamp-1">{n.content}</p>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>
+
+      {!isAdding && (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="w-full bg-[#1D1D1F] hover:bg-black text-white font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1 shadow-sm cursor-pointer"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>New Memo</span>
+        </button>
+      )}
     </div>
   );
 }

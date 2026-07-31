@@ -8,21 +8,6 @@ import Footer from './Footer';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  React.useEffect(() => {
-    const savedTheme = 'dark';
-    const htmlEl = document.documentElement;
-    const bodyEl = document.body;
-
-    const themeClasses = ['theme-dark', 'theme-pink', 'theme-green', 'theme-water'];
-    themeClasses.forEach(cls => {
-      htmlEl.classList.remove(cls);
-      bodyEl.classList.remove(cls);
-    });
-
-    htmlEl.classList.add(`theme-${savedTheme}`);
-    bodyEl.classList.add(`theme-${savedTheme}`);
-  }, [pathname]);
-
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding', '/study'];
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study/');
 
@@ -31,14 +16,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
-      {/* Main Canvas frame */}
+    <div className="flex min-h-screen bg-[#ECEFF6] text-[#0F172A] selection:bg-[#3B82F6] selection:text-white font-sans antialiased">
       <div className="flex-grow flex flex-col min-h-screen">
         {/* Top Header navbar */}
         <Header />
 
         {/* Page contents */}
-        <main className="flex-grow pt-4 pb-12 px-4 md:px-8 w-full max-w-full mx-auto">
+        <main className="flex-grow pt-2 sm:pt-4 pb-12 px-3 sm:px-4 md:px-6 lg:px-8 w-full max-w-[1600px] mx-auto">
           {children}
         </main>
 

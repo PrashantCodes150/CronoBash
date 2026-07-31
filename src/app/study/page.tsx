@@ -1058,6 +1058,7 @@ function StudySessionContent() {
           .insert({
             user_id: user.id,
             room_id: roomId || null,
+            name: sessionName?.trim() || null,
             start_time: new Date().toISOString(),
             focus_seconds: 0,
             total_seconds: 0,
@@ -1687,7 +1688,12 @@ function StudySessionContent() {
   };
 
   return (
-    <div className={`theme-${selectedTheme} bg-background text-on-background h-screen flex flex-col relative font-sans overflow-hidden`}>
+    <div className={`theme-${selectedTheme} ${
+      selectedTheme === 'pink' ? 'bg-[#2a0818] text-pink-100' :
+      selectedTheme === 'green' ? 'bg-[#042f1a] text-emerald-100' :
+      selectedTheme === 'water' ? 'bg-[#082f49] text-cyan-100' :
+      'bg-[#0b0f19] text-slate-100'
+    } h-screen flex flex-col relative font-sans overflow-hidden selection:bg-[#334155] selection:text-white`}>
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes petal-fall {
           0% {
@@ -1903,10 +1909,10 @@ function StudySessionContent() {
         </div>
       ) : roomId ? (
         // Split view battle arena
-        <main className="flex-grow flex flex-col justify-between w-full h-[calc(100vh-80px)] relative overflow-hidden bg-black select-none z-10">
+        <main className="flex-grow flex flex-col justify-between w-full h-[calc(100vh-80px)] min-h-[500px] relative overflow-hidden bg-black select-none z-10">
           
           {/* Immersive Top Header Bar */}
-          <div className="w-full flex justify-between items-center py-3 px-6 bg-gradient-to-b from-black/80 to-transparent relative z-30 shrink-0">
+          <div className="w-full flex justify-between items-center py-3 px-3 sm:px-6 bg-gradient-to-b from-black/80 to-transparent relative z-30 shrink-0">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary-fixed text-sm">military_tech</span>
               <span className="font-mono text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">CRONOBASH ARENA DEPLOYMENT</span>
@@ -2273,7 +2279,7 @@ function StudySessionContent() {
 
                       {/* Yellow Comic-Style VS Text */}
                       <span 
-                        className="relative z-10 text-5xl md:text-6xl font-black italic tracking-tighter uppercase select-none"
+                        className="relative z-10 text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter uppercase select-none"
                         style={{
                           color: '#facc15',
                           fontFamily: '"Impact", "Arial Black", sans-serif',
@@ -2378,37 +2384,43 @@ function StudySessionContent() {
         </main>
       ) : (
         // Render normal layout
-        <main className="flex-grow flex flex-col justify-center w-full max-w-7xl mx-auto px-4 py-4 relative z-10 overflow-hidden h-[calc(100vh-80px)]">
-          <div className="w-full h-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch overflow-hidden">
-            <div className="lg:col-span-8 flex flex-col gap-4 h-full overflow-hidden">
+        <main className="flex-grow flex flex-col justify-start w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 relative z-10 lg:h-[calc(100vh-80px)] min-h-0 overflow-y-auto lg:overflow-hidden">
+          <div className="w-full h-auto lg:h-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            <div className="lg:col-span-8 flex flex-col gap-4 h-auto lg:h-full">
               <motion.div
                 animate={{
                   borderColor: isFocused ? activeColors.primary : '#FF0055',
                   boxShadow: isFocused ? `0 0 25px ${activeColors.glow}` : '0 0 25px rgba(255, 0, 85, 0.25)'
                 }}
                 transition={{ duration: 0.6 }}
-                className={`flex-grow flex flex-col justify-center items-center p-6 relative overflow-hidden backdrop-blur transition-all duration-500 rounded-2xl border ${
-                  selectedTheme === 'pink' ? 'bg-pink-900/10 border-pink-500/30' :
-                  selectedTheme === 'green' ? 'bg-green-950/15 border-green-600/30' :
-                  selectedTheme === 'water' ? 'bg-cyan-950/15 border-cyan-500/30' :
-                  isFocused ? 'clay-card-success' : 'clay-card-error'
+                className={`flex-grow flex flex-col justify-between items-center p-5 sm:p-8 md:p-10 relative transition-all duration-500 rounded-3xl border min-h-[320px] w-full ${
+                  selectedTheme === 'pink' ? 'bg-pink-950/40 backdrop-blur-xl border-pink-400/30 text-pink-100 shadow-[0_8px_32px_rgba(255,105,180,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]' :
+                  selectedTheme === 'green' ? 'bg-emerald-950/40 backdrop-blur-xl border-emerald-400/30 text-emerald-100 shadow-[0_8px_32px_rgba(34,197,94,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]' :
+                  selectedTheme === 'water' ? 'bg-cyan-950/40 backdrop-blur-xl border-cyan-400/30 text-cyan-100 shadow-[0_8px_32px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]' :
+                  isFocused ? 'bg-white/5 backdrop-blur-xl border-emerald-400/40 text-white shadow-[0_8px_32px_rgba(0,255,163,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-white/5 backdrop-blur-xl border-rose-500/50 text-white shadow-[0_8px_32px_rgba(255,0,85,0.2),inset_0_1px_0_rgba(255,255,255,0.06)]'
                 }`}
               >
-                <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${
-                    isFocused ? 'bg-primary-container live-pulse' : 'bg-error animate-ping'
-                  }`}></span>
-                  <span className="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">
-                    Grind: {isFocused ? 'FOCUS ACTIVE' : 'DISTRACTED WARNING'}
+                {/* Status Bar */}
+                <div className="w-full flex items-center justify-between gap-2 mb-2 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${
+                      isFocused ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500 animate-ping'
+                    }`}></span>
+                    <span className="font-mono text-[10px] sm:text-xs text-slate-300 uppercase tracking-wider font-bold">
+                      STATUS: {isFocused ? 'FOCUS ACTIVE' : 'DISTRACTED WARNING'}
+                    </span>
+                  </div>
+                  <span className="font-mono text-[9px] text-slate-400 uppercase tracking-wider font-semibold hidden sm:inline">
+                    Multi-Track AI Gaze
                   </span>
                 </div>
 
-                <div className="text-center select-none my-auto">
-                  <h1 className="font-display text-5xl md:text-6xl font-black text-on-surface tracking-tight font-mono">
+                <div className="text-center select-none my-auto py-2">
+                  <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight font-mono drop-shadow-md">
                     {formatTimer(seconds)}
                   </h1>
-                  <p className="text-xs font-label-mono text-on-surface-variant mt-2 tracking-widest uppercase font-bold">
-                    Webcam Multi-Track: Screen & Paper Focus Enabled
+                  <p className="text-[11px] sm:text-xs font-mono text-slate-300 mt-2 tracking-widest uppercase font-bold">
+                    Webcam Multi-Track: Screen &amp; Paper Focus Enabled
                   </p>
 
                   {selectedTheme === 'dark' && (
@@ -2417,19 +2429,20 @@ function StudySessionContent() {
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
-                      className="text-xs text-primary-fixed/80 uppercase font-mono tracking-widest font-bold mt-3 max-w-md mx-auto"
+                      className="text-[11px] sm:text-xs text-primary-fixed/80 uppercase font-mono tracking-widest font-bold mt-2.5 max-w-md mx-auto"
                     >
                       💡 {currentQuote}
                     </motion.p>
                   )}
                 </div>
 
-                <div className="w-full flex justify-center mt-2.5">
+                {/* Session Setup Controls */}
+                <div className="w-full flex justify-center mt-3">
                   {!sessionStarted ? (
-                    <div className="flex flex-col items-center gap-2 w-full">
-                      <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
-                        <div className="space-y-0.5">
-                          <label className="block text-[7px] font-label-mono text-on-surface-variant uppercase tracking-wider text-center font-bold">
+                    <div className="w-full max-w-md mx-auto space-y-3 bg-black/30 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        <div className="space-y-1 text-left">
+                          <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-wider font-bold">
                             Select Objective (Optional)
                           </label>
                           <select
@@ -2442,17 +2455,17 @@ function StudySessionContent() {
                                 setSessionName(matched.title);
                               }
                             }}
-                            className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 font-label-mono text-[9px] text-on-surface focus:outline-none focus:border-primary-fixed cursor-pointer"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-400 cursor-pointer"
                           >
-                            <option value="">-- Custom --</option>
+                            <option value="">-- Custom Study --</option>
                             {activeTasks.map(t => (
                               <option key={t.id} value={t.id}>{t.title}</option>
                             ))}
                           </select>
                         </div>
 
-                        <div className="space-y-0.5">
-                          <label className="block text-[7px] font-label-mono text-on-surface-variant uppercase tracking-wider text-center font-bold">
+                        <div className="space-y-1 text-left">
+                          <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-wider font-bold">
                             Session Name
                           </label>
                           <input
@@ -2460,30 +2473,30 @@ function StudySessionContent() {
                             placeholder="Name this study..."
                             value={sessionName}
                             onChange={(e) => setSessionName(e.target.value)}
-                            className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 font-label-mono text-[9px] text-on-surface focus:outline-none focus:border-primary-fixed transition-all text-center placeholder:text-on-surface-variant/40"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-400 transition-all placeholder:text-slate-500"
                           />
                         </div>
                       </div>
 
                       <button
                         onClick={handleStartSession}
-                        className="bg-primary-container hover:bg-primary-fixed text-on-primary font-label-mono text-[9px] font-bold px-6 py-2 rounded-lg shadow-[0_0_10px_rgba(0,255,163,0.2)] cursor-pointer uppercase tracking-wider mt-1"
+                        className="w-full bg-[#10B981] hover:bg-emerald-400 text-slate-950 font-mono text-xs font-extrabold py-3 px-6 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer uppercase tracking-wider transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
                       >
-                        Start Your Focus
+                        <span className="material-symbols-outlined text-base font-bold">play_arrow</span>
+                        <span>Start Your Focus</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap items-center justify-center gap-3 w-full">
                       <button
                         onClick={handleTogglePause}
-                        className="bg-surface-container border border-outline-variant text-on-surface font-label-mono text-[9px] font-bold px-5 py-2 rounded-lg cursor-pointer uppercase tracking-wider"
+                        className="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-mono text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer uppercase tracking-wider shadow-sm"
                       >
                         {isActive ? 'Pause' : 'Resume'}
                       </button>
                       {roomId && (
                         <button
                           onClick={async () => {
-                            // Immediately broadcast forfeit to opponents so they receive it in sub-50ms
                             if (webrtcChannelRef.current) {
                               webrtcChannelRef.current.send({
                                 type: 'broadcast',
@@ -2492,7 +2505,6 @@ function StudySessionContent() {
                               });
                             }
                             
-                            // Write to DB presence for robustness
                             if (user) {
                               try {
                                 await supabase.from('room_presence').upsert({
@@ -2510,16 +2522,16 @@ function StudySessionContent() {
                             setSelfHandsDown(true);
                             handleEndSession('self');
                           }}
-                          className="bg-red-950/40 border border-red-500 text-red-400 font-label-mono text-[9px] font-bold px-5 py-2 rounded-lg cursor-pointer uppercase tracking-wider hover:bg-red-900/60 transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+                          className="bg-red-950/40 border border-red-500 text-red-400 font-mono text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer uppercase tracking-wider hover:bg-red-900/60 transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
                         >
-                          <span className="material-symbols-outlined text-[10px]">back_hand</span>
+                          <span className="material-symbols-outlined text-xs">back_hand</span>
                           Hands Down
                         </button>
                       )}
                       {!roomId && (
                         <button
                           onClick={() => handleEndSession()}
-                          className="bg-surface-container border border-error text-error font-label-mono text-[9px] font-bold px-5 py-2 rounded-lg cursor-pointer uppercase tracking-wider"
+                          className="bg-red-600 hover:bg-red-700 text-white font-mono text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer uppercase tracking-wider shadow-sm"
                         >
                           End Focus
                         </button>
@@ -2529,40 +2541,40 @@ function StudySessionContent() {
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-4 gap-4 shrink-0 font-mono text-xs">
-                <div className="clay-card p-3 flex flex-col justify-between hover:scale-[1.02] transition-transform">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 shrink-0 font-mono text-xs">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-between hover:scale-[1.02] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] cursor-default">
                   <div>
-                    <span className="text-on-surface-variant uppercase font-bold text-[8px] tracking-wider text-left block">Attention Ratio</span>
-                    <span className="font-display text-xl font-black text-primary-fixed mt-1 block">
+                    <span className="text-slate-400 uppercase font-bold text-[8px] tracking-wider text-left block">Attention Ratio</span>
+                    <span className="font-mono text-xl font-black text-emerald-400 mt-1 block">
                       {seconds > 0 ? Math.round((focusSeconds / seconds) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="w-full bg-surface-container-high h-1 rounded-full overflow-hidden mt-2">
-                    <div className="bg-primary-container h-full" style={{ width: `${seconds > 0 ? (focusSeconds/seconds)*100 : 0}%` }}></div>
+                  <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-2">
+                    <div className="bg-emerald-400 h-full transition-all duration-300" style={{ width: `${seconds > 0 ? (focusSeconds/seconds)*100 : 0}%` }}></div>
                   </div>
                 </div>
 
-                <div className="clay-card p-3 flex flex-col justify-between hover:scale-[1.02] transition-transform">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-between hover:scale-[1.02] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] cursor-default">
                   <div>
-                    <span className="text-on-surface-variant uppercase font-bold text-[8px] tracking-wider text-left block">Focus Allocation</span>
-                    <span className="font-display text-[10px] font-black text-on-surface mt-1.5 block truncate">
+                    <span className="text-slate-400 uppercase font-bold text-[8px] tracking-wider text-left block">Focus Allocation</span>
+                    <span className="font-mono text-[10px] font-black text-slate-200 mt-1.5 block truncate">
                       💻{Math.floor(screenFocusSeconds / 60)}m /  📝{Math.floor(paperFocusSeconds / 60)}m
                     </span>
                   </div>
-                  <div className="flex gap-1 mt-2 h-1 rounded-full overflow-hidden bg-surface-container-high w-full">
-                    <div className="bg-primary-container h-full" style={{ width: `${focusSeconds > 0 ? (screenFocusSeconds/focusSeconds)*100 : 50}%` }}></div>
-                    <div className="bg-cyan-400 h-full" style={{ width: `${focusSeconds > 0 ? (paperFocusSeconds/focusSeconds)*100 : 50}%` }}></div>
+                  <div className="flex gap-0.5 mt-2 h-1 rounded-full overflow-hidden bg-white/10 w-full">
+                    <div className="bg-emerald-400 h-full transition-all" style={{ width: `${focusSeconds > 0 ? (screenFocusSeconds/focusSeconds)*100 : 50}%` }}></div>
+                    <div className="bg-cyan-400 h-full transition-all" style={{ width: `${focusSeconds > 0 ? (paperFocusSeconds/focusSeconds)*100 : 50}%` }}></div>
                   </div>
                 </div>
 
-                <div className="clay-card p-3 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                  <span className="text-on-surface-variant uppercase font-bold text-[8px] tracking-wider text-left block">Longest Streak</span>
-                  <span className="font-display text-xl font-black text-secondary-fixed mt-1">{longestStreak}s</span>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-between hover:scale-[1.02] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] cursor-default">
+                  <span className="text-slate-400 uppercase font-bold text-[8px] tracking-wider text-left block">Longest Streak</span>
+                  <span className="font-mono text-xl font-black text-violet-400 mt-1">{longestStreak}s</span>
                 </div>
 
-                <div className="clay-card p-3 flex flex-col justify-between hover:scale-[1.02] transition-transform">
-                  <span className="text-on-surface-variant uppercase font-bold text-[8px] tracking-wider text-left block">Interruptions</span>
-                  <span className="font-display text-xl font-black text-error mt-1">{interruptions}</span>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-between hover:scale-[1.02] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] cursor-default">
+                  <span className="text-slate-400 uppercase font-bold text-[8px] tracking-wider text-left block">Interruptions</span>
+                  <span className="font-mono text-xl font-black text-rose-400 mt-1">{interruptions}</span>
                 </div>
               </div>
 
@@ -2575,50 +2587,50 @@ function StudySessionContent() {
                 className="flex gap-4 overflow-x-auto pb-2 pr-2 snap-x snap-mandatory h-[180px] shrink-0 no-scrollbar"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                <div className="clay-card p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] transition-transform">
-                  <h3 className="font-display text-[8px] font-bold text-on-surface uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span>Session Focus Level Index</span>
-                    <span className="text-[7px] text-on-surface-variant font-mono">1/3 ➔</span>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <h3 className="font-mono text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="text-slate-200">Session Focus Level Index</span>
+                    <span className="text-[7px] text-slate-500 font-mono">1/3 ➔</span>
                   </h3>
                   <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData} margin={{ top: 2, right: 2, left: -32, bottom: 0 }}>
-                        <XAxis dataKey="time" stroke="#849588" fontSize={8} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#849588" fontSize={8} domain={[0, 100]} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '8px' }} />
-                        <Line type="monotone" dataKey="level" stroke="#00FFA3" strokeWidth={1.5} dot={false} />
+                        <XAxis dataKey="time" stroke="rgba(148,163,184,0.5)" fontSize={8} tickLine={false} axisLine={false} />
+                        <YAxis stroke="rgba(148,163,184,0.5)" fontSize={8} domain={[0, 100]} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '8px', color: '#e2e8f0' }} />
+                        <Line type="monotone" dataKey="level" stroke="#00FFA3" strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="clay-card p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] transition-transform">
-                  <h3 className="font-display text-[8px] font-bold text-on-surface uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span>Focus Streak Timeline</span>
-                    <span className="text-[7px] text-on-surface-variant font-mono">2/3 ➔</span>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <h3 className="font-mono text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="text-slate-200">Focus Streak Timeline</span>
+                    <span className="text-[7px] text-slate-500 font-mono">2/3 ➔</span>
                   </h3>
                   <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={streakChartData} margin={{ top: 2, right: 2, left: -32, bottom: 0 }}>
-                        <XAxis dataKey="time" stroke="#849588" fontSize={8} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#849588" fontSize={8} domain={[0, 100]} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '8px' }} />
+                        <XAxis dataKey="time" stroke="rgba(148,163,184,0.5)" fontSize={8} tickLine={false} axisLine={false} />
+                        <YAxis stroke="rgba(148,163,184,0.5)" fontSize={8} domain={[0, 100]} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '8px', color: '#e2e8f0' }} />
                         <defs>
                           <linearGradient id="colorStreak" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#ccbdff" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#ccbdff" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.5}/>
+                            <stop offset="95%" stopColor="#a78bfa" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <Area type="monotone" dataKey="streak" stroke="#ccbdff" fillOpacity={1} fill="url(#colorStreak)" strokeWidth={1.2} />
+                        <Area type="monotone" dataKey="streak" stroke="#a78bfa" fillOpacity={1} fill="url(#colorStreak)" strokeWidth={1.8} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="clay-card p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] transition-transform">
-                  <h3 className="font-display text-[8px] font-bold text-on-surface uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span>Screen vs Paper Focus (Secs)</span>
-                    <span className="text-[7px] text-on-surface-variant font-mono">3/3 ➔</span>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col shrink-0 w-[48%] min-w-[280px] snap-start hover:scale-[1.01] hover:bg-white/8 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <h3 className="font-mono text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="text-slate-200">Screen vs Paper Focus (Secs)</span>
+                    <span className="text-[7px] text-slate-500 font-mono">3/3 ➔</span>
                   </h3>
                   <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
@@ -2626,9 +2638,9 @@ function StudySessionContent() {
                         { name: 'Screen', seconds: screenFocusSeconds },
                         { name: 'Paper', seconds: paperFocusSeconds }
                       ]} margin={{ top: 2, right: 2, left: -25, bottom: 0 }}>
-                        <XAxis dataKey="name" stroke="#849588" fontSize={8} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#849588" fontSize={8} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#3a4a3f', borderRadius: '6px', fontSize: '8px' }} />
+                        <XAxis dataKey="name" stroke="rgba(148,163,184,0.5)" fontSize={8} tickLine={false} axisLine={false} />
+                        <YAxis stroke="rgba(148,163,184,0.5)" fontSize={8} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '8px', color: '#e2e8f0' }} />
                         <Bar dataKey="seconds" radius={[6, 6, 0, 0]}>
                           {
                             [

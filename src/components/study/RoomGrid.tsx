@@ -97,7 +97,7 @@ export function RoomGrid({ members, selfId, streams }: RoomGridProps) {
         className={`grid gap-4 p-2 overflow-y-auto max-h-[75vh] w-full mx-auto justify-center ${gridStyle}`}
       >
         {activeMembers.map(m => (
-          <div key={m.id} className="aspect-square min-w-[200px]">
+          <div key={m.id} className="aspect-square min-w-0 w-full">
             <CameraTile
               userId={m.id}
               name={m.name}

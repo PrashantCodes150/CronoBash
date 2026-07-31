@@ -18,24 +18,24 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { profile } = useAuth();
 
-  const hiddenRoutes = ['/', '/login', '/signup', '/onboarding'];
-  if (hiddenRoutes.includes(pathname) || pathname.startsWith('/study')) return null;
-
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom" role="navigation" aria-label="Mobile navigation">
+      {/* Glass background bar */}
       <div
         className="mx-2 mb-2 rounded-2xl bg-white/70 backdrop-blur-2xl border border-white/40 shadow-[0_-4px_30px_rgba(0,0,0,0.08)]"
         style={{ backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 100%)' }}
       >
-        <div className="flex items-center justify-around px-1 py-1.5">
+        <div className="flex items-center justify-around px-1 py-1">
           {tabs.map((tab) => {
-            const isActive = pathname === tab.href;
+            const isActive = pathname === tab.href || (tab.href === '/dashboard' && pathname === '/dashboard');
             return (
               <Link
                 key={tab.name}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-[64px] ${
-                  isActive ? 'text-[#3B82F6]' : 'text-slate-400'
+                  isActive
+                    ? 'text-[#3B82F6]'
+                    : 'text-slate-400'
                 }`}
               >
                 <span
@@ -56,6 +56,7 @@ export default function BottomNav() {
             );
           })}
 
+          {/* Profile tab with avatar */}
           <Link
             href="/profile"
             className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 min-w-[64px] ${

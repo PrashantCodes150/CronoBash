@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
 import { supabase, Task, Room } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
+import GreetingBanner from '@/components/GreetingBanner';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -15,12 +17,33 @@ import { CalendarWidget } from '@/components/widgets/CalendarWidget';
 import { TimeTrackerWidget } from '@/components/widgets/TimeTrackerWidget';
 import { NoteWidget } from '@/components/widgets/NoteWidget';
 import { MoneyMatchWidget } from '@/components/widgets/MoneyMatchWidget';
-import { ReferralCard } from '@/components/study/ReferralCard';
-import { StudentAdBanner } from '@/components/ads/StudentAdBanner';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, profile, wallet, refreshWallet } = useAuth();
+
+  // Redirect new users who haven't completed onboarding to /onboarding
+  useEffect(() => {
+    if (!user) return;
+    if (typeof window !== 'undefined') {
+      const isLocalSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true' || localStorage.getItem('cronobash_has_seen_onboarding') === 'true';
+      if (isLocalSeen) return;
+    }
+    if (profile && profile.has_seen_onboarding === false) {
+      router.replace('/onboarding');
+    }
+  }, [user, profile?.has_seen_onboarding, router]);
+
+  // Navigation tab state
+  const [activeTab, setActiveTab] = useState<'all' | 'focus' | 'productivity' | 'squads' | 'analytics'>('all');
+
+  // Interactive Header Controls States
+  const [isArenaDropdownOpen, setIsArenaDropdownOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [isQuickSprintModalOpen, setIsQuickSprintModalOpen] = useState(false);
+  const [quickSprintTitle, setQuickSprintTitle] = useState('');
+  const [quickSprintDuration, setQuickSprintDuration] = useState(25);
 
   // Metrics states
   const [focusSecondsToday, setFocusSecondsToday] = useState(0);
@@ -88,7 +111,7 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [challengeOpponent, user?.id]);
 
-  // Persistent Deleted Sessions Register (ensures deleted sessions NEVER reappear on refresh)
+  // Persistent Deleted Sessions Register
   const getDeletedSessionIds = (): Set<string> => {
     if (typeof window === 'undefined') return new Set();
     try {
@@ -114,13 +137,9 @@ export default function Dashboard() {
     e.stopPropagation();
     if (!sessionId) return;
 
-    // 1. Register ID in persistent deleted sessions set
     addDeletedSessionId(String(sessionId));
-
-    // 2. Remove from UI state immediately
     setAllSessionsList(prev => prev.filter(s => String(s.id) !== String(sessionId)));
 
-    // 3. Delete from Supabase study_sessions table
     try {
       await supabase
         .from('study_sessions')
@@ -130,7 +149,6 @@ export default function Dashboard() {
       console.error('Supabase session delete error:', err);
     }
 
-    // 4. Clear from local storage caches if stored locally
     if (typeof window !== 'undefined') {
       const storageKeys = ['cronobash_productivity_sessions', 'cronobash_study_sessions', 'study_sessions_cache'];
       storageKeys.forEach(key => {
@@ -148,6 +166,14 @@ export default function Dashboard() {
     }
 
     toast.success('Study session deleted permanently! 🗑️');
+  };
+
+  // Launch Quick Sprint Handler
+  const handleStartQuickSprint = (e: React.FormEvent) => {
+    e.preventDefault();
+    const titleParam = encodeURIComponent(quickSprintTitle.trim() || 'Quick Focus Sprint');
+    setIsQuickSprintModalOpen(false);
+    router.push(`/study?taskTitle=${titleParam}&targetMins=${quickSprintDuration}`);
   };
 
   // Launch Squad Challenge Handler
@@ -203,27 +229,21 @@ export default function Dashboard() {
         total_focus_seconds_today: 0
       });
 
-      // Dispatch invite notification if an opponent user was selected/searched
       if (selectedOpponentUser?.id) {
-        const { error: notifError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: selectedOpponentUser.id,
-            title: '⚔️ SQUAD BATTLE CHALLENGE!',
-            message: `${user.user_metadata?.name || user.email?.split('@')[0] || 'A squad member'} challenged you to a ${challengeDuration}m 1v1 Focus Duel: "${roomName}"!`,
-            type: 'invite',
-            is_read: false,
-            metadata: {
-              room_id: newRoom.id,
-              invite_code: newRoom.invite_code || '',
-              challenger_id: user.id,
-              challenger_name: user.user_metadata?.name || user.email?.split('@')[0] || 'Challenger'
-            }
-          });
-
-        if (!notifError) {
-          toast.success(`Invite notification sent to ${selectedOpponentUser.name || 'squad member'}! 🚀`);
-        }
+        await supabase.from('notifications').insert({
+          user_id: selectedOpponentUser.id,
+          title: '⚔️ SQUAD BATTLE CHALLENGE!',
+          message: `${user.user_metadata?.name || user.email?.split('@')[0] || 'A squad member'} challenged you to a ${challengeDuration}m 1v1 Focus Duel: "${roomName}"!`,
+          type: 'invite',
+          is_read: false,
+          metadata: {
+            room_id: newRoom.id,
+            invite_code: newRoom.invite_code || '',
+            challenger_id: user.id,
+            challenger_name: user.user_metadata?.name || user.email?.split('@')[0] || 'Challenger'
+          }
+        });
+        toast.success(`Invite notification sent to ${selectedOpponentUser.name || 'squad member'}! 🚀`);
       } else {
         toast.success(`Challenge Room Created! Launching Battle Lobby... ⚔️`);
       }
@@ -243,9 +263,6 @@ export default function Dashboard() {
     if (!user) return;
     setLoadingData(true);
     try {
-      // ── Timezone-safe date helpers ──
-      // Build local midnight boundaries as UTC ISO strings so queries
-      // correctly match sessions created anywhere in the world.
       const localToday = new Date();
       const localMidnightStart = new Date(
         localToday.getFullYear(), localToday.getMonth(), localToday.getDate(), 0, 0, 0, 0
@@ -257,7 +274,6 @@ export default function Dashboard() {
       let focusSum = 0;
       let totalSum = 0;
 
-      // 1. Fetch study sessions today (using local-day boundaries)
       const { data: sessionsToday, error: sessError } = await supabase
         .from('study_sessions')
         .select('*')
@@ -278,17 +294,13 @@ export default function Dashboard() {
         }
       }
 
-      // 2. Fetch User Profile for daily targets
       const { data: profData } = await supabase
         .from('users')
         .select('daily_goal_minutes')
         .eq('id', user.id)
         .single();
-      if (profData) {
-        setTargetGoal(profData.daily_goal_minutes || 120);
-      }
+      setTargetGoal(profile?.daily_goal_minutes || profData?.daily_goal_minutes || 120);
 
-      // 3. Fetch Tasks
       const { data: tasksList } = await supabase
         .from('tasks')
         .select('*')
@@ -296,7 +308,6 @@ export default function Dashboard() {
         .order('completed', { ascending: true });
       if (tasksList) setTasks(tasksList as Task[]);
 
-      // 4. Fetch Lobbies user has joined
       const { data: lobbiesJoined } = await supabase
         .from('room_members')
         .select('rooms(*)')
@@ -309,7 +320,6 @@ export default function Dashboard() {
         setLiveRooms(parsed);
       }
 
-      // 5. Chart 1: Weekly Focus (Last 7 local days)
       const sevenDaysAgoLocal = new Date(
         localToday.getFullYear(), localToday.getMonth(), localToday.getDate() - 6, 0, 0, 0, 0
       ).toISOString();
@@ -333,7 +343,6 @@ export default function Dashboard() {
       if (weekSessions) {
         for (const s of weekSessions) {
           const d = new Date(s.start_time);
-          // Use LOCAL day-of-week so IST sessions map to correct bar
           const key = dayNames[d.getDay()];
           if (key in dailyMinutes) {
             dailyMinutes[key] += Math.round((s.focus_seconds || 0) / 60);
@@ -345,7 +354,6 @@ export default function Dashboard() {
         Object.entries(dailyMinutes).map(([day, minutes]) => ({ day, minutes }))
       );
 
-      // 6. Chart 2: Hourly Focus (Today) — bucket by 2-hour windows
       const hourlyBuckets: Record<string, number> = {};
       for (let h = 0; h <= 22; h += 2) {
         const label = `${String(h).padStart(2, '0')}:00`;
@@ -355,7 +363,6 @@ export default function Dashboard() {
       if (sessionsToday) {
         for (const s of sessionsToday) {
           const d = new Date(s.start_time);
-          // Use local hours so IST sessions land in the correct bucket
           const h = d.getHours();
           const bucket = Math.floor(h / 2) * 2;
           const label = `${String(bucket).padStart(2, '0')}:00`;
@@ -369,7 +376,6 @@ export default function Dashboard() {
         Object.entries(hourlyBuckets).map(([name, minutes]) => ({ name, minutes }))
       );
 
-      // 7. Fetch all study sessions to populate logs, task aggregations, and room aggregations
       const { data: allSessions } = await supabase
         .from('study_sessions')
         .select('*, rooms(type)')
@@ -381,18 +387,13 @@ export default function Dashboard() {
         const activeSessions = allSessions.filter((s: any) => !deletedIds.has(String(s.id)));
         setAllSessionsList(activeSessions);
 
-        // Aggregate room focus minutes
         const roomMinutes: Record<string, number> = {};
-        // Aggregate task focus minutes
         const taskMinutes: Record<string, number> = {};
 
         activeSessions.forEach((s: any) => {
-          // Room aggregation
           if (s.room_id) {
             roomMinutes[s.room_id] = (roomMinutes[s.room_id] || 0) + Math.round((s.focus_seconds || 0) / 60);
           }
-
-          // Task aggregation - match by name (since the session name matches the task title)
           if (s.name) {
             const taskKey = s.name.trim().toLowerCase();
             taskMinutes[taskKey] = (taskMinutes[taskKey] || 0) + Math.round((s.focus_seconds || 0) / 60);
@@ -402,7 +403,6 @@ export default function Dashboard() {
         setRoomFocusMinutes(roomMinutes);
         setTaskFocusMinutes(taskMinutes);
 
-        // Convert each session start_time to a local YYYY-MM-DD string
         const toLocalDateStr = (iso: string) => {
           const d = new Date(iso);
           return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -456,6 +456,7 @@ export default function Dashboard() {
       if (!error && data) {
         setTasks([...tasks, data as Task]);
         setNewTaskTitle('');
+        toast.success('Objective created! 🎯');
       }
     } catch (e) {
       console.error(e);
@@ -497,264 +498,436 @@ export default function Dashboard() {
 
   if (loadingData && tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-on-surface-variant font-label-mono text-xs mt-4">SYNCING SPRINT SYSTEM CONFIG...</p>
+      <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#ECEFF6] rounded-[32px] p-8">
+        <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 font-semibold text-sm mt-4 tracking-wide">LOADING DASHBOARD CONTROL...</p>
       </div>
     );
   }
 
   const focusMinsToday = Math.round(focusSecondsToday / 60);
-  // Don't use Math.max(10,...) — that forces a fake 10m distracted even on zero data
   const distractedMinsToday = Math.max(0, Math.round((totalSecondsToday - focusSecondsToday) / 60));
   const progressPercent = Math.min(100, Math.round((focusMinsToday / targetGoal) * 100));
 
-  // Chart 3: Donut chart data
   const donutData = focusMinsToday === 0 && distractedMinsToday === 0
-    ? [{ name: 'No sessions today', value: 1, color: '#313540' }]
+    ? [{ name: 'No sessions today', value: 1, color: '#E4E4E7' }]
     : [
-        { name: 'Focus', value: focusMinsToday, color: '#00FFA3' },
-        { name: 'Distracted', value: distractedMinsToday, color: '#FF0055' }
+        { name: 'Focus', value: focusMinsToday, color: '#3B82F6' },
+        { name: 'Distracted', value: distractedMinsToday, color: '#8B5CF6' }
       ];
 
+  // Filter tasks and rooms based on global search
+  const filteredSearchTasks = tasks.filter(t => t.title.toLowerCase().includes(globalSearchQuery.toLowerCase().trim()));
+  const filteredSearchRooms = liveRooms.filter(r => r.name.toLowerCase().includes(globalSearchQuery.toLowerCase().trim()));
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="bg-[#fafaf9] min-h-screen text-[#1c1917] font-sans p-4 sm:p-6 md:p-8 rounded-[32px] space-y-6"
+    >
       
-      {/* Dashboard Top welcome banner */}
-      <header className="pb-4 border-b border-outline-variant flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="font-display text-2xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2">
-            <span>Main Command Rig</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          </h2>
-          <p className="text-xs text-on-surface-variant mt-1">Sprints telemetry, active task trackers, and weekly logs</p>
-        </div>
+      {/* ── GREETING BANNER (dashboard-only) ── */}
+      <GreetingBanner />
+
+      {/* ── TOP HEADER & FILTER TAB NAVIGATION ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
-        {/* Wallet credit display */}
-        <div 
-          onClick={() => router.push('/wallet')}
-          className="flex items-center gap-3 bg-gradient-to-r from-amber-500/15 via-yellow-500/5 to-surface-container border border-amber-500/40 rounded-xl p-3 select-none cursor-pointer hover:border-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)] transition-all group"
-          title="Open Wallet"
-        >
-          <div className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-base animate-pulse">payments</span>
-          </div>
-          <div>
-            <p className="font-label-mono text-[8px] text-amber-400/90 uppercase font-bold tracking-widest">Stakes Balance</p>
-            <p className="font-mono text-sm font-bold text-white flex items-center gap-1">
-              <span>{wallet?.balance ?? 0}</span>
-              <span className="text-[10px] text-amber-400 font-normal">TKN</span>
-            </p>
-          </div>
-        </div>
-      </header>
+        {/* Left Title & Pill Filter Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto overflow-hidden">
+          {/* Location Dropdown Pill */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setIsArenaDropdownOpen(!isArenaDropdownOpen)}
+              className="bg-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 cursor-pointer hover:shadow transition-all group"
+            >
+              <span className="font-extrabold text-xs sm:text-sm text-gray-900">Focus Arena</span>
+              <span className={`material-symbols-outlined text-gray-400 text-base transition-transform ${isArenaDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
+            </button>
 
-      {/* Grid structure: Goal rings progress + Money Match Coming Soon Widget + quick stats cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column (6 cols): Progress Circular Gauge */}
-        <div className="lg:col-span-6 card-base p-6 bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 relative overflow-hidden group hover:border-emerald-400 transition-all shadow-[0_0_25px_rgba(0,255,163,0.1)]">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
-            <div>
-              <h2 className="font-label-mono text-label-mono text-emerald-400 uppercase tracking-wider mb-2 font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm animate-spin">timelapse</span>
-                <span>Today's Focus Time</span>
-              </h2>
-              <div className="font-display text-4xl font-extrabold text-white mb-3 flex items-baseline gap-2">
-                <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">{Math.floor(focusMinsToday / 60)}h {focusMinsToday % 60}m</span>
-                <span className="font-label-mono text-xs text-emerald-400/80">/ {targetGoal}m target</span>
-              </div>
-              <p className="text-xs text-on-surface-variant max-w-sm mb-6 leading-relaxed">
-                You are in the top 15% of users today. Complete tasks and study in squads to boost payouts.
-              </p>
-              <button 
-                onClick={() => router.push('/study')}
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 border border-emerald-400 py-2.5 px-6 rounded-lg font-label-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:scale-[1.03] group/btn"
-              >
-                <span>Launch Focus Session</span>
-                <span className="material-symbols-outlined text-xs group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
-              </button>
-            </div>
-
-            {/* Circular Progress Ring */}
-            <div className="relative w-40 h-40 flex-shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle className="text-surface-variant/40" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeWidth="8"></circle>
-                <circle 
-                  className="text-emerald-400 drop-shadow-[0_0_10px_rgba(0,255,163,0.8)] transition-all duration-1000 ease-out" 
-                  cx="50" 
-                  cy="50" 
-                  fill="transparent" 
-                  r="42" 
-                  stroke="currentColor" 
-                  strokeDasharray="263.8" 
-                  strokeDashoffset={263.8 - (263.8 * progressPercent) / 100} 
-                  strokeLinecap="round" 
-                  strokeWidth="8"
-                ></circle>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display text-2xl font-black text-white">{progressPercent}%</span>
-                <span className="font-label-mono text-[8px] text-emerald-400 uppercase tracking-widest font-bold">Goal</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Middle Column (3 cols): Small Money Matches Coming Soon Widget */}
-        <div className="lg:col-span-3">
-          <MoneyMatchWidget />
-        </div>
-
-        {/* Right Column (3 cols): Quick stats cards & Level Badges */}
-        <div className="lg:col-span-3 grid grid-rows-3 gap-3">
-          
-          {/* Card 1: Verified Badge */}
-          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-purple-500/15 via-indigo-500/5 to-surface-container border border-purple-500/30 hover:border-purple-400 hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all group">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 group-hover:rotate-45 transition-transform duration-500">
-                <span className="material-symbols-outlined text-base animate-pulse">verified</span>
-              </div>
-              <div>
-                <p className="font-label-mono text-[9px] text-purple-300 uppercase font-bold">Verified Arena Badge</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="font-display text-xs font-bold text-white">Level {profile?.level || 1}</span>
-                  <VerifiedBadge level={profile?.level || 1} size="sm" showLevelNumber={false} />
+            {/* Interactive Dropdown Menu Overlay */}
+            {isArenaDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setIsArenaDropdownOpen(false)}></div>
+                <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2.5 z-40 animate-fadeIn">
+                  <div className="px-3 py-1.5 border-b border-gray-100 text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">
+                    Quick Rig Navigation
+                  </div>
+                  <ul className="space-y-1 pt-1 text-xs font-bold text-gray-700">
+                    <li>
+                      <button
+                        onClick={() => { setActiveTab('all'); setIsArenaDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 text-gray-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#3B82F6]">dashboard</span>
+                        <span>Focus Arena Overview</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { router.push('/rooms'); setIsArenaDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#10B981]">groups</span>
+                        <span>Squad Battle Arenas</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { router.push('/study'); setIsArenaDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#F59E0B]">schedule</span>
+                        <span>Focus Study Room</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { router.push('/tasks'); setIsArenaDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#3B82F6]">checklist</span>
+                        <span>Task &amp; Objectives Hub</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { router.push('/analytics'); setIsArenaDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 text-gray-700 hover:text-gray-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#8B5CF6]">monitoring</span>
+                        <span>Analytics &amp; Reports</span>
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-              </div>
-            </div>
-            <span className="font-label-mono text-[9px] text-purple-300 bg-purple-950/80 border border-purple-800/60 px-2 py-0.5 rounded-full font-bold shadow-[0_0_8px_rgba(168,85,247,0.3)]">
-              {profile?.points || 0} XP
-            </span>
+              </>
+            )}
           </div>
 
-          {/* Card 2: Current Streak */}
-          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-orange-500/15 via-amber-500/5 to-surface-container border border-orange-500/30 hover:border-orange-400 hover:shadow-[0_0_15px_rgba(249,115,22,0.2)] transition-all group">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-base text-orange-400 animate-bounce">local_fire_department</span>
-              </div>
-              <div>
-                <p className="font-label-mono text-[9px] text-orange-300 uppercase font-bold">Current Streak</p>
-                <p className="font-display text-sm font-black text-white">{streakDays} Days</p>
-              </div>
-            </div>
-            <span className="font-label-mono text-[9px] text-orange-300 bg-orange-950/80 border border-orange-800/60 px-2 py-0.5 rounded-full font-bold shadow-[0_0_8px_rgba(249,115,22,0.3)]">
-              {streakDays > 0 ? '🔥 Active' : 'Start today'}
-            </span>
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar py-1 w-full sm:w-auto max-w-full">
+            {[
+              { id: 'all', label: 'Overview' },
+              { id: 'focus', label: 'Focus Sprints' },
+              { id: 'productivity', label: 'Productivity' },
+              { id: 'squads', label: 'Squad Arenas' },
+              { id: 'analytics', label: 'Analytics' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  activeTab === tab.id
+                    ? 'bg-[#1D1D1F] text-white shadow-sm'
+                    : 'text-[#44474c] hover:text-[#1D1D1F] bg-white/70 hover:bg-white border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-
-          {/* Card 3: Sessions Today */}
-          <div className="card-base p-3.5 flex items-center justify-between bg-gradient-to-r from-cyan-500/15 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all group">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 group-hover:rotate-180 transition-transform duration-700">
-                <span className="material-symbols-outlined text-base animate-pulse">timer</span>
-              </div>
-              <div>
-                <p className="font-label-mono text-[9px] text-cyan-300 uppercase font-bold">Sessions Today</p>
-                <p className="font-display text-sm font-black text-white">{totalSessionsToday} Runs</p>
-              </div>
-            </div>
-            <span className="font-label-mono text-[9px] text-cyan-300 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full font-bold">
-              Verified
-            </span>
-          </div>
-
         </div>
-      </div>
 
-      {/* Interactive Productivity Suite Widgets */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
-          <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <span className="material-symbols-outlined text-base animate-pulse">widgets</span>
-            </div>
-            <span>Productivity Suite Controls &amp; Widgets</span>
-          </h3>
+        {/* Right Circular Action Buttons */}
+        <div className="flex items-center gap-3 self-end lg:self-auto">
+
+          {/* Action Button 1: Add Challenge Duel (+) */}
           <button 
-            onClick={() => router.push('/tasks')}
-            className="text-xs font-mono text-emerald-400 hover:text-cyan-400 transition cursor-pointer font-bold flex items-center gap-1 hover:translate-x-0.5 transition-transform"
+            onClick={() => setIsChallengeModalOpen(true)}
+            className="w-10 h-10 rounded-full bg-white shadow-sm border border-white/80 text-gray-700 hover:text-gray-900 hover:scale-110 transition-all flex items-center justify-center cursor-pointer"
+            title="Challenge Squad Member (+)"
           >
-            <span>Open Full Productivity Hub</span>
-            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+            <span className="material-symbols-outlined text-lg font-bold">add</span>
+          </button>
+
+          {/* Action Button 2: Global Search (🔍) */}
+          <button 
+            onClick={() => setIsSearchModalOpen(true)}
+            className="w-10 h-10 rounded-full bg-white shadow-sm border border-white/80 text-gray-700 hover:text-gray-900 hover:scale-110 transition-all flex items-center justify-center cursor-pointer"
+            title="Search Tasks & Arenas (🔍)"
+          >
+            <span className="material-symbols-outlined text-lg font-bold">search</span>
+          </button>
+
+          {/* Action Button 3: Quick Sprint Launcher (✎) */}
+          <button 
+            onClick={() => setIsQuickSprintModalOpen(true)}
+            className="w-10 h-10 rounded-full bg-white shadow-sm border border-white/80 text-gray-700 hover:text-gray-900 hover:scale-110 transition-all flex items-center justify-center cursor-pointer"
+            title="Quick Sprint & Note (✎)"
+          >
+            <span className="material-symbols-outlined text-lg font-bold">edit</span>
           </button>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <TaskWidget />
-          <CalendarWidget />
-          <TimeTrackerWidget />
-          <NoteWidget />
-        </div>
       </div>
 
-      {/* Main Charts: Grid containing 3 specific charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Weekly Log (Bar Chart) - 6 cols */}
-        <div className="lg:col-span-6 card-base p-5 space-y-4 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-[0_0_20px_rgba(0,255,163,0.1)] group">
-          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-emerald-400 animate-pulse">bar_chart</span>
-            <span>Weekly grind (Mins per Day)</span>
-          </h3>
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="day" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#00FFA3', borderRadius: '8px', fontSize: '10px', color: '#fff' }} />
-                <Bar dataKey="minutes" fill="#00FFA3" radius={[4, 4, 0, 0]} maxBarSize={25} />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* ── UPPER GRID: FOCUS TIME RING CARD + MONEY MATCH WIDGET + STATS CAPSULES ── */}
+      {(activeTab === 'all' || activeTab === 'focus') && (
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+        >
+          
+          {/* Today's Focus Ring Card (6 cols) */}
+          <div className="lg:col-span-6 morphism-card p-6 sm:p-7 bg-white flex flex-col justify-between relative overflow-hidden group">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shadow-sm">
+                    <span className="material-symbols-outlined text-xl font-bold">timelapse</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-[#3B82F6] uppercase tracking-wider">Today's Focus Time</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">Daily Target: {targetGoal}m</p>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline gap-2 pt-1">
+                  <span className="text-4xl font-black text-gray-900 tracking-tight">
+                    {Math.floor(focusMinsToday / 60)}h {focusMinsToday % 60}m
+                  </span>
+                  <span className="text-xs font-bold text-gray-400">/ {targetGoal}m</span>
+                </div>
+
+                <p className="text-xs text-gray-500 leading-relaxed max-w-sm">
+                  You are in the top 15% of focus fighters today. Complete objectives and study in squad lobbies to boost rewards!
+                </p>
+
+                <div className="pt-2">
+                  <button 
+                    onClick={() => router.push('/study')}
+                    className="bg-[#1D1D1F] hover:bg-black text-white font-bold py-3 px-6 rounded-2xl transition-all flex items-center gap-2 cursor-pointer shadow-md hover:scale-105 group/btn text-xs"
+                  >
+                    <span>Launch Focus Session</span>
+                    <span className="material-symbols-outlined text-xs group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Circular Progress Gauge */}
+              <div className="relative w-40 h-40 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle className="text-gray-100" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeWidth="9"></circle>
+                  <circle 
+                    className="text-[#3B82F6] transition-all duration-1000 ease-out" 
+                    cx="50" 
+                    cy="50" 
+                    fill="transparent" 
+                    r="42" 
+                    stroke="currentColor" 
+                    strokeDasharray="263.8" 
+                    strokeDashoffset={263.8 - (263.8 * progressPercent) / 100} 
+                    strokeLinecap="round" 
+                    strokeWidth="9"
+                  ></circle>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-black text-gray-900">{progressPercent}%</span>
+                  <span className="text-[10px] text-[#3B82F6] font-extrabold uppercase tracking-widest">Goal</span>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
 
-        {/* Hourly Focus (Line Chart) - 6 cols */}
-        <div className="lg:col-span-6 card-base p-5 space-y-4 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-[0_0_20px_rgba(0,229,255,0.1)] group">
-          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-cyan-400 animate-pulse">show_chart</span>
-            <span>Hourly Focus (Mins per Hour)</span>
-          </h3>
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={hourlyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <YAxis stroke="#849588" fontSize={9} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1c1f2a', borderColor: '#00E5FF', borderRadius: '8px', fontSize: '10px', color: '#fff' }} />
-                <Line type="monotone" dataKey="minutes" stroke="#00E5FF" strokeWidth={2} dot={{ fill: '#00E5FF', r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* Money Match Widget (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col justify-center">
+            <MoneyMatchWidget />
           </div>
-        </div>
 
-      </div>
+          {/* Quick Stats Column (3 cols) */}
+          <div className="lg:col-span-3 grid grid-rows-3 gap-3">
+            
+            {/* Stat 1: Verified Arena Badge */}
+            <div className="morphism-card p-4 flex items-center justify-between bg-white group cursor-pointer hover:border-[#10B981] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="material-symbols-outlined text-lg">verified</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Arena Rank</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-sm font-black text-gray-900">Level {profile?.level || 1}</span>
+                    <VerifiedBadge level={profile?.level || 1} size="sm" showLevelNumber={false} />
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded-full border border-[#10B981]/20">
+                {profile?.points || 0} XP
+              </span>
+            </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            {/* Stat 2: Current Streak */}
+            <div className="morphism-card p-4 flex items-center justify-between bg-white group cursor-pointer hover:border-[#F59E0B] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F59E0B] text-gray-900 flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="material-symbols-outlined text-lg">local_fire_department</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Daily Streak</p>
+                  <p className="text-sm font-black text-gray-900">{streakDays} Days</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-[#D97706] bg-[#FEF3C7] px-2.5 py-1 rounded-full border border-[#F59E0B]/20">
+                {streakDays > 0 ? '🔥 Active' : 'Start today'}
+              </span>
+            </div>
+
+            {/* Stat 3: Sessions Today */}
+            <div className="morphism-card p-4 flex items-center justify-between bg-white group cursor-pointer hover:border-[#6366F1] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#6366F1] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="material-symbols-outlined text-lg">timer</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sessions Today</p>
+                  <p className="text-sm font-black text-gray-900">{totalSessionsToday} Runs</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-[#4338CA] bg-[#EEF2FF] px-2.5 py-1 rounded-full border border-[#6366F1]/20">
+                Verified
+              </span>
+            </div>
+
+          </div>
+
+        </motion.div>
+      )}
+
+
+
+      {/* ── PRODUCTIVITY SUITE CONTROLS & WIDGETS ── */}
+      {(activeTab === 'all' || activeTab === 'productivity') && (
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.2 }}
+          className="space-y-4 pt-2"
+        >
+          <div className="flex items-center justify-between border-b border-gray-200/70 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center shadow-sm">
+                <span className="material-symbols-outlined text-base font-bold">widgets</span>
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
+                Productivity Controls &amp; Widgets
+              </h3>
+            </div>
+            <button 
+              onClick={() => router.push('/tasks')}
+              className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer flex items-center gap-1 hover:translate-x-0.5 transition-transform"
+            >
+              <span>Open Full Productivity Hub</span>
+              <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}><TaskWidget /></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.33 }}><CalendarWidget /></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.41 }}><TimeTrackerWidget /></motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.49 }}><NoteWidget /></motion.div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── MAIN ANALYTICS CHARTS (Weekly Grind & Hourly Focus) ── */}
+      {(activeTab === 'all' || activeTab === 'analytics') && (
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2"
+        >
+          
+          {/* Weekly Focus Bar Chart (6 cols) */}
+          <div className="lg:col-span-6 morphism-card p-6 bg-white space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#6366F1] text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-sm font-bold">bar_chart</span>
+                </div>
+                <span>Weekly Grind (Mins per Day)</span>
+              </h4>
+              <span className="text-[11px] font-semibold text-gray-400">Last 7 Days</span>
+            </div>
+
+            <div className="h-60 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="day" stroke="#9E9E9E" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9E9E9E" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#6366F1', borderRadius: '16px', fontSize: '11px', color: '#1D1D1F', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                  <Bar dataKey="minutes" fill="#6366F1" radius={[8, 8, 0, 0]} maxBarSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Hourly Focus Line Chart (6 cols) */}
+          <div className="lg:col-span-6 morphism-card p-6 bg-white space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#3B82F6] text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-sm font-bold">show_chart</span>
+                </div>
+                <span>Hourly Focus Rhythm (Today)</span>
+              </h4>
+              <span className="text-[11px] font-semibold text-gray-400">2-Hour Buckets</span>
+            </div>
+
+            <div className="h-60 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={hourlyChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="name" stroke="#9E9E9E" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9E9E9E" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#3B82F6', borderRadius: '16px', fontSize: '11px', color: '#1D1D1F', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                  <Line type="monotone" dataKey="minutes" stroke="#3B82F6" strokeWidth={3} dot={{ fill: '#3B82F6', r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </motion.div>
+      )}
+
+      {/* ── RATIO BREAKDOWN & OBJECTIVES & JOINED SQUAD ARENAS ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="grid grid-cols-1 xl:grid-cols-12 gap-6 pt-2"
+      >
         
-        {/* Donut Chart (Focus vs Non-Focus Ratio today) - 4 cols */}
-        <div className="xl:col-span-4 card-base p-5 flex flex-col justify-between h-[360px] bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-surface-container border border-purple-500/30 hover:border-purple-400/60 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)] group">
-          <h3 className="font-display text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-purple-400 animate-spin">pie_chart</span>
-            <span>Focus Ratio breakdown</span>
-          </h3>
+        {/* Focus Donut Breakdown - 4 cols */}
+        <div className="xl:col-span-4 morphism-card p-6 flex flex-col justify-between h-[380px] bg-white">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center">
+              <span className="material-symbols-outlined text-sm font-bold">pie_chart</span>
+            </div>
+            <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider">
+              Focus Ratio Breakdown
+            </h4>
+          </div>
           
           <div className="relative flex-grow flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={170}>
               <PieChart>
                 <Pie
                   data={donutData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={5}
+                  innerRadius={55}
+                  outerRadius={78}
+                  paddingAngle={6}
                   dataKey="value"
                 >
                   {donutData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#3B82F6' : '#8B5CF6'} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -762,104 +935,98 @@ export default function Dashboard() {
             </ResponsiveContainer>
             
             <div className="absolute flex flex-col items-center">
-              <span className="font-mono text-lg font-bold text-white">{focusMinsToday}m</span>
-              <span className="text-[7px] text-purple-300 uppercase tracking-widest font-bold">Focus</span>
+              <span className="text-xl font-black text-gray-900">{focusMinsToday}m</span>
+              <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">Focus</span>
             </div>
           </div>
 
-          <div className="flex justify-around text-[10px] font-mono border-t border-purple-500/20 pt-4">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(0,255,163,0.6)]"></span> Focus ({focusMinsToday}m)</span>
-            <span className="flex items-center gap-1.5 text-rose-400 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Distracted ({distractedMinsToday}m)</span>
+          <div className="flex justify-around text-xs border-t border-gray-100 pt-4 font-bold">
+            <span className="flex items-center gap-1.5 text-[#3B82F6]"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></span> Focus ({focusMinsToday}m)</span>
+            <span className="flex items-center gap-1.5 text-[#8B5CF6]"><span className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6]"></span> Distracted ({distractedMinsToday}m)</span>
           </div>
         </div>
 
-        {/* Objectives list - 4 cols */}
-        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-surface-container border border-indigo-500/30 hover:border-indigo-400/60 transition-all shadow-[0_0_20px_rgba(99,102,241,0.1)]">
-          <div className="p-4 border-b border-indigo-500/20 flex justify-between items-center bg-indigo-950/20">
-            <h3 className="font-display text-sm font-bold text-white uppercase flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm text-indigo-400 animate-pulse">task_alt</span>
-              <span>Sprint Objectives</span>
-            </h3>
-            <span className="font-label-mono text-[10px] text-indigo-300 font-bold bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-800/40">{tasks.length} active</span>
+        {/* Sprint Objectives list - 4 cols */}
+        <div className="xl:col-span-4 morphism-card flex flex-col h-[380px] overflow-hidden bg-white">
+          <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#3B82F6] text-white flex items-center justify-center">
+                <span className="material-symbols-outlined text-sm font-bold">task_alt</span>
+              </div>
+              <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider">
+                Sprint Objectives
+              </h4>
+            </div>
+            <span className="text-[10px] font-extrabold text-gray-500 bg-white px-2.5 py-0.5 rounded-full border border-gray-200">{tasks.length} active</span>
           </div>
           
-          <form onSubmit={handleAddTask} className="p-3 border-b border-indigo-500/20 bg-surface/80 flex gap-2">
+          <form onSubmit={handleAddTask} className="p-3 border-b border-gray-100 bg-white flex gap-2">
             <input
               type="text"
               required
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="New objective..."
-              className="flex-1 bg-background border border-indigo-500/30 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-400 font-mono"
+              placeholder="Add new objective..."
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:border-[#3B82F6]"
             />
-            <select
-              value={newTaskSubject}
-              onChange={(e) => setNewTaskSubject(e.target.value)}
-              className="bg-background border border-indigo-500/30 rounded px-1 py-1 text-[10px] text-white focus:outline-none font-mono"
-            >
-              <option value="Engineering">Eng</option>
-              <option value="Mathematics">Math</option>
-              <option value="Physics">Phys</option>
-              <option value="Design">Des</option>
-            </select>
             <button 
               type="submit"
-              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono font-bold px-3 rounded transition-transform hover:scale-105 flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(0,255,163,0.3)]"
+              className="bg-[#1D1D1F] hover:bg-black text-white font-bold px-4 rounded-xl text-xs transition-transform hover:scale-105 flex items-center justify-center cursor-pointer shadow-sm"
             >
-              <span className="material-symbols-outlined text-sm font-bold">add</span>
+              +
             </button>
           </form>
 
-          <div className="p-2 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
             {tasks.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <p className="text-[11px] text-indigo-300/80 font-label-mono mb-2">No active sprint objectives</p>
+                <p className="text-xs text-gray-400 font-medium mb-3">No active sprint objectives</p>
                 <button
                   onClick={() => router.push('/study')}
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono text-[10px] font-bold px-3 py-1.5 rounded transition cursor-pointer hover:scale-105 shadow-[0_0_12px_rgba(0,255,163,0.3)]"
+                  className="bg-[#3B82F6] text-white text-xs font-bold px-4 py-2 rounded-xl hover:scale-105 transition-transform cursor-pointer shadow-sm"
                 >
-                  + Start Free Study Session
+                  + Launch Free Sprint
                 </button>
               </div>
             ) : (
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col gap-2">
                 {tasks.map(task => (
                   <li 
                     key={task.id} 
-                    className={`flex items-center justify-between p-2.5 rounded-lg border border-indigo-500/20 bg-indigo-950/20 hover:bg-indigo-950/40 transition-all ${
-                      task.completed ? 'opacity-40' : ''
+                    className={`flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70 hover:bg-white transition-all ${
+                      task.completed ? 'opacity-50' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <input 
                         type="checkbox" 
                         checked={task.completed} 
                         onChange={() => toggleTask(task.id, task.completed)}
-                        className="w-3.5 h-3.5 text-emerald-400 bg-background border-indigo-500/40 rounded focus:ring-emerald-400 cursor-pointer shrink-0"
+                        className="w-4 h-4 text-[#3B82F6] bg-white border-gray-300 rounded focus:ring-[#3B82F6] cursor-pointer shrink-0"
                       />
                       <div 
                         onClick={() => router.push(`/study?taskTitle=${encodeURIComponent(task.title)}&taskId=${task.id}`)}
                         className="flex flex-col min-w-0 cursor-pointer group"
                       >
-                        <span className={`text-xs text-white truncate group-hover:text-emerald-400 transition-colors ${task.completed ? 'line-through' : ''}`}>
+                        <span className={`text-xs font-bold text-gray-900 truncate group-hover:text-[#3B82F6] transition-colors ${task.completed ? 'line-through' : ''}`}>
                           {task.title}
                         </span>
-                        <span className="text-[9px] text-emerald-400 font-mono font-bold">
-                          Focus: {taskFocusMinutes[task.title.trim().toLowerCase()] || 0}m / {task.planned_minutes}m target ⚡ Start
+                        <span className="text-[10px] text-[#3B82F6] font-semibold">
+                          Focus: {taskFocusMinutes[task.title.trim().toLowerCase()] || 0}m / {task.planned_minutes}m target
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button 
                         onClick={() => router.push(`/study?taskTitle=${encodeURIComponent(task.title)}&taskId=${task.id}`)}
-                        className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-neutral-950 p-1 rounded transition-colors text-[10px] font-mono font-bold cursor-pointer"
+                        className="bg-[#DBEAFE] text-[#1E40AF] p-1.5 rounded-xl hover:scale-105 transition-transform text-xs font-bold cursor-pointer"
                         title="Start Sprint"
                       >
                         <span className="material-symbols-outlined text-xs font-bold">play_arrow</span>
                       </button>
                       <button 
                         onClick={() => deleteTask(task.id)}
-                        className="text-rose-400 hover:text-rose-300 transition-colors p-1 cursor-pointer"
+                        className="text-red-500 hover:text-red-700 p-1.5 cursor-pointer"
                         title="Delete Objective"
                       >
                         <span className="material-symbols-outlined text-xs font-bold">delete</span>
@@ -872,23 +1039,27 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Lobbies list (Joined Squads) - 4 cols */}
-        <div className="xl:col-span-4 card-base flex flex-col h-[360px] overflow-hidden bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-surface-container border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-[0_0_20px_rgba(0,255,163,0.1)]">
-          <div className="p-4 border-b border-emerald-500/20 flex justify-between items-center bg-emerald-950/20">
-            <h3 className="font-display text-sm font-bold text-white uppercase flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>Joined Squads</span>
-            </h3>
-            <span className="font-label-mono text-[10px] text-emerald-300 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/40">{liveRooms.length} active</span>
+        {/* Joined Squad Arenas - 4 cols */}
+        <div className="xl:col-span-4 morphism-card flex flex-col h-[380px] overflow-hidden bg-white">
+          <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#10B981] text-white flex items-center justify-center">
+                <span className="material-symbols-outlined text-sm font-bold">groups</span>
+              </div>
+              <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider">
+                Joined Squad Arenas
+              </h4>
+            </div>
+            <span className="text-[10px] font-extrabold text-gray-500 bg-white px-2.5 py-0.5 rounded-full border border-gray-200">{liveRooms.length} active</span>
           </div>
 
-          <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-2">
+          <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-2.5">
             {liveRooms.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <p className="text-[11px] text-emerald-300/80 font-label-mono">No active arena memberships</p>
+                <p className="text-xs text-gray-400 font-medium">No active arena memberships</p>
                 <button 
                   onClick={() => router.push('/rooms')}
-                  className="mt-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 px-4 py-1.5 rounded font-label-mono text-[10px] font-bold transition-all hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(0,255,163,0.3)]"
+                  className="mt-3 bg-[#10B981] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 cursor-pointer shadow-sm"
                 >
                   Browse &amp; Join Squads
                 </button>
@@ -897,17 +1068,16 @@ export default function Dashboard() {
               liveRooms.map(room => (
                 <div 
                   key={room.id}
-                  className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3 hover:border-emerald-400 transition-all cursor-pointer group"
+                  className="p-3.5 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-between gap-3 hover:border-[#10B981] transition-all cursor-pointer group"
                   onClick={() => router.push(`/study?roomId=${room.id}`)}
                 >
                   <div className="min-w-0">
-                    <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{room.name}</h4>
+                    <h5 className="text-xs font-bold text-gray-900 truncate group-hover:text-[#10B981] transition-colors">{room.name}</h5>
                     <div className="flex gap-2 items-center mt-1">
-                      <span className="font-mono text-[8px] text-emerald-300 uppercase tracking-widest inline-block font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                      <span className="text-[10px] text-gray-500 uppercase font-bold bg-white px-2 py-0.5 rounded-full border border-gray-200">
                         #{room.type} • {room.max_members} max
                       </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest inline-block font-bold">
+                      <span className="text-[10px] text-[#10B981] font-bold">
                         Focus: {roomFocusMinutes[room.id] || 0}m
                       </span>
                     </div>
@@ -917,7 +1087,7 @@ export default function Dashboard() {
                       e.stopPropagation();
                       router.push(`/study?roomId=${room.id}`);
                     }}
-                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-[9px] font-bold py-1.5 px-3.5 rounded transition-all hover:scale-105 cursor-pointer shrink-0 shadow-[0_0_10px_rgba(0,255,163,0.3)]"
+                    className="bg-[#1D1D1F] text-white text-[10px] font-bold py-2 px-3.5 rounded-xl transition-all hover:scale-105 cursor-pointer shrink-0 shadow-sm"
                   >
                     Launch Arena
                   </button>
@@ -927,19 +1097,28 @@ export default function Dashboard() {
           </div>
         </div>
 
-      </div>
+      </motion.div>
 
-      {/* Duel History & Study Logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* ── BATTLE DUELS & RECENT STUDY LOGS ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2"
+      >
         
-        {/* Arena Battle Duels Log (6 cols) */}
-        <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden bg-gradient-to-br from-amber-500/10 via-red-500/5 to-surface-container border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-          <div className="flex justify-between items-center pb-3 border-b border-amber-500/20 mb-4 bg-amber-950/20 p-2 rounded-lg">
-            <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm text-amber-400 animate-bounce">swords</span>
-              <span>Arena Battle Duels</span>
-            </h3>
-            <span className="font-label-mono text-[10px] text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-800/40">
+        {/* Battle Duels Log (6 cols) */}
+        <div className="lg:col-span-6 morphism-card p-6 flex flex-col h-[380px] overflow-hidden bg-white">
+          <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4 bg-gray-50/80 p-2.5 rounded-2xl">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center">
+                <span className="material-symbols-outlined text-sm font-bold">swords</span>
+              </div>
+              <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider">
+                Arena Battle Duels
+              </h4>
+            </div>
+            <span className="text-[10px] font-extrabold text-gray-500 bg-white px-2.5 py-0.5 rounded-full border border-gray-200">
               {allSessionsList.filter(s => s.opponent_name).length} Duels
             </span>
           </div>
@@ -947,12 +1126,12 @@ export default function Dashboard() {
           <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
             {allSessionsList.filter(s => s.opponent_name).length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-2">
-                <p className="text-xs text-amber-300/80 font-mono uppercase">No duel history found.</p>
+                <p className="text-xs text-gray-400 font-medium">No battle duels logged yet.</p>
                 <button
                   onClick={() => setIsChallengeModalOpen(true)}
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-neutral-950 font-mono text-[10px] font-bold px-4 py-2 rounded transition-transform hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                  className="bg-[#8B5CF6] text-white text-xs font-bold px-4 py-2 rounded-xl transition-transform hover:scale-105 cursor-pointer shadow-sm"
                 >
-                  Challenge a Squad Member
+                  Challenge Squad Member
                 </button>
               </div>
             ) : (
@@ -961,28 +1140,25 @@ export default function Dashboard() {
                 const myMins = Math.round(duel.focus_seconds / 60);
                 const oppMins = Math.round(duel.opponent_focus_seconds / 60);
                 return (
-                  <div key={duel.id} className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl flex items-center justify-between gap-3 font-mono">
+                  <div key={duel.id} className="p-3.5 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-between gap-3 text-xs">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${
+                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                           duel.is_winner 
-                            ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_10px_rgba(0,255,163,0.3)]'
-                            : 'text-rose-400 bg-rose-500/20 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                            ? 'text-[#059669] bg-[#D1FAE5]'
+                            : 'text-[#DC2626] bg-[#FEE2E2]'
                         }`}>
                           {duel.is_winner ? 'VICTORY' : 'DEFEAT'}
                         </span>
-                        {duel.hands_down_forfeited && (
-                          <span className="text-[8px] text-amber-300/80 uppercase font-bold">(Forfeited)</span>
-                        )}
                       </div>
-                      <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight mt-1.5">
+                      <h5 className="font-extrabold text-xs text-gray-900 truncate mt-1">
                         VS {duel.opponent_name}
-                      </h4>
-                      <p className="text-[9px] text-amber-300/90 uppercase mt-0.5">
+                      </h5>
+                      <p className="text-[10px] text-gray-500 font-medium mt-0.5">
                         You: {myMins}m | Opponent: {oppMins}m
                       </p>
                     </div>
-                    <span className="text-[9px] text-amber-300/70 shrink-0">{date}</span>
+                    <span className="text-[10px] text-gray-400 font-semibold shrink-0">{date}</span>
                   </div>
                 );
               })
@@ -996,22 +1172,26 @@ export default function Dashboard() {
           const recentTwoDaySessions = allSessionsList.filter(s => new Date(s.start_time) >= twoDaysAgo);
 
           return (
-            <div className="lg:col-span-6 card-base p-5 flex flex-col h-[380px] overflow-hidden bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-surface-container border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-[0_0_20px_rgba(6,182,212,0.1)]">
-              <div className="flex justify-between items-center pb-3 border-b border-cyan-500/20 mb-4 bg-cyan-950/20 p-2 rounded-lg">
-                <h3 className="font-display text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-cyan-400 animate-spin">history</span>
-                  <span>Recent Study Sessions</span>
-                </h3>
-                <span className="font-label-mono text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/40">{recentTwoDaySessions.length} in last 48h</span>
+            <div className="lg:col-span-6 morphism-card p-6 flex flex-col h-[380px] overflow-hidden bg-white">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4 bg-gray-50/80 p-2.5 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#F59E0B] text-gray-900 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-sm font-bold">history</span>
+                  </div>
+                  <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider">
+                    Recent Study Sessions
+                  </h4>
+                </div>
+                <span className="text-[10px] font-extrabold text-gray-500 bg-white px-2.5 py-0.5 rounded-full border border-gray-200">{recentTwoDaySessions.length} in last 48h</span>
               </div>
 
               <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-2.5">
                 {recentTwoDaySessions.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-2">
-                    <p className="text-xs text-cyan-300/80 font-mono">No study sessions recorded in the last 2 days.</p>
+                    <p className="text-xs text-gray-400 font-medium">No sessions recorded in the last 2 days.</p>
                     <button
                       onClick={() => router.push('/study')}
-                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-mono text-[10px] font-bold px-4 py-2 rounded transition-transform hover:scale-105 cursor-pointer shadow-[0_0_12px_rgba(0,255,163,0.3)]"
+                      className="bg-[#F59E0B] text-gray-900 text-xs font-bold px-4 py-2 rounded-xl transition-transform hover:scale-105 cursor-pointer shadow-sm"
                     >
                       Start New Session
                     </button>
@@ -1022,48 +1202,28 @@ export default function Dashboard() {
                     const totalMin = Math.round((session.total_seconds || 0) / 60);
                     const focusMin = Math.round((session.focus_seconds || 0) / 60);
                     const ratio = session.total_seconds > 0 ? Math.round((session.focus_seconds / session.total_seconds) * 100) : 0;
-                    
-                    const roomType = session.rooms?.type;
-                    const typeLabel = roomType 
-                      ? `Arena: ${roomType.charAt(0).toUpperCase() + roomType.slice(1)}` 
-                      : 'Self Mode';
-                    const badgeColor = roomType === 'money' 
-                      ? 'text-amber-400 bg-amber-500/20 border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
-                      : roomType === 'private'
-                      ? 'text-purple-400 bg-purple-500/20 border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                      : roomType === 'public'
-                      ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_8px_rgba(0,255,163,0.2)]'
-                      : 'text-cyan-300 bg-cyan-950/80 border-cyan-800/40';
 
                     return (
                       <div 
                         key={session.id} 
-                        className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-xl flex items-center justify-between gap-3 font-mono group hover:border-cyan-400 transition-all"
+                        className="p-3.5 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-between gap-3 text-xs group hover:border-[#F59E0B] transition-all"
                       >
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeColor}`}>
-                              {typeLabel}
-                            </span>
-                          </div>
-                          <h4 className="font-display text-xs font-bold text-white truncate uppercase tracking-tight group-hover:text-cyan-300 transition-colors">
+                          <h5 className="font-extrabold text-xs text-gray-900 truncate group-hover:text-[#F59E0B] transition-colors">
                             {session.name || 'Untitled Study Session'}
-                          </h4>
-                          <p className="text-[9px] text-emerald-400 uppercase tracking-wider font-bold mt-1">
+                          </h5>
+                          <p className="text-[10px] text-[#D97706] font-bold mt-0.5">
                             Focus: {focusMin}m / {totalMin}m ({ratio}%)
                           </p>
-                          <p className="text-[8px] text-cyan-300/70 uppercase mt-0.5">
-                            🖥️ {Math.round((session.screen_focus_seconds || 0) / 60)}m / 📝 {Math.round((session.paper_focus_seconds || 0) / 60)}m
-                          </p>
                         </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          <span className="text-[9px] text-cyan-300/70">{date}</span>
+                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                          <span className="text-[10px] text-gray-400 font-semibold">{date}</span>
                           <button
                             onClick={(e) => handleDeleteSession(session.id, e)}
-                            className="text-rose-400/90 hover:text-white bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30 px-2 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[9px] font-bold"
+                            className="text-red-500 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold"
                             title="Delete Session Record"
                           >
-                            <span className="material-symbols-outlined text-[12px]">delete</span>
+                            <span className="material-symbols-outlined text-[12px] font-bold">delete</span>
                             Delete
                           </button>
                         </div>
@@ -1076,20 +1236,19 @@ export default function Dashboard() {
           );
         })()}
 
-      </div>
+      </motion.div>
 
-      {/* Challenge Squad Member Interactive Modal */}
+      {/* ── MODAL 1: CHALLENGE SQUAD MEMBER MODAL (+) ── */}
       {isChallengeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-surface-container-low border border-[#00ffa3]/30 w-full max-w-md rounded-2xl p-6 shadow-[0_0_30px_rgba(0,255,163,0.15)] space-y-5 text-on-surface font-mono relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-md rounded-[28px] p-6 shadow-2xl space-y-5 text-gray-900 relative">
             
-            {/* Modal Header */}
-            <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30">
+            <div className="flex justify-between items-center pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#00ffa3]">swords</span>
-                <h2 className="font-display text-base font-extrabold uppercase text-white tracking-wider">
+                <span className="material-symbols-outlined text-[#3B82F6] font-bold">swords</span>
+                <h3 className="font-extrabold text-base text-gray-900">
                   Challenge Squad Member
-                </h2>
+                </h3>
               </div>
               <button
                 type="button"
@@ -1099,129 +1258,255 @@ export default function Dashboard() {
                   setChallengeOpponent('');
                   setUserSearchResults([]);
                 }}
-                className="text-on-surface-variant hover:text-white text-sm cursor-pointer p-1 rounded-lg hover:bg-surface-container"
+                className="text-gray-400 hover:text-gray-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSendSquadChallenge} className="space-y-4">
-              
-              {/* Squad Member Username / Handle with Live Search */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Duel Title</label>
+                <input
+                  type="text"
+                  required
+                  value={challengeTitle}
+                  onChange={(e) => setChallengeTitle(e.target.value)}
+                  placeholder="e.g. 1v1 Focus Duel"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:border-[#3B82F6]"
+                />
+              </div>
+
               <div className="relative">
-                <label className="block text-[11px] font-bold uppercase text-on-surface-variant mb-1">
-                  Squad Member Username / Handle
-                </label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Search Squad Member (Name or Email)</label>
+                <input
+                  type="text"
+                  value={selectedOpponentUser ? selectedOpponentUser.name || selectedOpponentUser.email : challengeOpponent}
+                  onChange={(e) => {
+                    setSelectedOpponentUser(null);
+                    setChallengeOpponent(e.target.value);
+                  }}
+                  placeholder="Type squad member name..."
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:border-[#3B82F6]"
+                />
 
-                {selectedOpponentUser ? (
-                  /* Selected Opponent User Badge */
-                  <div className="flex items-center justify-between p-2.5 bg-[#00ffa3]/10 border border-[#00ffa3]/40 rounded-xl text-xs text-white">
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src={selectedOpponentUser.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
-                        alt={selectedOpponentUser.name}
-                        className="w-7 h-7 rounded-full object-cover border border-[#00ffa3]"
-                      />
-                      <div>
-                        <p className="font-extrabold text-[#00ffa3]">{selectedOpponentUser.name}</p>
-                        <p className="text-[9px] text-on-surface-variant">{selectedOpponentUser.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedOpponentUser(null);
-                        setChallengeOpponent('');
-                      }}
-                      className="text-xs text-on-surface-variant hover:text-red-400 p-1 cursor-pointer"
-                      title="Change user"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Search by username or email (e.g. prashantsingh)"
-                        value={challengeOpponent}
-                        onChange={(e) => setChallengeOpponent(e.target.value)}
-                        className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-3 py-2 text-xs text-white placeholder-on-surface-variant/50 focus:outline-none focus:border-[#00ffa3]"
-                      />
-                      {searchingUsers && (
-                        <span className="absolute right-3 top-2.5 text-[10px] text-primary-fixed animate-pulse">
-                          Searching...
-                        </span>
-                      )}
-                    </div>
+                {searchingUsers && (
+                  <span className="absolute right-3 top-8 text-[10px] text-gray-400">Searching...</span>
+                )}
 
-                    {/* Search Results Dropdown */}
-                    {userSearchResults.length > 0 && (
-                      <div className="absolute left-0 right-0 mt-1 bg-surface-container-lowest border border-[#00ffa3]/30 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto divide-y divide-outline-variant/20">
-                        {userSearchResults.map((u) => (
-                          <div
-                            key={u.id}
-                            onClick={() => {
-                              setSelectedOpponentUser(u);
-                              setChallengeOpponent(u.name);
-                              setUserSearchResults([]);
-                            }}
-                            className="p-2.5 hover:bg-[#00ffa3]/10 cursor-pointer flex items-center justify-between transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={u.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
-                                alt={u.name}
-                                className="w-6 h-6 rounded-full object-cover border border-outline-variant/40"
-                              />
-                              <div>
-                                <p className="text-xs font-bold text-white">{u.name}</p>
-                                <p className="text-[9px] text-on-surface-variant">{u.email}</p>
-                              </div>
-                            </div>
-                            <span className="text-[9px] font-bold text-[#00ffa3] bg-[#00ffa3]/10 px-2 py-0.5 rounded border border-[#00ffa3]/30">
-                              Select
-                            </span>
-                          </div>
-                        ))}
+                {userSearchResults.length > 0 && !selectedOpponentUser && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden max-h-40 overflow-y-auto">
+                    {userSearchResults.map((u) => (
+                      <div
+                        key={u.id}
+                        onClick={() => {
+                          setSelectedOpponentUser(u);
+                          setChallengeOpponent(u.name || u.email);
+                          setUserSearchResults([]);
+                        }}
+                        className="p-2.5 hover:bg-gray-50 cursor-pointer flex items-center justify-between border-b border-gray-100 last:border-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={u.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
+                            alt=""
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                          <span className="text-xs font-bold text-gray-800">{u.name || u.email}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-[#3B82F6]">Select</span>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Challenge Battle Title */}
               <div>
-                <label className="block text-[11px] font-bold uppercase text-on-surface-variant mb-1">
-                  Challenge Battle Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 1v1 Deep Work Duel"
-                  value={challengeTitle}
-                  onChange={(e) => setChallengeTitle(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-3 py-2 text-xs text-white placeholder-on-surface-variant/50 focus:outline-none focus:border-[#00ffa3]"
-                />
-              </div>
-
-              {/* Sprint Duration Options */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-on-surface-variant mb-1.5">
-                  Focus Sprint Duration
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[15, 25, 45, 60].map((mins) => (
+                <label className="block text-xs font-bold text-gray-700 mb-1">Sprint Duration</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[15, 25, 45].map((mins) => (
                     <button
                       key={mins}
                       type="button"
                       onClick={() => setChallengeDuration(mins)}
-                      className={`py-2 text-xs font-extrabold rounded-xl border transition-all cursor-pointer ${
+                      className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         challengeDuration === mins
-                          ? 'bg-[#00ffa3]/20 text-[#00ffa3] border-[#00ffa3] shadow-[0_0_10px_rgba(0,255,163,0.2)]'
-                          : 'bg-surface-container-lowest/60 border-outline-variant/30 text-on-surface-variant hover:text-white'
+                          ? 'bg-[#1D1D1F] text-white shadow-sm'
+                          : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {mins} Mins
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Token Stake Wager (Optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={challengeStake}
+                  onChange={(e) => setChallengeStake(Number(e.target.value))}
+                  placeholder="0 Tokens"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:border-[#3B82F6]"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsChallengeModalOpen(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingChallenge}
+                  className="flex-1 bg-[#1D1D1F] hover:bg-black text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {creatingChallenge ? 'Creating...' : 'Send Challenge 🚀'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: LIVE UNIVERSAL SEARCH MODAL (🔍) ── */}
+      {isSearchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-lg rounded-[28px] p-6 shadow-2xl space-y-4 text-gray-900 relative">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#3B82F6] font-bold">search</span>
+                <h3 className="font-extrabold text-base text-gray-900">
+                  Universal Search Hub
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchModalOpen(false);
+                  setGlobalSearchQuery('');
+                }}
+                className="text-gray-400 hover:text-gray-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-gray-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <input
+              type="text"
+              autoFocus
+              value={globalSearchQuery}
+              onChange={(e) => setGlobalSearchQuery(e.target.value)}
+              placeholder="Search tasks, objectives, squad lobbies..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#3B82F6]"
+            />
+
+            <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-3 pt-1">
+              {globalSearchQuery.trim() === '' ? (
+                <p className="text-xs text-gray-400 text-center py-6 font-medium">Type any keyword to search active objectives and squad arenas</p>
+              ) : (
+                <>
+                  {/* Matching Tasks */}
+                  <div>
+                    <h4 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1.5">Objectives</h4>
+                    {filteredSearchTasks.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">No matching objectives</p>
+                    ) : (
+                      filteredSearchTasks.map(t => (
+                        <div
+                          key={t.id}
+                          onClick={() => {
+                            setIsSearchModalOpen(false);
+                            router.push(`/study?taskTitle=${encodeURIComponent(t.title)}&taskId=${t.id}`);
+                          }}
+                          className="p-2.5 hover:bg-gray-50 rounded-xl cursor-pointer flex items-center justify-between border border-gray-100 mb-1"
+                        >
+                          <span className="text-xs font-bold text-gray-800">{t.title}</span>
+                          <span className="text-[10px] text-[#3B82F6] font-extrabold">Start Sprint →</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Matching Rooms */}
+                  <div>
+                    <h4 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1.5">Squad Arenas</h4>
+                    {filteredSearchRooms.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">No matching arenas</p>
+                    ) : (
+                      filteredSearchRooms.map(r => (
+                        <div
+                          key={r.id}
+                          onClick={() => {
+                            setIsSearchModalOpen(false);
+                            router.push(`/study?roomId=${r.id}`);
+                          }}
+                          className="p-2.5 hover:bg-gray-50 rounded-xl cursor-pointer flex items-center justify-between border border-gray-100 mb-1"
+                        >
+                          <span className="text-xs font-bold text-gray-800">{r.name}</span>
+                          <span className="text-[10px] text-[#10B981] font-extrabold">Join Arena →</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 3: QUICK SPRINT & NOTE LAUNCHER (✎) ── */}
+      {isQuickSprintModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-md rounded-[28px] p-6 shadow-2xl space-y-5 text-gray-900 relative">
+            <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#3B82F6] font-bold">edit</span>
+                <h3 className="font-extrabold text-base text-gray-900">
+                  Quick Focus Sprint Launcher
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickSprintModalOpen(false)}
+                className="text-gray-400 hover:text-gray-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-gray-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleStartQuickSprint} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Sprint Note / Objective Title</label>
+                <input
+                  type="text"
+                  required
+                  value={quickSprintTitle}
+                  onChange={(e) => setQuickSprintTitle(e.target.value)}
+                  placeholder="e.g. Deep Focus Math Problem Set"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:border-[#3B82F6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Select Duration</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[15, 25, 45, 60].map(mins => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setQuickSprintDuration(mins)}
+                      className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        quickSprintDuration === mins
+                          ? 'bg-[#1D1D1F] text-white shadow-sm'
+                          : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       {mins}m
@@ -1230,70 +1515,19 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Token Wager Options (with Coming Soon Banner) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[11px] font-bold uppercase text-on-surface-variant">
-                    Token Stake Wager
-                  </label>
-                  <span className="text-[8px] font-black text-yellow-400 bg-yellow-500/10 border border-yellow-500/30 px-1.5 py-0.5 rounded tracking-wider uppercase">
-                    ⚡ Token Stakes Coming Soon
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-2 opacity-80">
-                  <button
-                    type="button"
-                    onClick={() => setChallengeStake(0)}
-                    className={`py-2 text-xs font-extrabold rounded-xl border transition-all cursor-pointer ${
-                      challengeStake === 0
-                        ? 'bg-[#00ffa3]/20 text-[#00ffa3] border-[#00ffa3] shadow-[0_0_10px_rgba(0,255,163,0.2)]'
-                        : 'bg-surface-container-lowest/60 border-outline-variant/30 text-on-surface-variant'
-                    }`}
-                  >
-                    Friendly
-                  </button>
-                  {[25, 50, 100].map((stake) => (
-                    <button
-                      key={stake}
-                      type="button"
-                      disabled
-                      title="Real-money Token Stakes feature coming soon!"
-                      className="py-2 text-xs font-bold rounded-xl border bg-surface-container-lowest/30 border-outline-variant/20 text-on-surface-variant/40 cursor-not-allowed flex flex-col items-center justify-center"
-                    >
-                      <span>{stake} TKN</span>
-                      <span className="text-[7px] text-yellow-400 font-normal">Soon</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="flex justify-end gap-3 pt-3 border-t border-outline-variant/30">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsChallengeModalOpen(false);
-                    setSelectedOpponentUser(null);
-                    setChallengeOpponent('');
-                    setUserSearchResults([]);
-                  }}
-                  className="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-white rounded-xl transition cursor-pointer"
+                  onClick={() => setIsQuickSprintModalOpen(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={creatingChallenge}
-                  className="px-5 py-2 text-xs font-black uppercase tracking-wider bg-[#00ffa3] text-black hover:bg-[#00ffa3]/90 rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.3)] transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="flex-1 bg-[#3B82F6] hover:bg-blue-600 text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md"
                 >
-                  {creatingChallenge ? (
-                    <span>Creating...</span>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-sm">swords</span>
-                      Launch Challenge
-                    </>
-                  )}
+                  Launch Sprint 🚀
                 </button>
               </div>
             </form>
@@ -1301,6 +1535,6 @@ export default function Dashboard() {
         </div>
       )}
 
-    </div>
+    </motion.div>
   );
 }

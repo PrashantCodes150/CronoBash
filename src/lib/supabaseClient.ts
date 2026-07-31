@@ -13,14 +13,24 @@ export const supabase = createClient(
 export interface UserProfile {
   id: string;
   name: string;
+  full_name?: string;
+  username?: string;
+  gamer_tag?: string;
   email: string;
   avatar_url: string | null;
   daily_goal_minutes: number;
+  primary_discipline?: string;
+  preferred_stakes?: string;
+  ai_coach_persona?: string;
+  sound_effects?: string;
+  leaderboard_privacy?: string;
+  camera_verified?: boolean;
   is_pro?: boolean;
   created_at: string;
   is_public?: boolean;
   last_seen_at?: string;
   points?: number;
+  xp?: number;
   level?: number;
   badges?: string[];
   has_seen_onboarding?: boolean;

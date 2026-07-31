@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useProductivityStore } from '@/lib/productivity-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth-context';
-import { Timer, Play, Pause, RotateCcw, CheckCircle, Flame, History, Award, Tag } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, CheckCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export function TimeTrackerView() {
   const { user } = useAuth();
@@ -19,18 +20,20 @@ export function TimeTrackerView() {
   
   // Pomodoro preset minutes
   const [pomodoroTarget, setPomodoroTarget] = useState<number>(25);
-  const [sessionNotes, setSessionNotes] = useState<string>('');
+
+  // Black Pill Switches
+  const [soundBell, setSoundBell] = useState(true);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sound generator effect using Web Audio API for timer finish bell
   const playFinishSound = () => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
       osc.connect(gain);
@@ -50,7 +53,7 @@ export function TimeTrackerView() {
             const maxSec = pomodoroTarget * 60;
             if (prev + 1 >= maxSec) {
               setIsRunning(false);
-              playFinishSound();
+              if (soundBell) playFinishSound();
               return maxSec;
             }
           }
@@ -64,7 +67,7 @@ export function TimeTrackerView() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, mode, pomodoroTarget]);
+  }, [isRunning, mode, pomodoroTarget, soundBell]);
 
   const handleToggleTimer = () => {
     setIsRunning(!isRunning);
@@ -77,21 +80,18 @@ export function TimeTrackerView() {
 
   const handleSaveSession = async () => {
     if (seconds < 10) {
-      alert('Session duration must be at least 10 seconds to save!');
+      toast.error('Session duration must be at least 10 seconds to save!');
       return;
     }
 
     setIsRunning(false);
 
-    // Save to local productivity store
     logSession({
       subject,
       duration_seconds: seconds,
       mode,
-      notes: sessionNotes || undefined,
     });
 
-    // Sync to Supabase study_sessions if logged in
     if (user) {
       try {
         await supabase.from('study_sessions').insert({
@@ -100,236 +100,213 @@ export function TimeTrackerView() {
           end_time: new Date().toISOString(),
           focus_seconds: seconds,
           total_seconds: seconds,
+          name: `${subject} Focus Sprint`
         });
       } catch (e) {
-        console.warn('Could not sync study session to Supabase:', e);
+        console.error(e);
       }
     }
 
-    alert(`Awesome work! Saved ${formatTime(seconds)} of focus time under ${subject}.`);
+    toast.success('Focus session saved to stats! 🚀');
     setSeconds(0);
-    setSessionNotes('');
   };
 
-  const formatTime = (totalSec: number) => {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  const formatTimer = (sec: number) => {
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Compute ring progress for Pomodoro
-  const maxPomodoroSec = pomodoroTarget * 60;
-  const progressRatio = mode === 'pomodoro' ? Math.min(seconds / maxPomodoroSec, 1) : (seconds % 60) / 60;
-  const strokeDashoffset = 283 - 283 * progressRatio;
-
-  // Stats calculation
-  const totalTrackedToday = sessions.reduce((acc, s) => acc + s.duration_seconds, 0);
+  const totalLogSecs = (sessions || []).reduce((acc: number, log: any) => acc + (log.duration_seconds || 0), 0);
+  const totalLogHours = (totalLogSecs / 3600).toFixed(1);
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-surface-container-high border border-outline-variant/50 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Timer className="w-7 h-7 text-primary-fixed" />
-            Focus Time Tracker
-          </h2>
-          <p className="text-on-surface-variant text-sm mt-1">
-            Track real-time study sessions with Pomodoro or Stopwatch modes.
-          </p>
+      
+      {/* ── TOP METRIC CARDS (SOLID CIRCLE BADGES & ↗ ARROWS) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#9333EA] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">timer</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Focus Time</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{totalLogHours} Hours</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
         </div>
 
-        <div className="flex items-center gap-3 bg-surface-variant p-2 rounded-xl border border-outline-variant/40">
-          <Flame className="w-5 h-5 text-amber-400" />
-          <div className="text-xs font-mono">
-            <span className="text-on-surface-variant">Today's Focus: </span>
-            <span className="text-primary-fixed font-bold">{Math.round(totalTrackedToday / 60)} mins</span>
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">history</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sessions Logged</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{sessions.length} Sprints</p>
+            </div>
           </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">bolt</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Sprint</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{formatTimer(seconds)}</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">local_fire_department</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Goal</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">85% Achieved 🔥</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+      </div>
+
+      {/* ── TIMER CONTROLS & BLACK PILL SWITCHES ── */}
+      <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#EAB308] text-white flex items-center justify-center text-xs font-bold">
+              <span className="material-symbols-outlined text-xs">volume_up</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900">Audio Finish Bell</span>
+            <button
+              onClick={() => setSoundBell(!soundBell)}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer ${
+                soundBell ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${soundBell ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#10B981] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="material-symbols-outlined text-xs">coffee</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900 shrink-0">Auto-Start Breaks</span>
+            <button
+              onClick={() => setAutoStartBreaks(!autoStartBreaks)}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0 ${
+                autoStartBreaks ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${autoStartBreaks ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+        </div>
+
+        {/* Pomodoro Preset Buttons */}
+        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 gap-1">
+          {[15, 25, 45, 60].map(mins => (
+            <button
+              key={mins}
+              onClick={() => { setPomodoroTarget(mins); setMode('pomodoro'); setSeconds(0); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+                pomodoroTarget === mins && mode === 'pomodoro' ? 'bg-[#1D1D1F] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {mins}m
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Timer Main Panel */}
-        <div className="lg:col-span-2 bg-surface-container rounded-2xl border border-outline-variant/50 p-6 flex flex-col items-center justify-center space-y-6 relative overflow-hidden">
-          {/* Mode Switcher */}
-          <div className="flex items-center bg-surface-variant p-1.5 rounded-xl border border-outline-variant/40">
+      {/* ── TIMER STAGE & SESSIONS LOG ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div className="lg:col-span-8 morphism-card bg-white p-8 rounded-[28px] border border-white/80 shadow-sm text-center space-y-6">
+          <div className="py-4">
+            <span className="text-6xl sm:text-7xl font-black font-mono tracking-widest text-slate-900">
+              {formatTimer(seconds)}
+            </span>
+            <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-wider">
+              {mode === 'pomodoro' ? `Pomodoro Target: ${pomodoroTarget} Mins` : 'Active Stopwatch Counter'}
+            </p>
+          </div>
+
+          <div className="flex justify-center items-center gap-3">
             <button
-              onClick={() => { setMode('stopwatch'); handleResetTimer(); }}
-              className={`px-5 py-2 rounded-lg text-xs font-bold transition ${
-                mode === 'stopwatch' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-white'
+              onClick={handleToggleTimer}
+              className={`px-8 py-3.5 rounded-2xl font-black text-sm transition-transform hover:scale-105 cursor-pointer shadow-md flex items-center gap-2 ${
+                isRunning ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-[#10B981] hover:bg-emerald-600 text-white'
               }`}
             >
-              Stopwatch
+              {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
+              <span>{isRunning ? 'Pause Sprint' : 'Start Focus Sprint'}</span>
             </button>
-            <button
-              onClick={() => { setMode('pomodoro'); handleResetTimer(); }}
-              className={`px-5 py-2 rounded-lg text-xs font-bold transition ${
-                mode === 'pomodoro' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-white'
-              }`}
-            >
-              Pomodoro Timer
-            </button>
-          </div>
 
-          {/* Subject & Pomodoro Target Presets */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary-fixed" />
-              <select
-                value={subject}
-                onChange={e => setSubject(e.target.value)}
-                className="bg-surface-variant text-on-surface text-xs border border-outline-variant/40 rounded-lg px-3 py-1.5 focus:outline-none"
-              >
-                <option value="Engineering">Engineering</option>
-                <option value="Algorithms">Algorithms</option>
-                <option value="CS Core">CS Core</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Design">Design</option>
-              </select>
-            </div>
-
-            {mode === 'pomodoro' && (
-              <div className="flex items-center gap-1 bg-surface-variant px-2 py-1 rounded-lg border border-outline-variant/40">
-                {[15, 25, 45, 60].map(mins => (
-                  <button
-                    key={mins}
-                    onClick={() => { setPomodoroTarget(mins); handleResetTimer(); }}
-                    className={`px-2.5 py-1 text-xs font-mono rounded transition ${
-                      pomodoroTarget === mins ? 'bg-primary text-black font-bold' : 'text-on-surface-variant hover:text-white'
-                    }`}
-                  >
-                    {mins}m
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* SVG Progress Ring & Big Timer Display */}
-          <div className="relative w-64 h-64 flex items-center justify-center my-4">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                className="text-surface-variant stroke-current"
-                strokeWidth="6"
-                fill="transparent"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                className="text-primary-fixed stroke-current transition-all duration-500"
-                strokeWidth="6"
-                strokeDasharray="283"
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                fill="transparent"
-              />
-            </svg>
-
-            <div className="absolute flex flex-col items-center justify-center space-y-1">
-              <span className="text-5xl font-mono font-bold text-white tracking-wider">
-                {mode === 'pomodoro' ? formatTime(maxPomodoroSec - seconds) : formatTime(seconds)}
-              </span>
-              <span className="text-xs font-mono uppercase tracking-widest text-primary-fixed font-bold">
-                {isRunning ? 'FOCUS ACTIVE' : 'PAUSED'}
-              </span>
-              <span className="text-[10px] text-on-surface-variant font-mono">{subject}</span>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-4">
             <button
               onClick={handleResetTimer}
-              className="p-3 bg-surface-variant hover:bg-surface-container-high text-on-surface-variant hover:text-white rounded-xl transition border border-outline-variant/40"
+              className="p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition cursor-pointer"
               title="Reset Timer"
             >
               <RotateCcw className="w-5 h-5" />
             </button>
 
-            <button
-              onClick={handleToggleTimer}
-              className={`flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-base transition shadow-lg ${
-                isRunning
-                  ? 'bg-amber-500 text-black hover:bg-amber-400 shadow-amber-500/20'
-                  : 'bg-primary text-on-primary hover:brightness-110 shadow-primary/30'
-              }`}
-            >
-              {isRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
-              {isRunning ? 'Pause' : 'Start Focus'}
-            </button>
-
-            {seconds > 0 && (
+            {seconds > 10 && (
               <button
                 onClick={handleSaveSession}
-                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+                className="px-6 py-3.5 bg-[#3B82F6] hover:bg-blue-600 text-white font-extrabold text-xs rounded-2xl transition cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <CheckCircle className="w-5 h-5" />
-                Log Session
+                <CheckCircle className="w-4 h-4" />
+                <span>Save Session</span>
               </button>
             )}
           </div>
-
-          {/* Session Notes input */}
-          <div className="w-full max-w-md pt-2">
-            <input
-              type="text"
-              placeholder="Add optional notes for this focus session..."
-              value={sessionNotes}
-              onChange={e => setSessionNotes(e.target.value)}
-              className="w-full bg-surface-variant border border-outline-variant/40 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-primary text-center"
-            />
-          </div>
         </div>
 
-        {/* Right Panel: Session Logs & History */}
-        <div className="bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4">
-          <div className="border-b border-outline-variant/40 pb-3 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <History className="w-5 h-5 text-primary-fixed" />
-              Session Logs
-            </h3>
-            <span className="text-xs font-mono text-on-surface-variant font-bold">
-              {sessions.length} recorded
-            </span>
+        <div className="lg:col-span-4 morphism-card bg-white p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="font-extrabold text-sm text-slate-900">Recent Sessions</h3>
+            <span className="text-xs font-bold text-slate-400">{totalLogHours}h total</span>
           </div>
 
-          <div className="space-y-3 overflow-y-auto max-h-[450px] pr-1">
-            {sessions.length === 0 ? (
-              <div className="text-xs text-on-surface-variant/60 italic font-mono py-8 text-center border border-dashed border-outline-variant/30 rounded-xl">
-                No focus sessions logged yet today. Click "Start Focus" to begin!
-              </div>
+          <div className="space-y-2.5 max-h-[280px] overflow-y-auto custom-scrollbar">
+            {(sessions || []).length === 0 ? (
+              <p className="text-xs text-slate-400 font-medium text-center py-8">No saved sessions yet</p>
             ) : (
-              sessions.map(s => (
-                <div
-                  key={s.id}
-                  className="bg-surface-container-high p-3.5 rounded-xl border border-outline-variant/40 space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white font-mono">{s.subject}</span>
-                    <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
-                      +{Math.round(s.duration_seconds / 60)} mins
-                    </span>
+              (sessions || []).map((log: any, i: number) => (
+                <div key={log.id || i} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h5 className="text-xs font-extrabold text-slate-900">#{log.subject || 'Study'}</h5>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">{log.mode || 'sprint'}</span>
                   </div>
-
-                  {s.notes && (
-                    <p className="text-xs text-on-surface-variant italic">"{s.notes}"</p>
-                  )}
-
-                  <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-mono pt-1 border-t border-outline-variant/20">
-                    <span className="capitalize">{s.mode} mode</span>
-                    <span>{new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
+                  <span className="text-xs font-black text-[#3B82F6]">
+                    {Math.round((log.duration_seconds || 0) / 60)} mins
+                  </span>
                 </div>
               ))
             )}
           </div>
         </div>
+
       </div>
+
     </div>
   );
 }

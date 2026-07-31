@@ -2,14 +2,62 @@
 
 import React, { useState } from 'react';
 import { CalendarEvent, useProductivityStore } from '@/lib/productivity-store';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, Tag, Trash2, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export function CalendarView() {
-  const { events, tasks, addEvent, deleteEvent } = useProductivityStore();
+  const { events, addEvent, deleteEvent } = useProductivityStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<string>(new Date().toISOString().split('T')[0]);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  // Real Functional Toggles (Persisted in LocalStorage)
+  const [syncGoogleCalendar, setSyncGoogleCalendar] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cal_sync_google') !== 'false';
+    }
+    return true;
+  });
+
+  const [examDeadlineAlerts, setExamDeadlineAlerts] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cal_exam_alerts') !== 'false';
+    }
+    return true;
+  });
+
+  const handleToggleSyncGoogle = () => {
+    const nextVal = !syncGoogleCalendar;
+    setSyncGoogleCalendar(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cal_sync_google', String(nextVal));
+    }
+    if (nextVal) {
+      // Export events as .ics calendar file download
+      const icsData = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CronoBash//FocusArena//EN\n" +
+        events.map(e => `BEGIN:VEVENT\nSUMMARY:${e.title}\nDESCRIPTION:${e.description || ''}\nDTSTART:${e.start_date.replace(/[- :]/g, '')}\nEND:VEVENT`).join('\n') +
+        "\nEND:VCALENDAR";
+      const blob = new Blob([icsData], { type: 'text/calendar' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'cronobash_exams_calendar.ics';
+      link.click();
+      toast.success('Google Calendar .ics file downloaded! Import into your calendar app. 📅');
+    } else {
+      toast.success('Google Calendar sync disabled.');
+    }
+  };
+
+  const handleToggleExamAlerts = () => {
+    const nextVal = !examDeadlineAlerts;
+    setExamDeadlineAlerts(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cal_exam_alerts', String(nextVal));
+    }
+    toast.success(nextVal ? 'Exam & Deadline Alerts active.' : 'Exam alerts muted.');
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,10 +91,10 @@ export function CalendarView() {
     if (!title.trim()) return;
 
     const categoryColors = {
-      study: '#00FFA3',
-      exam: '#FF4D4D',
-      deadline: '#FFB800',
-      personal: '#9D4EDD',
+      study: '#3B82F6',
+      exam: '#EF4444',
+      deadline: '#F59E0B',
+      personal: '#8B5CF6',
     };
 
     addEvent({
@@ -55,22 +103,21 @@ export function CalendarView() {
       start_date: `${selectedDay} ${startTime}`,
       end_date: `${selectedDay} ${endTime}`,
       category,
-      color: categoryColors[category] || '#00FFA3',
+      color: categoryColors[category] || '#3B82F6',
     });
 
     setTitle('');
     setDescription('');
     setIsModalOpen(false);
+    toast.success('Exam event scheduled on calendar! 📅');
   };
 
-  // Helper to format date string key YYYY-MM-DD
   const formatDateKey = (dayNum: number) => {
     const mStr = String(month + 1).padStart(2, '0');
     const dStr = String(dayNum).padStart(2, '0');
     return `${year}-${mStr}-${dStr}`;
   };
 
-  // Get events on a specific day key
   const getEventsForDay = (dayKey: string) => {
     return events.filter(e => {
       if (categoryFilter !== 'all' && e.category !== categoryFilter) return false;
@@ -78,217 +125,224 @@ export function CalendarView() {
     });
   };
 
-  // Get tasks on a specific day key
-  const getTasksForDay = (dayKey: string) => {
-    return tasks.filter(t => t.due_date === dayKey);
-  };
-
   const selectedDayEvents = getEventsForDay(selectedDay);
-  const selectedDayTasks = getTasksForDay(selectedDay);
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-surface-container-high border border-outline-variant/50 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <CalendarIcon className="w-7 h-7 text-primary-fixed" />
-            Study & Exam Calendar
-          </h2>
-          <p className="text-on-surface-variant text-sm mt-1">
-            Schedule study sessions, track exam dates, and view deadline agendas.
-          </p>
+      
+      {/* ── TOP METRIC CARDS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">calendar_month</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Scheduled</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{events.length} Events</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#EF4444] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">priority_high</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Official Exams</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{events.filter(e => e.category === 'exam').length} Exams</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-[#EF4444] text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">alarm</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Project Deadlines</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{events.filter(e => e.category === 'deadline').length} Pending</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+        <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-lg font-bold">event_available</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Selected Day Events</p>
+              <p className="text-sm font-black text-slate-900 mt-0.5">{selectedDayEvents.length} Active</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">north_east</span>
+        </div>
+
+      </div>
+
+      {/* ── REAL FUNCTIONAL BLACK PILL TOGGLE SWITCHES ── */}
+      <div className="morphism-card bg-white p-5 rounded-[24px] border border-white/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="material-symbols-outlined text-xs">download</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900 shrink-0">Export .ICS Calendar</span>
+            <button
+              onClick={handleToggleSyncGoogle}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0 ${
+                syncGoogleCalendar ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${syncGoogleCalendar ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-100">
+            <span className="w-7 h-7 rounded-full bg-[#EF4444] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <span className="material-symbols-outlined text-xs">notifications_active</span>
+            </span>
+            <span className="text-xs font-bold text-slate-900 shrink-0">Exam Deadline Alerts</span>
+            <button
+              onClick={handleToggleExamAlerts}
+              className={`w-11 h-5.5 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0 ${
+                examDeadlineAlerts ? 'bg-[#1D1D1F]' : 'bg-slate-200'
+              }`}
+            >
+              <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform ${examDeadlineAlerts ? 'translate-x-5.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-on-primary font-bold rounded-xl shadow-[0_0_20px_rgba(0,255,163,0.3)] hover:brightness-110 transition cursor-pointer shrink-0"
+          className="w-full md:w-auto bg-[#1D1D1F] hover:bg-black text-white font-extrabold text-xs py-2.5 px-5 rounded-full transition hover:scale-105 cursor-pointer shadow-md flex items-center justify-center gap-1.5"
         >
-          <Plus className="w-5 h-5" />
-          Add Event
+          <Plus className="w-4 h-4" />
+          <span>Schedule Exam Event</span>
         </button>
       </div>
 
-      {/* Main Calendar Grid + Sidebar Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Month Calendar Grid */}
-        <div className="lg:col-span-2 bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4">
-          {/* Controls Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-bold text-white font-display">
+      {/* ── MONTH CALENDAR & DAY EVENTS ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div className="lg:col-span-8 morphism-card bg-white p-6 sm:p-7 rounded-[28px] border border-white/80 shadow-sm space-y-5">
+          <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#8B5CF6] font-bold">calendar_month</span>
+              <h3 className="font-extrabold text-base text-slate-900">
                 {monthNames[month]} {year}
               </h3>
-              <button
-                onClick={() => setCurrentDate(new Date())}
-                className="text-xs bg-surface-variant text-primary-fixed px-2.5 py-1 rounded-lg hover:bg-surface-container-high transition font-mono"
-              >
-                Today
-              </button>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Category Filter */}
-              <select
-                value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
-                className="bg-surface-variant text-on-surface text-xs border border-outline-variant/40 rounded-lg px-2.5 py-1.5 focus:outline-none"
+              <button
+                onClick={handlePrevMonth}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
               >
-                <option value="all">All Categories</option>
-                <option value="study">Study</option>
-                <option value="exam">Exams</option>
-                <option value="deadline">Deadlines</option>
-                <option value="personal">Personal</option>
-              </select>
-
-              <div className="flex items-center gap-1 bg-surface-variant p-1 rounded-lg">
-                <button
-                  onClick={handlePrevMonth}
-                  className="p-1 hover:bg-surface-container-high text-on-surface-variant hover:text-white rounded transition"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={handleNextMonth}
-                  className="p-1 hover:bg-surface-container-high text-on-surface-variant hover:text-white rounded transition"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* Weekday Names Header */}
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-mono font-bold text-on-surface-variant py-2 border-b border-outline-variant/30">
-            <span>Sun</span>
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
+          <div className="grid grid-cols-7 text-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
           </div>
 
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1.5">
-            {/* Empty Offset Days */}
-            {Array.from({ length: firstDayOfMonth }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="h-20 md:h-24 bg-surface-container-low/30 rounded-xl opacity-30" />
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+              <div key={`empty-${i}`} className="h-16 rounded-2xl bg-slate-50/50 opacity-40"></div>
             ))}
 
-            {/* Month Days */}
-            {Array.from({ length: daysInMonth }).map((_, idx) => {
-              const dayNum = idx + 1;
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const dayNum = i + 1;
               const dayKey = formatDateKey(dayNum);
               const dayEvents = getEventsForDay(dayKey);
-              const dayTasks = getTasksForDay(dayKey);
               const isSelected = selectedDay === dayKey;
-              const isToday = new Date().toISOString().split('T')[0] === dayKey;
+              const hasExam = dayEvents.some(e => e.category === 'exam');
 
               return (
                 <div
                   key={dayKey}
                   onClick={() => setSelectedDay(dayKey)}
-                  className={`h-20 md:h-24 p-1.5 rounded-xl border flex flex-col justify-between cursor-pointer transition relative overflow-hidden ${
+                  className={`h-16 p-2 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(0,255,163,0.15)]'
-                      : isToday
-                      ? 'border-amber-500/50 bg-amber-500/5'
-                      : 'border-outline-variant/30 bg-surface-container-high/40 hover:bg-surface-container-high'
+                      ? 'bg-blue-50 border-[#3B82F6] shadow-sm font-bold scale-105'
+                      : hasExam && examDeadlineAlerts
+                      ? 'bg-red-50/60 border-red-200 hover:border-red-400'
+                      : 'bg-slate-50 border-slate-100 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs font-mono font-bold w-5 h-5 flex items-center justify-center rounded-full ${
-                        isToday
-                          ? 'bg-amber-500 text-black'
-                          : isSelected
-                          ? 'bg-primary text-black'
-                          : 'text-on-surface-variant'
-                      }`}
-                    >
+                  <div className="flex justify-between items-center">
+                    <span className={`text-xs font-extrabold ${isSelected ? 'text-[#3B82F6]' : hasExam ? 'text-red-600' : 'text-slate-800'}`}>
                       {dayNum}
                     </span>
-                    {(dayEvents.length > 0 || dayTasks.length > 0) && (
-                      <span className="w-2 h-2 rounded-full bg-primary-fixed animate-pulse" />
+                    {hasExam && examDeadlineAlerts && (
+                      <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
                     )}
                   </div>
 
-                  {/* Indicator Pills */}
-                  <div className="space-y-1 overflow-hidden">
-                    {dayEvents.slice(0, 2).map(e => (
-                      <div
-                        key={e.id}
-                        className="text-[9px] truncate font-semibold px-1 rounded text-black font-mono"
-                        style={{ backgroundColor: e.color || '#00FFA3' }}
-                      >
-                        {e.title}
-                      </div>
-                    ))}
-                    {dayEvents.length > 2 && (
-                      <div className="text-[9px] text-on-surface-variant font-mono">
-                        +{dayEvents.length - 2} more
-                      </div>
-                    )}
-                    {dayTasks.length > 0 && dayEvents.length < 2 && (
-                      <div className="text-[9px] truncate text-amber-400 font-mono bg-amber-500/10 border border-amber-500/20 px-1 rounded">
-                        ✓ {dayTasks.length} task{dayTasks.length > 1 ? 's' : ''}
-                      </div>
-                    )}
-                  </div>
+                  {dayEvents.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {dayEvents.slice(0, 2).map((e, idx) => (
+                        <span key={idx} className="w-2 h-2 rounded-full" style={{ backgroundColor: e.color || '#3B82F6' }}></span>
+                      ))}
+                      {dayEvents.length > 2 && (
+                        <span className="text-[8px] font-black text-slate-400">+{dayEvents.length - 2}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Right Col: Agenda Sidebar for Selected Day */}
-        <div className="bg-surface-container rounded-2xl border border-outline-variant/50 p-5 space-y-4">
-          <div className="border-b border-outline-variant/40 pb-3">
-            <h3 className="text-lg font-bold text-white flex items-center justify-between">
-              <span>Agenda</span>
-              <span className="text-xs font-mono text-primary-fixed">{selectedDay}</span>
-            </h3>
-            <p className="text-xs text-on-surface-variant mt-0.5">
-              Scheduled events and deadlines for selected date
-            </p>
+        <div className="lg:col-span-4 morphism-card bg-white p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h4 className="font-extrabold text-sm text-slate-900">Events for {selectedDay}</h4>
+              <p className="text-[10px] text-slate-400 font-bold">{selectedDayEvents.length} scheduled</p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#3B82F6] hover:bg-blue-600 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl cursor-pointer shadow-sm"
+            >
+              + Add
+            </button>
           </div>
 
-          {/* Events List */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-mono uppercase tracking-wider text-on-surface-variant font-bold">
-              Events ({selectedDayEvents.length})
-            </h4>
-
+          <div className="space-y-3 max-h-[380px] overflow-y-auto custom-scrollbar p-0.5">
             {selectedDayEvents.length === 0 ? (
-              <div className="text-xs text-on-surface-variant/60 italic font-mono py-4 text-center border border-dashed border-outline-variant/30 rounded-xl">
-                No events scheduled for this day
-              </div>
+              <p className="text-xs text-slate-400 font-medium text-center py-8">No scheduled exams or deadlines on this day</p>
             ) : (
               selectedDayEvents.map(e => (
-                <div
-                  key={e.id}
-                  className="bg-surface-container-high p-3 rounded-xl border border-outline-variant/40 space-y-1 relative group"
-                  style={{ borderLeftWidth: '4px', borderLeftColor: e.color || '#00FFA3' }}
-                >
-                  <div className="flex items-center justify-between">
-                    <h5 className="text-sm font-bold text-white">{e.title}</h5>
-                    <button
-                      onClick={() => deleteEvent(e.id)}
-                      className="text-on-surface-variant hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
-                    >
+                <div key={e.id} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-extrabold text-slate-900">{e.title}</span>
+                    <button onClick={() => deleteEvent(e.id)} className="text-slate-400 hover:text-red-600 cursor-pointer p-1">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  {e.description && (
-                    <p className="text-xs text-on-surface-variant">{e.description}</p>
-                  )}
-                  <div className="flex items-center justify-between pt-1 text-[10px] text-on-surface-variant font-mono">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-primary-fixed" />
-                      {e.start_date.split(' ')[1] || 'All Day'} - {e.end_date.split(' ')[1] || ''}
-                    </span>
-                    <span className="uppercase font-bold" style={{ color: e.color }}>
+                  {e.description && <p className="text-[11px] text-slate-500 font-medium">{e.description}</p>}
+                  <div className="flex items-center justify-between pt-1 text-[10px] font-bold">
+                    <span className="text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {e.start_date.split(' ')[1] || '10:00'}</span>
+                    <span className="px-2 py-0.5 rounded-md uppercase text-white font-extrabold" style={{ backgroundColor: e.color }}>
                       {e.category}
                     </span>
                   </div>
@@ -296,125 +350,66 @@ export function CalendarView() {
               ))
             )}
           </div>
-
-          {/* Scheduled Tasks List */}
-          <div className="space-y-3 pt-3 border-t border-outline-variant/30">
-            <h4 className="text-xs font-mono uppercase tracking-wider text-on-surface-variant font-bold">
-              Tasks Due Today ({selectedDayTasks.length})
-            </h4>
-
-            {selectedDayTasks.length === 0 ? (
-              <div className="text-xs text-on-surface-variant/60 italic font-mono py-4 text-center border border-dashed border-outline-variant/30 rounded-xl">
-                No tasks due on this day
-              </div>
-            ) : (
-              selectedDayTasks.map(t => (
-                <div
-                  key={t.id}
-                  className="bg-surface-container-high/60 p-3 rounded-xl border border-outline-variant/30 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-4 h-4 ${t.completed ? 'text-emerald-400' : 'text-on-surface-variant'}`} />
-                    <span className={`text-xs ${t.completed ? 'line-through text-on-surface-variant' : 'text-white'}`}>
-                      {t.title}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono bg-surface-variant px-1.5 py-0.5 rounded text-on-surface-variant">
-                    {t.subject}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
         </div>
+
       </div>
 
-      {/* Add Event Modal */}
+      {/* CREATE EVENT MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-container-high border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white">Schedule Calendar Event</h3>
-            <p className="text-xs text-on-surface-variant font-mono">Date: {selectedDay}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-md rounded-[28px] p-6 shadow-2xl space-y-5 text-slate-900 relative">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900">Schedule Exam or Deadline</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-slate-100">✕</button>
+            </div>
 
             <form onSubmit={handleCreateEvent} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Event Title</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Event Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Data Structures Exam"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
+                  placeholder="e.g. Midterm Physics Exam"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="Room details or notes..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-primary resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-mono text-on-surface-variant mb-1">Start Time</label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-on-surface-variant mb-1">End Time</label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={e => setEndTime(e.target.value)}
-                    className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-on-surface-variant mb-1">Category</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
                 <select
                   value={category}
                   onChange={e => setCategory(e.target.value as any)}
-                  className="w-full bg-surface-variant border border-outline-variant/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none"
                 >
-                  <option value="study">Study Session</option>
-                  <option value="exam">Exam / Test</option>
+                  <option value="study">Study Sprint</option>
+                  <option value="exam">Official Exam</option>
                   <option value="deadline">Project Deadline</option>
                   <option value="personal">Personal Goal</option>
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm rounded-xl text-on-surface-variant hover:bg-surface-variant transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-sm font-bold bg-primary text-on-primary rounded-xl shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:brightness-110 transition"
-                >
-                  Save Event
-                </button>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Description (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Notes or exam syllabus..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6] resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 bg-[#1D1D1F] hover:bg-black text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md">Schedule 📅</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

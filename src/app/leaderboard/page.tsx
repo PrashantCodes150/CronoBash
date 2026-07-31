@@ -75,16 +75,21 @@ export default function LeaderboardPage() {
   const selfUserData = users.find(u => u.user_id === currentUser?.id);
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 flex flex-col gap-6 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#fafaf9] text-[#1c1917] p-4 sm:p-6 md:p-8 flex flex-col gap-6 max-w-5xl mx-auto rounded-[32px] font-sans">
       
       {/* Header title */}
-      <div className="flex items-center gap-3 border-b border-amber-500/20 pb-4 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-4 rounded-2xl border">
-        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 p-3 rounded-xl border border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse">
-          <Trophy className="w-6 h-6 animate-bounce" />
+      <div className="flex items-center gap-4 bg-white/80 backdrop-blur-xl border border-slate-200/80 p-6 rounded-3xl shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+          <Trophy className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-black tracking-wider uppercase font-display bg-gradient-to-r from-amber-400 via-orange-400 to-white bg-clip-text text-transparent">Global Leaderboards</h1>
-          <p className="text-xs text-amber-300/80 font-mono">Compare your focus efficiency and total hours with the world</p>
+          <h1
+            className="text-2xl sm:text-3xl font-extrabold text-[#334155] tracking-tight"
+            style={{ fontFamily: "'Syne', sans-serif" }}
+          >
+            Global <span style={{ color: '#ff5500' }}>Leaderboards</span>
+          </h1>
+          <p className="text-sm text-[#44474c] mt-0.5">Compare your focus efficiency and total study hours with the world</p>
         </div>
       </div>
 
@@ -114,19 +119,19 @@ export default function LeaderboardPage() {
       )}
 
       {/* Leaderboard Table */}
-      <div className="bg-gradient-to-br from-amber-500/10 via-surface-container to-surface-container border border-amber-500/30 rounded-2xl p-5 overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.5)]">
+      <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 shadow-md overflow-hidden text-[#1c1917]">
         {loading ? (
-          <div className="text-center py-12 text-xs text-neutral-500 font-mono">Querying top standings...</div>
+          <div className="text-center py-12 text-xs text-slate-400 font-semibold">Querying top standings...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-neutral-800 text-neutral-500 uppercase tracking-wider font-mono text-[10px]">
+                <tr className="border-b border-slate-200 text-[#75777d] uppercase tracking-wider font-bold text-[10px]">
                   <th className="p-3">Rank</th>
                   <th className="p-3">User Profile</th>
-                  <th className="p-3">Focus Hours</th>
-                  <th className="p-3">Avg Focus Ratio</th>
-                  <th className="p-3">Arena Win Rate</th>
+                  <th className="p-3 hidden sm:table-cell">Focus Hours</th>
+                  <th className="p-3 hidden md:table-cell">Avg Focus Ratio</th>
+                  <th className="p-3 hidden lg:table-cell">Arena Win Rate</th>
                 </tr>
               </thead>
               <tbody>

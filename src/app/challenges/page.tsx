@@ -91,7 +91,7 @@ export default function ChallengesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 flex flex-col gap-6 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 sm:p-6 flex flex-col gap-6 max-w-5xl mx-auto">
       
       {/* Header title */}
       <div className="flex items-center gap-3 border-b border-neutral-800 pb-4">

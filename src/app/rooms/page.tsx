@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
 import { supabase, Room } from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 export default function RoomsLobby() {
   const { user, wallet, refreshWallet } = useAuth();
@@ -14,9 +16,11 @@ export default function RoomsLobby() {
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
 
-  // Filters & Search
+  // Filters & Search & Dropdowns
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'money'>('all');
+  const [isNavDropdownOpen, setIsNavDropdownOpen] = useState(false);
+
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [joiningByCode, setJoiningByCode] = useState(false);
 
@@ -27,11 +31,8 @@ export default function RoomsLobby() {
   const [newRoomLimit, setNewRoomLimit] = useState(10);
   const [newRoomFee, setNewRoomFee] = useState(50);
   const [newRoomDescription, setNewRoomDescription] = useState('');
-  const [newRoomTags, setNewRoomTags] = useState('Engineering');
+  const [newRoomTags, setNewRoomTags] = useState('Engineering, Math');
   const [creating, setCreating] = useState(false);
-
-  // Message alert state
-  const [alertMsg, setAlertMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
   // Fetch rooms from Supabase
   const loadRooms = async () => {
@@ -63,10 +64,10 @@ export default function RoomsLobby() {
         }
       }
 
-      // Purge any stale test money rooms (e.g. edede money match) from Supabase
+      // Purge any stale test money rooms
       await supabase.from('rooms').delete().eq('type', 'money');
 
-      // Load active rooms list (Public & Private)
+      // Load active rooms list
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -94,118 +95,103 @@ export default function RoomsLobby() {
     }
 
     if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
       result = result.filter(r => 
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        r.name.toLowerCase().includes(q) ||
+        (r.description && r.description.toLowerCase().includes(q)) ||
+        (r.subject_tags && r.subject_tags.some(t => t.toLowerCase().includes(q)))
       );
     }
 
     setFilteredRooms(result);
-  }, [searchQuery, activeFilter, rooms]);
+  }, [activeFilter, searchQuery, rooms]);
 
-  // Join room operation
-  const handleJoinRoom = async (room: Room) => {
-    if (!user) return;
-    setAlertMsg(null);
-
-    if (room.is_active === false) {
-      setAlertMsg({ type: 'error', text: 'Match in progress! This public study room is currently locked.' });
-      return;
-    }
-
-    try {
-      // 1. If money room, check wallet stakes and join via atomic RPC
-      if (room.type === 'money') {
-        setAlertMsg({ type: 'error', text: '⚡ Real-Money Cash Matches escrow is COMING SOON! Get early access notifications on your Dashboard.' });
-        return;
-      }
-
-      // 2. Insert user into room members (for non-money rooms)
-      const { error: joinError } = await supabase
-        .from('room_members')
-        .insert({
-          room_id: room.id,
-          user_id: user.id,
-          total_focus_seconds_today: 0
-        });
-
-      // If already a member (duplicate key), redirect anyway
-      if (joinError && !joinError.message.includes('duplicate key')) {
-        setAlertMsg({ type: 'error', text: 'Could not register room join state.' });
-        return;
-      }
-
-      router.push(`/rooms/${room.id}`);
-    } catch (e) {
-      console.error(e);
+  // Quick Auto Join Public Room
+  const handleQuickMatch = () => {
+    const publicRooms = rooms.filter(r => r.type === 'public');
+    if (publicRooms.length > 0) {
+      toast.success(`Joining active arena: "${publicRooms[0].name}" 🚀`);
+      router.push(`/rooms/${publicRooms[0].id}`);
+    } else {
+      setIsModalOpen(true);
+      toast.error('No open public rooms right now. Host a new arena!');
     }
   };
 
+  // Join Room By Invite Code
   const handleJoinByCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanCode = joinCodeInput.trim().toUpperCase();
-    if (!cleanCode || !user) return;
-    if (cleanCode.length !== 6) {
-      setAlertMsg({ type: 'error', text: 'Invite code must be exactly 6 characters.' });
-      return;
-    }
+    if (!joinCodeInput.trim()) return;
+
     setJoiningByCode(true);
-    setAlertMsg(null);
+
     try {
-      const { data: roomData, error: roomError } = await supabase
+      const { data: targetRoom, error } = await supabase
         .from('rooms')
         .select('*')
-        .ilike('invite_code', cleanCode)
-        .maybeSingle();
+        .eq('invite_code', joinCodeInput.trim().toUpperCase())
+        .eq('is_active', true)
+        .single();
 
-      if (roomError || !roomData) {
-        setAlertMsg({ type: 'error', text: 'Room not found for the entered invite code.' });
+      if (error || !targetRoom) {
+        toast.error('Invalid or expired Arena Invite Code.');
         setJoiningByCode(false);
         return;
       }
 
-      await handleJoinRoom(roomData as Room);
-    } catch (err) {
-      console.error(err);
-      setAlertMsg({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred while joining the room.' });
+      toast.success(`Joining private arena: "${targetRoom.name}" 🚀`);
+      router.push(`/rooms/${targetRoom.id}`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Error verifying invite code.');
     } finally {
       setJoiningByCode(false);
     }
   };
 
-  // Create room handler
+  // Copy Code to Clipboard
+  const handleCopyCode = (code: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(code);
+    toast.success(`Invite code "${code}" copied to clipboard! 📋`);
+  };
+
+  // Delete Hosted Arena
+  const handleDeleteHostedRoom = async (roomId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', roomId)
+        .eq('owner_id', user?.id || '');
+
+      if (!error) {
+        toast.success('Hosted Arena deleted successfully.');
+        setRooms(prev => prev.filter(r => r.id !== roomId));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete room.');
+    }
+  };
+
+  // Create Room submit handler
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoomName.trim() || !user) return;
-    setCreating(true);
-    setAlertMsg(null);
 
-    // Limit validations based on room type
-    if (newRoomType === 'money' && (newRoomLimit < 2 || newRoomLimit > 6)) {
-      setAlertMsg({ type: 'error', text: 'Money rooms must have a maximum capacity of 2 to 6 contestants.' });
-      setCreating(false);
-      return;
-    }
-    if ((newRoomType === 'public' || newRoomType === 'private') && (newRoomLimit < 2 || newRoomLimit > 10)) {
-      setAlertMsg({ type: 'error', text: 'Public or private rooms must have a maximum capacity of 2 to 10 contestants.' });
-      setCreating(false);
-      return;
-    }
+    setCreating(true);
 
     const tagsArray = newRoomTags.split(',').map(t => t.trim()).filter(Boolean);
 
-    // Block money room creation completely until official launch
     if (newRoomType === 'money') {
-      setAlertMsg({ 
-        type: 'error', 
-        text: '⚡ Money Arenas creation is COMING SOON! Real-money cash contests & token escrow are undergoing final security audits. Please select Public or Private Arena for now.' 
-      });
+      toast.error('⚡ Money Arenas creation is COMING SOON! High-stakes skill escrow is in final security audit.');
       setCreating(false);
       return;
     }
 
     try {
-      // Ensure user profile exists in public.users to prevent foreign key fkey violations!
       const { data: profileCheck } = await supabase
         .from('users')
         .select('id')
@@ -251,13 +237,12 @@ export default function RoomsLobby() {
         .single();
 
       if (roomError || !newRoom) {
-        setAlertMsg({ type: 'error', text: roomError?.message || 'Error generating new study room instance.' });
+        toast.error(roomError?.message || 'Error generating new study room instance.');
         setCreating(false);
         return;
       }
 
-      // Add owner as member
-      const { error: joinError } = await supabase
+      await supabase
         .from('room_members')
         .insert({
           room_id: newRoom.id,
@@ -265,17 +250,14 @@ export default function RoomsLobby() {
           total_focus_seconds_today: 0
         });
 
-      if (joinError) {
-        setAlertMsg({ type: 'error', text: 'Room created, but auto-join failed.' });
-      }
-
+      toast.success('Arena Created! Launching Lobby... 🚀');
       setIsModalOpen(false);
       setNewRoomName('');
       setNewRoomDescription('');
       router.push(`/rooms/${newRoom.id}`);
     } catch (e) {
       console.error(e);
-      setAlertMsg({ type: 'error', text: e instanceof Error ? e.message : 'An unexpected error occurred.' });
+      toast.error(e instanceof Error ? e.message : 'An unexpected error occurred.');
     } finally {
       setCreating(false);
     }
@@ -286,374 +268,564 @@ export default function RoomsLobby() {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get('kicked') === 'true') {
-        setAlertMsg({ type: 'error', text: 'You were kicked from the study arena by the owner.' });
+        toast.error('You were kicked from the study arena by the owner.');
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
       }
     }
   }, []);
 
+  const publicRoomsCount = rooms.filter(r => r.type === 'public').length;
+  const privateRoomsCount = rooms.filter(r => r.type === 'private').length;
+  const myHostedRooms = rooms.filter(r => r.owner_id === user?.id);
+
+  // Rainbow Tag Colors helper
+  const getTagColorClass = (idx: number) => {
+    const colors = [
+      'bg-blue-50 text-[#3B82F6] border-blue-200',
+      'bg-emerald-50 text-[#10B981] border-emerald-200',
+      'bg-purple-50 text-[#8B5CF6] border-purple-200',
+      'bg-amber-50 text-[#D97706] border-amber-200',
+      'bg-rose-50 text-[#E11D48] border-rose-200'
+    ];
+    return colors[idx % colors.length];
+  };
+
   return (
-    <div className="space-y-6 select-none">
-      {/* Top Banner Lobbies controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-emerald-500/30 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-6.5 rounded-3xl shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.8),_inset_1px_1px_1px_rgba(255,255,255,0.08)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="bg-neutral-950 border border-emerald-500/40 text-emerald-400 px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),_inset_-2px_-2px_4px_rgba(255,255,255,0.03),_0_0_12px_rgba(0,255,163,0.2)]">
-              LIVE ARENA NETWORK
-            </span>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="bg-[#fafaf9] min-h-screen text-[#1c1917] font-sans p-4 sm:p-6 md:p-8 rounded-[32px] space-y-6 select-none"
+    >
+      
+      {/* ── TOP NAVIGATION & FILTER BAR ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        {/* Left Title & Location Dropdown Pill */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <button
+              onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+              className="bg-white px-5 py-2.5 rounded-full shadow-sm border border-white/80 flex items-center gap-2 cursor-pointer hover:shadow transition-all group"
+            >
+              <span className="font-extrabold text-sm text-slate-900">Squad Arenas Hub</span>
+              <span className={`material-symbols-outlined text-slate-400 text-base transition-transform ${isNavDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
+            </button>
+
+            {/* Dropdown Overlay */}
+            {isNavDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setIsNavDropdownOpen(false)}></div>
+                <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl p-2 z-40 animate-fadeIn">
+                  <div className="px-3 py-1.5 border-b border-gray-100 text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">
+                    Arena Categories
+                  </div>
+                  <ul className="space-y-1 pt-1 text-xs font-bold text-slate-700">
+                    <li>
+                      <button
+                        onClick={() => { setActiveFilter('all'); setIsNavDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2 text-slate-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#3B82F6]">dashboard</span>
+                        <span>All Active Arenas</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { setActiveFilter('public'); setIsNavDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2 text-slate-700 hover:text-slate-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#10B981]">groups</span>
+                        <span>Public Focus Lobbies</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { setActiveFilter('private'); setIsNavDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2 text-slate-700 hover:text-slate-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#8B5CF6]">lock</span>
+                        <span>Private Squad Duels</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { setActiveFilter('money'); setIsNavDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2 text-slate-700 hover:text-slate-900 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base text-[#F59E0B]">payments</span>
+                        <span>High-Stakes Cash Contests</span>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </>
+            )}
           </div>
-          <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase tracking-tight mt-2 bg-gradient-to-r from-emerald-400 via-cyan-400 to-white bg-clip-text text-transparent">
-            Study Arenas Hub
-          </h2>
-          <p className="text-xs text-emerald-300/80 font-mono mt-0.5">Join live study arenas or stake tokens in high-stakes money contests</p>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar py-1 w-full sm:w-auto max-w-full">
+            {[
+              { id: 'all', label: `All Arenas (${rooms.length})` },
+              { id: 'public', label: `Public (${publicRoomsCount})` },
+              { id: 'private', label: `Private (${privateRoomsCount})` },
+              { id: 'money', label: 'Money Matches' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id as any)}
+                className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  activeFilter === tab.id
+                    ? 'bg-[#1D1D1F] text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900 bg-white/70 hover:bg-white border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="group bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 font-label-mono text-xs font-extrabold py-3.5 px-6 rounded-2xl hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 shadow-[-4px_-4px_12px_rgba(255,255,255,0.05),_6px_6px_16px_rgba(0,0,0,0.8),_0_0_20px_rgba(0,255,163,0.35)] cursor-pointer border border-emerald-400 shrink-0"
+
+        {/* Right Action Buttons */}
+        <div className="flex items-center gap-3 self-end lg:self-auto">
+          <button
+            onClick={handleQuickMatch}
+            className="bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-xs py-2.5 px-5 rounded-full transition-all hover:scale-105 cursor-pointer shadow-sm border border-white/80 flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-base text-[#10B981]">flash_on</span>
+            <span>Quick Match</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#1D1D1F] hover:bg-black text-white font-extrabold text-xs py-2.5 px-5 rounded-full transition-all hover:scale-105 cursor-pointer shadow-md flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-base">add</span>
+            <span>Host Arena</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── TOP STATS WIDGETS ROW (4 COLUMNS WITH VIBRANT BADGES) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* Widget 1: Total Active Arenas */}
+        <div 
+          onClick={() => setActiveFilter('all')}
+          className="morphism-card p-5 bg-white flex items-center justify-between group hover:border-[#3B82F6] transition-all cursor-pointer shadow-sm"
         >
-          <span className="material-symbols-outlined text-base font-bold transition-transform duration-300 group-hover:rotate-90">add</span>
-          <span>Create Arena</span>
-        </button>
-      </div>
-
-      {alertMsg && (
-        <div className={`border rounded-2xl p-4 text-xs flex items-center gap-3 font-mono shadow-[inset_2px_2px_6px_rgba(0,0,0,0.8),_inset_-2px_-2px_6px_rgba(255,255,255,0.03)] ${
-          alertMsg.type === 'error' ? 'bg-rose-950/40 border-rose-500/50 text-rose-300' : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
-        }`}>
-          <span className="material-symbols-outlined text-sm animate-bounce">warning</span>
-          <span>{alertMsg.text}</span>
-        </div>
-      )}
-
-      {/* Neumorphic Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gradient-to-br from-neutral-900 to-neutral-950 border border-white/5 p-4.5 rounded-3xl shadow-[-6px_-6px_16px_rgba(255,255,255,0.02),_6px_6px_18px_rgba(0,0,0,0.8)]">
-        {/* Type Filter buttons */}
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          {(['all', 'public', 'private', 'money'] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2.5 rounded-2xl font-label-mono text-xs font-bold uppercase transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
-                activeFilter === filter
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-neutral-950 font-extrabold shadow-[-3px_-3px_8px_rgba(255,255,255,0.05),_4px_4px_12px_rgba(0,0,0,0.8),_0_0_15px_rgba(0,255,163,0.4)] scale-105 border border-emerald-400'
-                  : 'bg-neutral-950 text-neutral-400 hover:text-white border border-white/5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),_inset_-2px_-2px_5px_rgba(255,255,255,0.02)]'
-              }`}
-            >
-              <span>{filter === 'money' ? 'Money Arenas' : filter}</span>
-              {filter === 'money' && (
-                <span className="text-[8px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
-                  COMING SOON
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Join by Code & Search Container */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
-          {/* Join by Code form */}
-          <form onSubmit={handleJoinByCode} className="w-full sm:w-auto flex gap-2">
-            <input
-              type="text"
-              maxLength={6}
-              value={joinCodeInput}
-              onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
-              placeholder="ENTER ARENA CODE..."
-              className="bg-neutral-950 border border-emerald-500/30 rounded-2xl px-3.5 py-2.5 font-mono text-xs text-white focus:outline-none focus:border-emerald-400 uppercase tracking-wider w-full sm:w-40 text-center shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)]"
-            />
-            <button
-              type="submit"
-              disabled={joiningByCode}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-neutral-950 font-label-mono text-[10px] font-extrabold px-4 py-2.5 rounded-2xl transition-all hover:scale-105 cursor-pointer shrink-0 uppercase shadow-[-3px_-3px_8px_rgba(255,255,255,0.05),_4px_4px_12px_rgba(0,0,0,0.8),_0_0_12px_rgba(0,229,255,0.3)]"
-            >
-              {joiningByCode ? 'Joining...' : 'Join Code'}
-            </button>
-          </form>
-
-          {/* Search Input bar */}
-          <div className="w-full sm:w-48 relative flex items-center bg-neutral-950 border border-emerald-500/30 rounded-2xl px-3.5 py-2.5 shadow-[inset_3px_3px_8px_rgba(0,0,0,0.9),_inset_-3px_-3px_8px_rgba(255,255,255,0.03)]">
-            <span className="material-symbols-outlined text-emerald-400 text-lg mr-2 select-none animate-pulse">search</span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search study arenas..."
-              className="w-full bg-transparent text-xs text-white focus:outline-none font-mono"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Rooms Grid list or Money Arenas Full-Page COMING SOON */}
-      {activeFilter === 'money' ? (
-        <div className="card-base p-8 md:p-12 text-center space-y-6 relative overflow-hidden shadow-2xl backdrop-blur-xl">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-              <span className="material-symbols-outlined text-2xl font-bold">payments</span>
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#3B82F6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-xl font-bold">meeting_room</span>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-1 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.2)]">
-              OFFICIAL FEATURE PREVIEW
-            </span>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Lobbies</p>
+              <p className="text-xl font-black text-slate-900 mt-0.5">{rooms.length} Running</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold text-[#3B82F6] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+            Network
+          </span>
+        </div>
+
+        {/* Widget 2: Public Focus Lobbies */}
+        <div 
+          onClick={() => setActiveFilter('public')}
+          className="morphism-card p-5 bg-white flex items-center justify-between group hover:border-[#10B981] transition-all cursor-pointer shadow-sm"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-xl font-bold">groups</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Public Lobbies</p>
+              <p className="text-xl font-black text-slate-900 mt-0.5">{publicRoomsCount} Open</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold text-[#059669] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live
+          </span>
+        </div>
+
+        {/* Widget 3: Private Squad Rooms */}
+        <div 
+          onClick={() => setActiveFilter('private')}
+          className="morphism-card p-5 bg-white flex items-center justify-between group hover:border-[#8B5CF6] transition-all cursor-pointer shadow-sm"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#8B5CF6] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-xl font-bold">lock</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Private Squads</p>
+              <p className="text-xl font-black text-slate-900 mt-0.5">{privateRoomsCount} Locked</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold text-[#8B5CF6] bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+            Invite
+          </span>
+        </div>
+
+        {/* Widget 4: Hosted By You */}
+        <div className="morphism-card p-5 bg-white flex items-center justify-between group hover:border-[#F59E0B] transition-all shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#F59E0B] text-gray-900 flex items-center justify-center shrink-0 shadow-sm font-bold">
+              <span className="material-symbols-outlined text-xl font-bold">star</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hosted By You</p>
+              <p className="text-xl font-black text-slate-900 mt-0.5">{myHostedRooms.length} Arenas</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold text-[#D97706] bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+            Owner
+          </span>
+        </div>
+
+      </div>
+
+      {/* ── MAIN CONTENT GRID (12 COLUMNS) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* LEFT COLUMN: ROOMS GRID & SEARCH (8 COLS) */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* Header Search & Title Bar */}
+          <div className="morphism-card bg-white p-5 rounded-[28px] border border-white/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#3B82F6] text-white flex items-center justify-center shadow-sm">
+                <span className="material-symbols-outlined text-base font-bold">search</span>
+              </div>
+              <h3 className="font-extrabold text-slate-900 text-sm">Explore Active Arenas</h3>
+            </div>
+
+            <div className="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs">
+              <span className="material-symbols-outlined text-slate-400 text-base mr-2">search</span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by arena name or tag..."
+                className="bg-transparent text-slate-900 focus:outline-none w-full sm:w-56 font-medium"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-3xl md:text-4xl font-black text-white font-display tracking-tight">
-              High-Stakes Money Matches & Cash Contests
-            </h2>
-            <p className="text-xs md:text-sm text-on-surface-variant font-mono max-w-xl mx-auto leading-relaxed">
-              Master cognitive discipline, eliminate distractions, and stake your focus in 1v1 skill-verified study duels.
-            </p>
-          </div>
-
-          {/* Large Ripped Paper Reveal "COMING SOON" Graphic Container */}
-          <div className="w-full max-w-lg mx-auto bg-neutral-950 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl p-0.5 select-none">
-            <div className="py-6 sm:py-8 px-6 sm:px-10 flex items-center justify-center bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 relative">
-              {/* Curled / Ripped White Paper Fold Effect */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-10 bg-gradient-to-r from-neutral-100 via-neutral-300 to-transparent shadow-[4px_0_12px_rgba(0,0,0,0.8)] transform -skew-x-6 border-r border-neutral-400 pointer-events-none z-20" />
-              <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-3 bg-gradient-to-r from-neutral-400 to-transparent opacity-40 z-20 pointer-events-none" />
-
-              {/* Metallic 3D Silver "COMING SOON" Typography */}
-              <div className="relative z-10 text-center font-black tracking-widest uppercase font-display">
-                <span className="block text-2xl sm:text-4xl md:text-5xl bg-gradient-to-b from-white via-neutral-200 to-neutral-500 bg-clip-text text-transparent drop-shadow-[0_4px_10px_rgba(0,0,0,0.95)]">
-                  COMING SOON
+          {/* Rooms Grid list */}
+          {activeFilter === 'money' ? (
+            <div className="morphism-card bg-white p-8 md:p-10 text-center space-y-6 rounded-[28px] border border-amber-200 shadow-sm animate-fadeIn">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-[#F59E0B] text-gray-900 flex items-center justify-center shadow-md">
+                  <span className="material-symbols-outlined text-3xl font-bold">payments</span>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-4 py-1 rounded-full">
+                  OFFICIAL FEATURE PREVIEW
                 </span>
               </div>
-            </div>
-          </div>
 
-          {/* Trust-Building Psychological Notice */}
-          <div className="bg-surface-container-high/60 border border-outline-variant/30 rounded-2xl p-5 text-left space-y-1.5 max-w-xl mx-auto">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-mono">
-              <span className="material-symbols-outlined text-sm text-emerald-400">verified_user</span>
-              <span>100% Skill-Verified Cognitive Esports Standard</span>
-            </div>
-            <p className="text-xs text-on-surface-variant font-mono leading-relaxed">
-              Match outcomes are strictly determined by human focus verified frame-by-frame by MediaPipe AI gaze algorithms for peak academic mastery.
-            </p>
-          </div>
-        </div>
-      ) : loadingRooms ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-on-surface-variant font-label-mono text-xs mt-4">FETCHING ACTIVE ARENAS...</p>
-        </div>
-      ) : filteredRooms.length === 0 ? (
-        <div className="card-base text-center py-20 space-y-4">
-          <span className="material-symbols-outlined text-5xl text-on-surface-variant">meeting_room</span>
-          <p className="text-sm font-label-mono text-on-surface-variant">No active study arenas found</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room) => {
-            const isMoneyRoom = room.type === 'money';
-            return (
-              <div 
-                key={room.id}
-                className="card-base flex flex-col justify-between p-6 relative overflow-hidden group bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 border border-white/5 hover:border-emerald-500/40 rounded-3xl transition-all duration-300 shadow-[-8px_-8px_20px_rgba(255,255,255,0.02),_8px_8px_24px_rgba(0,0,0,0.85),_inset_1px_1px_1px_rgba(255,255,255,0.06)] hover:shadow-[-8px_-8px_25px_rgba(255,255,255,0.04),_10px_10px_30px_rgba(0,0,0,0.9),_0_0_25px_rgba(0,255,163,0.25)] hover:-translate-y-1"
-              >
-                {/* Background Ambient Glow Accent */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all pointer-events-none"></div>
-                
-                <div>
-                  <div className="flex justify-between items-start gap-4 mb-4 relative z-10">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`font-label-mono text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                        isMoneyRoom 
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]' 
-                          : room.type === 'private' 
-                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(0,255,163,0.3)]'
-                      }`}>
-                        {room.type} Arena
-                      </span>
-                      {isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
-                          COMING SOON
-                        </span>
-                      )}
-                      {room.is_active === false && !isMoneyRoom && (
-                        <span className="font-label-mono text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[10px] animate-pulse">lock</span>
-                          MATCH IN PROGRESS
-                        </span>
-                      )}
-                    </div>
-                    {isMoneyRoom && (
-                      <span className="font-label-mono text-[10px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-[0_0_8px_rgba(245,158,11,0.2)]">
-                        <span className="material-symbols-outlined text-[12px] font-bold">attach_money</span>
-                        Buy-in: {room.entry_fee} TKN
-                      </span>
-                    )}
-                  </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                  High-Stakes Money Matches &amp; Cash Contests
+                </h2>
+                <p className="text-xs md:text-sm text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">
+                  Master cognitive discipline, eliminate distractions, and stake your focus in 1v1 skill-verified study duels.
+                </p>
+              </div>
 
-                  <h3 className="font-display text-xl font-black text-white mb-2 truncate group-hover:text-cyan-400 transition-colors tracking-tight">
-                    {room.name}
-                  </h3>
-                  
-                  <p className="text-xs text-emerald-300/80 font-mono line-clamp-2 min-h-[32px] mb-4 leading-relaxed">
-                    {room.description || 'Join this study arena to sprint focus timers together, share resources, and climb daily metrics.'}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1.5 mb-6">
-                    {room.subject_tags.map(tag => (
-                      <span key={tag} className="font-label-mono text-[9px] bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 rounded-md text-emerald-300 font-bold shadow-[0_0_6px_rgba(0,255,163,0.15)]">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-left space-y-1.5 max-w-xl mx-auto">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
+                  <span className="material-symbols-outlined text-base">verified_user</span>
+                  <span>100% Skill-Verified Cognitive Standard</span>
                 </div>
-
-                <div className="border-t border-emerald-500/20 pt-4 flex items-center justify-between relative z-10">
-                  <div className="flex flex-col gap-1 font-label-mono text-xs text-emerald-300">
-                    <div className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm animate-pulse text-emerald-400">groups</span>
-                      <span className="font-bold">Max: {room.max_members} spots</span>
-                    </div>
-                    {room.invite_code && (
-                      <span 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(room.invite_code || '');
-                          setAlertMsg({ type: 'success', text: `Arena code ${room.invite_code} copied to clipboard!` });
-                        }}
-                        className="text-[10px] text-cyan-300 hover:text-white bg-cyan-950/60 border border-cyan-500/40 px-2 py-0.5 rounded-md cursor-pointer transition-all w-fit select-none font-bold font-mono tracking-wider mt-1 shadow-[0_0_8px_rgba(0,229,255,0.2)]"
-                        title="Click to copy code"
-                      >
-                        CODE: {room.invite_code}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    disabled={room.is_active === false || isMoneyRoom}
-                    onClick={() => handleJoinRoom(room)}
-                    className={`font-label-mono text-[10px] font-extrabold px-5 py-2.5 rounded-xl transition-all cursor-pointer uppercase ${
-                      isMoneyRoom
-                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 cursor-not-allowed opacity-90'
-                        : room.is_active === false
-                          ? 'bg-neutral-900 text-neutral-500 border border-neutral-800 cursor-not-allowed opacity-60'
-                          : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-neutral-950 shadow-[0_0_15px_rgba(0,255,163,0.3)] hover:scale-105 border border-emerald-400'
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                  Match outcomes are strictly determined by human focus verified frame-by-frame by MediaPipe AI gaze algorithms for peak academic mastery.
+                </p>
+              </div>
+            </div>
+          ) : loadingRooms ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[28px] border border-white/80">
+              <div className="w-10 h-10 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-500 font-bold text-xs mt-4">FETCHING ACTIVE ARENAS...</p>
+            </div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="morphism-card bg-white text-center py-20 space-y-4 rounded-[28px] border border-white/80">
+              <span className="material-symbols-outlined text-5xl text-slate-300">meeting_room</span>
+              <p className="text-sm font-bold text-slate-500">No active study arenas found</p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#1D1D1F] text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:scale-105 transition-transform cursor-pointer shadow-sm"
+              >
+                + Host New Arena
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 animate-fadeIn">
+              {filteredRooms.map((room) => {
+                const isPrivate = room.type === 'private';
+                return (
+                  <div 
+                    key={room.id}
+                    className={`morphism-card bg-white flex flex-col justify-between p-6 relative overflow-hidden group rounded-[28px] transition-all duration-200 shadow-sm hover:shadow-md border ${
+                      isPrivate ? 'border-purple-200/80 hover:border-[#8B5CF6]' : 'border-blue-200/80 hover:border-[#3B82F6]'
                     }`}
                   >
-                    {isMoneyRoom ? 'COMING SOON 🔒' : room.is_active === false ? 'LOCKED 🔒' : 'Enter Arena'}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                    <div className="space-y-3.5">
+                      <div className="flex justify-between items-start">
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full border ${
+                          isPrivate ? 'bg-purple-50 text-[#8B5CF6] border-purple-200' : 'bg-emerald-50 text-[#059669] border-emerald-200'
+                        }`}>
+                          {room.type} Arena
+                        </span>
 
-      {/* Create Room modal overlay */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-6">
-          <div className="w-full max-w-lg bg-surface-container border border-outline-variant rounded-2xl p-8 relative overflow-hidden shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-lg font-black text-on-surface uppercase">Configure Focus Arena</h3>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer"
+                        <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm text-[#3B82F6]">group</span>
+                          {room.max_members} max
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#3B82F6] transition-colors">
+                          {room.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
+                          {room.description || 'Focus study room for high achievers.'}
+                        </p>
+                      </div>
+
+                      {room.subject_tags && room.subject_tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {room.subject_tags.map((tag, idx) => (
+                            <span key={tag} className={`text-[10px] font-bold px-2.5 py-0.5 rounded-lg border ${getTagColorClass(idx)}`}>
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1.5">
+                        <span>Code:</span>
+                        <span className="text-slate-800 font-mono font-bold select-all">{room.invite_code || 'PUBLIC'}</span>
+                        {room.invite_code && (
+                          <button
+                            onClick={(e) => handleCopyCode(room.invite_code || '', e)}
+                            className="text-[#3B82F6] hover:text-blue-700 p-0.5 cursor-pointer"
+                            title="Copy Invite Code"
+                          >
+                            <span className="material-symbols-outlined text-xs">content_copy</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => router.push(`/rooms/${room.id}`)}
+                        className="bg-[#1D1D1F] hover:bg-black text-white font-extrabold text-xs py-2.5 px-4 rounded-xl transition-transform hover:scale-105 cursor-pointer shadow-sm flex items-center gap-1"
+                      >
+                        <span>Enter Lobby</span>
+                        <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </div>
+
+        {/* RIGHT COLUMN: QUICK JOIN & YOUR HOSTED ARENAS (4 COLS) */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* Quick Join By Invite Code Widget */}
+          <div className="morphism-card bg-white p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+              <span className="material-symbols-outlined text-[#8B5CF6] font-bold">vpn_key</span>
+              <h3 className="font-extrabold text-sm text-slate-900">
+                Quick Join By Code
+              </h3>
+            </div>
+
+            <form onSubmit={handleJoinByCode} className="space-y-3">
+              <p className="text-xs text-slate-500 font-medium">Enter a 6-character private invite code to join a friend's locked arena:</p>
+              <input
+                type="text"
+                maxLength={6}
+                value={joinCodeInput}
+                onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase().trim())}
+                placeholder="ENTER CODE..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#8B5CF6] uppercase tracking-wider text-center"
+              />
+              <button
+                type="submit"
+                disabled={joiningByCode}
+                className="w-full bg-[#1D1D1F] hover:bg-black text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md disabled:opacity-50"
               >
-                <span className="material-symbols-outlined">close</span>
+                {joiningByCode ? 'Verifying Code...' : 'Join Private Lobby 🚀'}
+              </button>
+            </form>
+          </div>
+
+          {/* Your Hosted Arenas Quick Access Widget */}
+          <div className="morphism-card bg-white p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#F59E0B] font-bold">star</span>
+                <h3 className="font-extrabold text-sm text-slate-900">
+                  Your Hosted Arenas
+                </h3>
+              </div>
+              <span className="text-xs font-bold text-slate-400">{myHostedRooms.length} active</span>
+            </div>
+
+            {myHostedRooms.length === 0 ? (
+              <div className="p-6 border border-slate-100 rounded-2xl text-center bg-slate-50 space-y-2">
+                <p className="text-xs text-slate-400 font-medium">You have not created any lobbies yet.</p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-[#F59E0B] text-gray-900 text-xs font-bold px-4 py-1.5 rounded-xl hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                >
+                  + Host Arena
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {myHostedRooms.map(room => (
+                  <div key={room.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h5 className="text-xs font-bold text-slate-900 truncate">{room.name}</h5>
+                      <span className="text-[10px] text-slate-500 font-mono">Code: {room.invite_code || 'PUBLIC'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => router.push(`/rooms/${room.id}`)}
+                        className="bg-[#1D1D1F] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg hover:bg-black cursor-pointer"
+                      >
+                        Enter
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteHostedRoom(room.id, e)}
+                        className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                        title="Delete Arena"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* CREATE ROOM MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white border border-gray-100 w-full max-w-md rounded-[28px] p-6 shadow-2xl space-y-5 text-slate-900 relative">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900">
+                Host New Study Arena
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-900 text-sm cursor-pointer p-1 rounded-lg hover:bg-slate-100"
+              >
+                ✕
               </button>
             </div>
 
             <form onSubmit={handleCreateRoom} className="space-y-4">
               <div>
-                <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Arena Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Arena Name</label>
                 <input
                   type="text"
                   required
                   value={newRoomName}
                   onChange={(e) => setNewRoomName(e.target.value)}
-                  placeholder="e.g. Deep Work: Engineering"
-                  className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed"
+                  placeholder="e.g. Quantum Physics Sprint"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Arena Type</label>
-                  <select
-                    value={newRoomType}
-                    onChange={(e) => setNewRoomType(e.target.value as ('public' | 'private' | 'money'))}
-                    className="w-full bg-background border border-outline-variant rounded-lg px-3 py-2 text-xs font-mono text-on-surface focus:outline-none focus:border-primary-fixed"
-                  >
-                    <option value="public">Public Arena</option>
-                    <option value="private">Private Arena</option>
-                    <option value="money">Money Match (COMING SOON)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Max Members</label>
-                  <input
-                    type="number"
-                    min={2}
-                    max={100}
-                    value={newRoomLimit}
-                    onChange={(e) => setNewRoomLimit(parseInt(e.target.value))}
-                    className="w-full bg-background border border-outline-variant rounded-lg px-3 py-2 text-xs font-mono text-on-surface focus:outline-none"
-                  />
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Arena Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['public', 'private'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setNewRoomType(type)}
+                      className={`py-2 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer ${
+                        newRoomType === type
+                          ? 'bg-[#1D1D1F] text-white shadow-sm'
+                          : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {newRoomType === 'money' && (
-                <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-amber-400 text-xs font-display flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm text-amber-400">warning</span>
-                      <span>Money Arena Launch Notice</span>
-                    </span>
-                    <span className="text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                      COMING SOON
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed font-mono">
-                    ⚡ Money Arena creation is currently locked. Real-money token escrow & cash contests are undergoing final security audits. Please select Public or Private Arena to initialize your study room.
-                  </p>
-                </div>
-              )}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Max Capacity</label>
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  value={newRoomLimit}
+                  onChange={(e) => setNewRoomLimit(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6]"
+                />
+              </div>
 
               <div>
-                <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Tags (Comma-separated)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Subject Tags (Comma Separated)</label>
                 <input
                   type="text"
                   value={newRoomTags}
                   onChange={(e) => setNewRoomTags(e.target.value)}
-                  placeholder="e.g. Engineering, Code, Math"
-                  className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 font-label-mono text-sm text-on-surface focus:outline-none focus:border-primary-fixed"
+                  placeholder="e.g. Engineering, Math, Code"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6]"
                 />
               </div>
 
               <div>
-                <label className="block font-label-mono text-xs text-on-surface-variant mb-1.5 uppercase font-bold">Description</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Description (Optional)</label>
                 <textarea
+                  rows={2}
                   value={newRoomDescription}
                   onChange={(e) => setNewRoomDescription(e.target.value)}
-                  placeholder="Focus sprint guidelines..."
-                  rows={3}
-                  className="w-full bg-background border border-outline-variant rounded-lg px-4 py-2 text-xs text-on-surface focus:outline-none focus:border-primary-fixed resize-none"
+                  placeholder="What are you studying?"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#3B82F6] resize-none"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={creating || newRoomType === 'money'}
-                className={`w-full font-label-mono text-xs font-bold py-3.5 rounded-lg transition-colors mt-4 cursor-pointer ${
-                  newRoomType === 'money'
-                    ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 cursor-not-allowed opacity-90'
-                    : 'bg-primary-container hover:bg-primary-fixed text-on-primary shadow-[0_0_12px_rgba(0,255,163,0.2)]'
-                }`}
-              >
-                {creating ? 'Spawning Instance...' : newRoomType === 'money' ? 'Money Arenas Coming Soon 🔒' : 'Initialize Study Arena'}
-              </button>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 bg-[#1D1D1F] hover:bg-black text-white font-black py-2.5 rounded-xl text-xs transition-transform hover:scale-105 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {creating ? 'Creating...' : 'Create Arena 🚀'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+
+    </motion.div>
   );
 }

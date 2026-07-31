@@ -44,7 +44,7 @@ export function AvatarWithBadge({
       {/* Full-Visibility Avatar Image Frame */}
       <div className="w-full h-full rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 shadow-sm">
         <img
-          src={avatarUrl || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'}
+          src={avatarUrl || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight'}
           alt={name}
           className="w-full h-full object-cover"
         />
