@@ -21,38 +21,10 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
     targetFrame: 0,
   });
 
-  // Preload frames
+  // Preload disabled to eliminate 404 frame image network requests
   useEffect(() => {
-    const loadedSet = new Set<number>();
-    const imgArray: HTMLImageElement[] = [];
-
-    for (let i = 1; i <= totalFrames; i++) {
-      const idx = i - 1;
-      const img = new Image();
-      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.jpg`;
-      
-      const handleReady = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
-          setImagesLoaded(true);
-        }
-      };
-
-      img.onload = handleReady;
-      img.onerror = handleReady;
-      img.src = filename;
-
-      if ('decode' in img && typeof (img as any).decode === 'function') {
-        (img as any).decode().catch(() => {});
-      }
-
-      imgArray.push(img);
-    }
-
-    setImages(imgArray);
-  }, [totalFrames]);
+    setImagesLoaded(true);
+  }, []);
 
   // Track mouse coordinates across the entire document
   useEffect(() => {
@@ -170,9 +142,19 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
   }, [imagesLoaded, images]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-0"
-    />
+    <>
+      <video
+        src="/videos/the_backgroiund_of_the_video_m_gwr_video_mvp.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-25"
+      />
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      />
+    </>
   );
 }

@@ -13,7 +13,7 @@ interface HandsMomentumHeroProps {
 }
 
 export default function HandsMomentumHero({
-  frames = HANDS_MOMENTUM_FRAMES
+  frames = []
 }: HandsMomentumHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);

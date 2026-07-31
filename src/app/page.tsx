@@ -494,9 +494,9 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── TURN STUDY INTO A SPORT: PINNED SCROLL-DRIVEN 3D FRAME ANIMATION HERO ── */}
+      {/* ── TURN STUDY INTO A SPORT: PINNED SCROLL-DRIVEN 3D HERO ── */}
       <TurnStudyIntoASportHero
-        frames={Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={[]}
         user={user}
       />
 
@@ -514,7 +514,7 @@ export default function LandingPage() {
 
       {/* ── SECTION 2: 100 LEVEL EMBLEM MASTERY (Pinned Scroll Video Canvas Hero) ── */}
       <Climb100TiersMasteryHero
-        frames={Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={[]}
       />
 
       {/* Motivational Ticker Strip below Emblem Mastery */}
@@ -522,7 +522,7 @@ export default function LandingPage() {
 
       {/* ── SECTION 3: INTERACTIVE ANIMATED WORKFLOW SHOWCASE (Pinned Scroll Video Canvas Hero) ── */}
       <CronoBashWorkflowSection
-        frames={Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={[]}
       />
 
       {/* ── SECTION 4: COMMUNITY TESTIMONIALS (BUILT FOR DEEP WORK FIGHTERS) ── */}

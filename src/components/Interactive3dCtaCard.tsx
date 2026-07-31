@@ -37,37 +37,9 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
     isHovered.current = false;
   };
 
-  // Preload and decode all 220 3D workflow animation frames
+  // Preload disabled to eliminate 404 frame image network requests
   useEffect(() => {
-    const totalFrames = 220;
-    const loadedSet = new Set<number>();
-    const imgArray: HTMLImageElement[] = [];
-
-    for (let i = 1; i <= totalFrames; i++) {
-      const idx = i - 1;
-      const src = `/workflow-frames/frame_${String(i).padStart(3, '0')}.jpg`;
-      const img = new Image();
-      const onImageReady = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
-          setImagesLoaded(true);
-        }
-      };
-
-      img.onload = onImageReady;
-      img.onerror = onImageReady;
-      img.src = src;
-
-      if ('decode' in img && typeof (img as any).decode === 'function') {
-        (img as any).decode().catch(() => {});
-      }
-
-      imgArray[idx] = img;
-    }
-
-    loadedImagesRef.current = imgArray;
+    setImagesLoaded(true);
   }, []);
 
   // 120fps Sub-Frame Interpolated 3D Video Canvas Loop + Parallax Mouse Tracking
