@@ -40,15 +40,18 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
   // Preload and decode all 220 3D workflow animation frames
   useEffect(() => {
     const totalFrames = 220;
-    let count = 0;
+    const loadedSet = new Set<number>();
     const imgArray: HTMLImageElement[] = [];
 
     for (let i = 1; i <= totalFrames; i++) {
+      const idx = i - 1;
       const src = `/workflow-frames/frame_${String(i).padStart(3, '0')}.jpg`;
       const img = new Image();
       const onImageReady = () => {
-        count++;
-        if (count === totalFrames) {
+        if (loadedSet.has(idx)) return;
+        loadedSet.add(idx);
+
+        if (idx === 0 || loadedSet.size >= 1) {
           setImagesLoaded(true);
         }
       };
@@ -61,7 +64,7 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
         (img as any).decode().catch(() => {});
       }
 
-      imgArray[i - 1] = img;
+      imgArray[idx] = img;
     }
 
     loadedImagesRef.current = imgArray;

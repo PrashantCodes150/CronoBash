@@ -33,7 +33,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
   useEffect(() => {
     if (!frames || frames.length === 0) return;
 
-    let count = 0;
+    const loadedSet = new Set<number>();
     const imgArray: HTMLImageElement[] = [];
 
     frames.forEach((src, idx) => {
@@ -41,8 +41,10 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       img.src = src;
       
       const onImageReady = () => {
-        count++;
-        if (count === frames.length) {
+        if (loadedSet.has(idx)) return;
+        loadedSet.add(idx);
+
+        if (idx === 0 || loadedSet.size >= 1) {
           setImagesLoaded(true);
         }
       };
@@ -85,7 +87,12 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1; // Sub-frame interpolation ratio [0..1]
 
-        const img1 = loadedImagesRef.current[idx1];
+        let targetIdx1 = idx1;
+        while (targetIdx1 > 0 && (!loadedImagesRef.current[targetIdx1] || !loadedImagesRef.current[targetIdx1].complete)) {
+          targetIdx1--;
+        }
+
+        const img1 = loadedImagesRef.current[targetIdx1] || loadedImagesRef.current[0];
         const img2 = loadedImagesRef.current[idx2];
 
         // Draw Base Frame (idx1)

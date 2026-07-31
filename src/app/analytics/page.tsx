@@ -338,7 +338,7 @@ export default function AnalyticsPage() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="space-y-6"
+      className="space-y-6 pb-24 lg:pb-8"
     >
       
       {/* ── TOP METRIC CARDS (REFERENCE IMAGE SOLID CIRCLE BADGES & ↗ ARROWS) ── */}

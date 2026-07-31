@@ -126,7 +126,7 @@ function ProductivityHubContent() {
   if (activeTab) {
     const currentTool = suiteCategories.find(c => c.id === activeTab);
     return (
-      <div className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 w-full max-w-full select-none">
+      <div className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 w-full max-w-full select-none pb-24 lg:pb-8">
         
         {/* Sub-page Navigation Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -214,7 +214,7 @@ function ProductivityHubContent() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-8 w-full max-w-full select-none"
+      className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-8 w-full max-w-full select-none pb-24 lg:pb-8"
     >
       
       {/* Directory Hub Header */}

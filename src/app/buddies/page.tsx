@@ -360,7 +360,7 @@ export default function BuddiesPage() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none"
+      className="bg-[#ECEFF6] min-h-screen text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none pb-24 lg:pb-8"
     >
       
       {/* ── TOP NAVIGATION & FILTER BAR ── */}

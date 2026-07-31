@@ -1693,7 +1693,7 @@ function StudySessionContent() {
       selectedTheme === 'green' ? 'bg-[#042f1a] text-emerald-100' :
       selectedTheme === 'water' ? 'bg-[#082f49] text-cyan-100' :
       'bg-[#0b0f19] text-slate-100'
-    } h-screen flex flex-col relative font-sans overflow-hidden selection:bg-[#334155] selection:text-white`}>
+    } min-h-screen md:h-screen flex flex-col relative font-sans overflow-y-auto md:overflow-hidden pb-24 md:pb-0 selection:bg-[#334155] selection:text-white`}>
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes petal-fall {
           0% {

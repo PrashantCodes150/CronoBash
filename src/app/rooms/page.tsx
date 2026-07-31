@@ -296,7 +296,7 @@ export default function RoomsLobby() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-[#fafaf9] min-h-screen text-[#1c1917] font-sans p-4 sm:p-6 md:p-8 rounded-[32px] space-y-6 select-none"
+      className="bg-[#fafaf9] min-h-screen text-[#1c1917] font-sans p-4 sm:p-6 md:p-8 rounded-[32px] space-y-6 select-none pb-24 lg:pb-8"
     >
       
       {/* ── TOP NAVIGATION & FILTER BAR ── */}

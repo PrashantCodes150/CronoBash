@@ -34,11 +34,11 @@ export default function HandsMomentumHero({
     restDelta: 0.0001,
   });
 
-  // 1. High-performance frame preloading with GPU async decoding
+  // 1. High-performance frame preloading with GPU async decoding and single-execution listener
   useEffect(() => {
     if (!frames || frames.length === 0) return;
 
-    let loadedCount = 0;
+    const loadedSet = new Set<number>();
     const imgArray: HTMLImageElement[] = [];
 
     frames.forEach((src, idx) => {
@@ -46,8 +46,11 @@ export default function HandsMomentumHero({
       img.src = src;
 
       const onReady = () => {
-        loadedCount++;
-        if (loadedCount === frames.length) {
+        if (loadedSet.has(idx)) return;
+        loadedSet.add(idx);
+        
+        // Display canvas immediately as soon as frame 0 or first image loads
+        if (idx === 0 || loadedSet.size >= 1) {
           setImagesLoaded(true);
         }
       };
@@ -88,7 +91,13 @@ export default function HandsMomentumHero({
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1;
 
-        const img1 = loadedImagesRef.current[idx1];
+        // Nearest loaded frame fallback to prevent blank/black canvas on network latency
+        let targetIdx1 = idx1;
+        while (targetIdx1 > 0 && (!loadedImagesRef.current[targetIdx1] || !loadedImagesRef.current[targetIdx1].complete)) {
+          targetIdx1--;
+        }
+
+        const img1 = loadedImagesRef.current[targetIdx1] || loadedImagesRef.current[0];
         const img2 = loadedImagesRef.current[idx2];
 
         if (img1 && img1.complete) {

@@ -23,19 +23,23 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
 
   // Preload frames
   useEffect(() => {
-    let loadedCount = 0;
+    const loadedSet = new Set<number>();
     const imgArray: HTMLImageElement[] = [];
 
-    const handleReady = () => {
-      loadedCount++;
-      if (loadedCount >= totalFrames) {
-        setImagesLoaded(true);
-      }
-    };
-
     for (let i = 1; i <= totalFrames; i++) {
+      const idx = i - 1;
       const img = new Image();
       const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.jpg`;
+      
+      const handleReady = () => {
+        if (loadedSet.has(idx)) return;
+        loadedSet.add(idx);
+
+        if (idx === 0 || loadedSet.size >= 1) {
+          setImagesLoaded(true);
+        }
+      };
+
       img.onload = handleReady;
       img.onerror = handleReady;
       img.src = filename;

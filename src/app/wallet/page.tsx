@@ -9,7 +9,7 @@ export default function WalletPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center py-8">
+    <div className="min-h-[75vh] flex items-center justify-center py-8 px-4 pb-24 lg:pb-8">
       
       {/* SINGLE CLEAN STUNNING COMING SOON BANNER CARD WITH FRAMER MOTION ANIMATION */}
       <motion.div

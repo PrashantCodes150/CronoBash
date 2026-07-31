@@ -439,7 +439,7 @@ export default function Header() {
                 {/* Click outside to close */}
                 <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)}></div>
                 
-                <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-3 w-[calc(100vw-32px)] max-w-xs sm:w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 text-xs">
                     <span className="font-bold text-slate-800 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
