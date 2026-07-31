@@ -33,7 +33,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
   useEffect(() => {
     if (!frames || frames.length === 0) return;
 
-    const loadedSet = new Set<number>();
+    let count = 0;
     const imgArray: HTMLImageElement[] = [];
 
     frames.forEach((src, idx) => {
@@ -41,10 +41,8 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       img.src = src;
       
       const onImageReady = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
+        count++;
+        if (count === frames.length) {
           setImagesLoaded(true);
         }
       };
@@ -87,12 +85,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1; // Sub-frame interpolation ratio [0..1]
 
-        let targetIdx1 = idx1;
-        while (targetIdx1 > 0 && (!loadedImagesRef.current[targetIdx1] || !loadedImagesRef.current[targetIdx1].complete)) {
-          targetIdx1--;
-        }
-
-        const img1 = loadedImagesRef.current[targetIdx1] || loadedImagesRef.current[0];
+        const img1 = loadedImagesRef.current[idx1];
         const img2 = loadedImagesRef.current[idx2];
 
         // Draw Base Frame (idx1)
@@ -155,16 +148,6 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       {/* Sticky Full-Screen Hero Viewport */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pt-16">
         
-        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
-        <video
-          src="/videos/generate_this_video_in_hd_in_gwr_video_mvp.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
-        />
-
         {/* Full Bleed Background Frame Canvas */}
         <canvas
           ref={canvasRef}

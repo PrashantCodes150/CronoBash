@@ -13,7 +13,7 @@ interface HandsMomentumHeroProps {
 }
 
 export default function HandsMomentumHero({
-  frames = []
+  frames = HANDS_MOMENTUM_FRAMES
 }: HandsMomentumHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,11 +34,11 @@ export default function HandsMomentumHero({
     restDelta: 0.0001,
   });
 
-  // 1. High-performance frame preloading with GPU async decoding and single-execution listener
+  // 1. High-performance frame preloading with GPU async decoding
   useEffect(() => {
     if (!frames || frames.length === 0) return;
 
-    const loadedSet = new Set<number>();
+    let loadedCount = 0;
     const imgArray: HTMLImageElement[] = [];
 
     frames.forEach((src, idx) => {
@@ -46,11 +46,8 @@ export default function HandsMomentumHero({
       img.src = src;
 
       const onReady = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-        
-        // Display canvas immediately as soon as frame 0 or first image loads
-        if (idx === 0 || loadedSet.size >= 1) {
+        loadedCount++;
+        if (loadedCount === frames.length) {
           setImagesLoaded(true);
         }
       };
@@ -91,13 +88,7 @@ export default function HandsMomentumHero({
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1;
 
-        // Nearest loaded frame fallback to prevent blank/black canvas on network latency
-        let targetIdx1 = idx1;
-        while (targetIdx1 > 0 && (!loadedImagesRef.current[targetIdx1] || !loadedImagesRef.current[targetIdx1].complete)) {
-          targetIdx1--;
-        }
-
-        const img1 = loadedImagesRef.current[targetIdx1] || loadedImagesRef.current[0];
+        const img1 = loadedImagesRef.current[idx1];
         const img2 = loadedImagesRef.current[idx2];
 
         if (img1 && img1.complete) {
@@ -188,16 +179,6 @@ export default function HandsMomentumHero({
       {/* Sticky Viewport Pinned Container (Apple Product Scroll Effect) */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10 z-10 bg-[#050711]">
         
-        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
-        <video
-          src="/videos/the_backgroiund_of_the_video_m_gwr_video_mvp.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
-        />
-
         {/* Fullscreen High-Performance Frame Canvas */}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover z-0" />
 

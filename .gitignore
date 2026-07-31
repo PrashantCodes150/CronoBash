@@ -43,5 +43,3 @@ next-env.d.ts
 # design exports
 /stitch_focusarena_dashboard/
 *.zip
-public/*-frames/
-public/frames/

@@ -44,17 +44,21 @@ export default function ScrollVideoCanvas({
   useEffect(() => {
     if (!frames || frames.length === 0) return;
 
-    const loadedSet = new Set<number>();
+    let loadedCount = 0;
     const imgArray: HTMLImageElement[] = [];
 
     frames.forEach((src, idx) => {
       const img = new Image();
       img.src = src;
       img.onload = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
+        loadedCount++;
+        if (loadedCount === frames.length) {
+          setImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === frames.length) {
           setImagesLoaded(true);
         }
       };
@@ -90,13 +94,7 @@ export default function ScrollVideoCanvas({
         );
 
         currentFrameIndexRef.current = frameIndex;
-        
-        let targetIdx = frameIndex;
-        while (targetIdx > 0 && (!loadedImagesRef.current[targetIdx] || !loadedImagesRef.current[targetIdx].complete)) {
-          targetIdx--;
-        }
-
-        const img = loadedImagesRef.current[targetIdx] || loadedImagesRef.current[0];
+        const img = loadedImagesRef.current[frameIndex];
 
         if (img && img.complete) {
           // Draw image centered aspect-fit/cover
