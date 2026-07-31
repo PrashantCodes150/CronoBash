@@ -545,102 +545,85 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  name: 'Devanshu Verma',
+                  name: 'Prashant Singh',
                   role: 'CS Undergrad & Competitive Programmer',
-                  tag: 'Verified Student · Codeforces Candidate Master',
                   quote: 'I went from struggling with 20-minute study sessions to logging 4 hours of intense flow state daily. The 1v1 money duels make procrastination impossible.',
-                  avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-                  stat: 'Level 42 · ₹14,500 Won',
+                  avatar: '/prashant_singh.jpg',
                   rating: 5.0,
-                  stars: 5,
                 },
                 {
-                  name: 'Ananya Sharma',
+                  name: 'Sakshami Singh',
                   role: 'Medical Aspirant (NEET)',
-                  tag: 'Verified Student · AIR 482 NEET Prep',
                   quote: 'The squad rooms feel like a virtual study library where everyone is accountable. Being able to see live squad statuses keeps me in the zone for hours.',
                   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-                  stat: 'Level 68 · 420 hrs Logged',
-                  rating: 5.0,
-                  stars: 5,
+                  rating: 4.8,
                 },
                 {
-                  name: 'Rohan Mehta',
+                  name: 'Ravinder',
                   role: 'Fintech Engineer & Scholar',
-                  tag: 'Verified Scholar · IIT Bombay Alum',
                   quote: 'The exponential XP curve and emblem badges make leveling up feel as rewarding as an RPG. Direct cash payouts settle instantly into my wallet.',
                   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-                  stat: 'Level 85 · Instant Wallet Payouts',
-                  rating: 4.9,
-                  stars: 5,
+                  rating: 4.7,
                 },
-              ].map((t, idx) => (
-                <FadeUp key={t.name} delay={idx * 0.1}>
-                  <HangingCardItem index={idx} className="h-full">
-                    <div className="h-full rounded-3xl p-7 border border-white/90 shadow-xl bg-white/90 backdrop-blur-2xl flex flex-col justify-between space-y-6 relative overflow-hidden group hover:border-[#334155]/30 transition-all duration-300">
-                      
-                      {/* Top Star Rating & Verified Proof Tag */}
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          {/* Real Star Score Badge */}
-                          <div className="flex items-center gap-1.5 bg-amber-50/80 border border-amber-200/80 px-2.5 py-1 rounded-full shadow-2xs">
+              ].map((t, idx) => {
+                const fullStars = Math.floor(t.rating);
+                const hasHalf = (t.rating % 1) >= 0.5;
+                const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+                return (
+                  <FadeUp key={t.name} delay={idx * 0.1}>
+                    <HangingCardItem index={idx} className="h-full">
+                      <div className="h-full rounded-3xl p-7 border border-white/90 shadow-xl bg-white/90 backdrop-blur-2xl flex flex-col justify-between space-y-6 relative overflow-hidden group hover:border-[#334155]/30 transition-all duration-300">
+                        
+                        {/* Top Dynamic Star Rating Header */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
                             <span className="text-xs font-black text-amber-700 font-mono">{t.rating.toFixed(1)}</span>
                             <div className="flex gap-0.5 text-amber-500">
-                              {[...Array(t.stars)].map((_, i) => (
-                                <span key={i} className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              {[...Array(fullStars)].map((_, i) => (
+                                <span key={`full-${i}`} className="material-symbols-outlined text-[17px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                  star
+                                </span>
+                              ))}
+                              {hasHalf && (
+                                <span key="half" className="material-symbols-outlined text-[17px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                  star_half
+                                </span>
+                              )}
+                              {[...Array(emptyStars)].map((_, i) => (
+                                <span key={`empty-${i}`} className="material-symbols-outlined text-[17px] text-amber-300/60" style={{ fontVariationSettings: "'FILL' 0" }}>
                                   star
                                 </span>
                               ))}
                             </div>
                           </div>
 
-                          {/* Verified Green Badge */}
-                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-200/60 shadow-2xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>{t.tag.split('·')[0].trim()}</span>
-                          </span>
+                          {/* Customer Remark Quote */}
+                          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                            "{t.quote}"
+                          </p>
                         </div>
 
-                        {/* Real Customer Remark Quote */}
-                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                          "{t.quote}"
-                        </p>
-                      </div>
-
-                      {/* Bottom Author Profile & Stat Badge */}
-                      <div className="pt-4 border-t border-slate-200/60 space-y-3">
-                        <div className="flex items-center gap-3">
-                          {/* Authentic Photograph Portrait */}
-                          <div className="relative shrink-0">
-                            <img
-                              src={t.avatar}
-                              alt={t.name}
-                              className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-slate-200/60"
-                            />
-                            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#10B981] text-white rounded-full flex items-center justify-center text-[9px] font-black shadow-xs">
-                              ✓
-                            </span>
-                          </div>
-
+                        {/* Bottom Author Profile */}
+                        <div className="pt-4 border-t border-slate-200/60 flex items-center gap-3">
+                          <img
+                            src={t.avatar}
+                            alt={t.name}
+                            className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-slate-200/60"
+                          />
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-extrabold text-[#334155] truncate flex items-center gap-1.5">
-                              <span>{t.name}</span>
+                            <div className="text-sm font-extrabold text-[#334155] truncate">
+                              {t.name}
                             </div>
                             <div className="text-[11px] text-slate-500 font-semibold truncate">{t.role}</div>
                           </div>
                         </div>
 
-                        {/* Verified Achievement Stat Pill */}
-                        <div className="inline-flex items-center gap-1.5 w-full bg-slate-100/80 border border-slate-200/60 px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-[#334155] font-mono">
-                          <span className="material-symbols-outlined text-xs text-[#3B82F6]">workspace_premium</span>
-                          <span className="truncate">{t.stat}</span>
-                        </div>
                       </div>
-
-                    </div>
-                  </HangingCardItem>
-                </FadeUp>
-              ))}
+                    </HangingCardItem>
+                  </FadeUp>
+                );
+              })}
             </div>
           </HangingCardsSection>
         </div>
