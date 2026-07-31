@@ -545,6 +545,13 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
+                  name: 'Sakshami Singh',
+                  role: 'Medical Aspirant (NEET)',
+                  quote: 'The squad rooms feel like a virtual study library where everyone is accountable. Being able to see live squad statuses keeps me in the zone for hours.',
+                  avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=sakshami-singh',
+                  rating: 4.8,
+                },
+                {
                   name: 'Prashant Singh',
                   role: 'CS Undergrad & Competitive Programmer',
                   quote: 'I went from struggling with 20-minute study sessions to logging 4 hours of intense flow state daily. The 1v1 money duels make procrastination impossible.',
@@ -552,17 +559,10 @@ export default function LandingPage() {
                   rating: 5.0,
                 },
                 {
-                  name: 'Sakshami Singh',
-                  role: 'Medical Aspirant (NEET)',
-                  quote: 'The squad rooms feel like a virtual study library where everyone is accountable. Being able to see live squad statuses keeps me in the zone for hours.',
-                  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-                  rating: 4.8,
-                },
-                {
                   name: 'Ravinder',
                   role: 'Fintech Engineer & Scholar',
                   quote: 'The exponential XP curve and emblem badges make leveling up feel as rewarding as an RPG. Direct cash payouts settle instantly into my wallet.',
-                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                  avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=ravinder',
                   rating: 4.7,
                 },
               ].map((t, idx) => {
