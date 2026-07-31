@@ -188,6 +188,16 @@ export default function HandsMomentumHero({
       {/* Sticky Viewport Pinned Container (Apple Product Scroll Effect) */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10 z-10 bg-[#050711]">
         
+        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
+        <video
+          src="/videos/the_backgroiund_of_the_video_m_gwr_video_mvp.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
+        />
+
         {/* Fullscreen High-Performance Frame Canvas */}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover z-0" />
 

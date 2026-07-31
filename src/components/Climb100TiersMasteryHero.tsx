@@ -232,8 +232,21 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     <div ref={containerRef} id="levels" className="relative h-[240vh] w-full bg-[#070B14]">
       
       {/* Sticky Full-Screen Viewport Pinned while Video Frames Pan */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10 bg-[#070B14]">
         
+        {/* Ambient Glowing Cyberpunk Background Fallback */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900/80 via-[#070B14] to-[#070B14] z-0 pointer-events-none" />
+
+        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
+        <video
+          src="/videos/generate_this_video_in_hd_in_gwr_video_mvp.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 mix-blend-screen"
+        />
+
         {/* Scroll Video Canvas Background (100% VISIBLE & BRIGHT) */}
         <canvas
           ref={canvasRef}

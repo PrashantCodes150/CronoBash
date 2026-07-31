@@ -155,6 +155,16 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       {/* Sticky Full-Screen Hero Viewport */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pt-16">
         
+        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
+        <video
+          src="/videos/generate_this_video_in_hd_in_gwr_video_mvp.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
+        />
+
         {/* Full Bleed Background Frame Canvas */}
         <canvas
           ref={canvasRef}

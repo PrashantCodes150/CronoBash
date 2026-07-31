@@ -178,6 +178,16 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
         onMouseLeave={handleMouseLeave}
         className="rounded-3xl p-8 sm:p-14 md:p-20 bg-[#070B14] text-white shadow-[0_25px_60px_rgba(0,0,0,0.9)] relative overflow-hidden text-center border border-slate-800/80 transition-all duration-300 select-none"
       >
+        {/* High-Performance MP4 Video Background for Vercel CDN */}
+        <video
+          src="/workflow_demo.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-80"
+        />
+
         {/* Full Bleed 3D Video Canvas (Mouse moves & follows cursor in 2D/3D parallax!) */}
         <canvas
           ref={canvasRef}

@@ -194,8 +194,18 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     <div ref={containerRef} id="workflow" className="relative h-[360vh] w-full bg-[#ECEFF6]">
       
       {/* Sticky Full-Screen Viewport Pinned while Video Frames Pan */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center items-center py-6 px-4">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center items-center py-6 px-4 bg-[#ECEFF6]">
         
+        {/* Instant MP4 Video Background Fallback for Vercel CDN */}
+        <video
+          src="/workflow_demo.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 mix-blend-multiply pointer-events-none"
+        />
+
         {/* Full Bleed Background Frame Canvas */}
         <canvas
           ref={canvasRef}
