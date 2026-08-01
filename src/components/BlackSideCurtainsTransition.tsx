@@ -290,51 +290,58 @@ export default function BlackSideCurtainsTransition() {
     if (!ctx) return;
 
     let animId: number;
+    let lastDrawnFrame = -1;
 
     const render = () => {
+      animId = requestAnimationFrame(render);
+
+      const total = loadedImagesRef.current.length;
+      const floatFrame = currentFrameObjRef.current.frame;
+
+      if (total === 0 || floatFrame < 0.1) return;
+
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+        return;
+      }
+
+      lastDrawnFrame = floatFrame;
+
       const width = canvas.width;
       const height = canvas.height;
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const total = loadedImagesRef.current.length;
-      const floatFrame = currentFrameObjRef.current.frame;
+      const idx1 = Math.floor(floatFrame);
+      const idx2 = Math.min(total - 1, idx1 + 1);
+      const blend = floatFrame - idx1;
 
-      if (total > 0 && floatFrame >= 0.1) {
-        const idx1 = Math.floor(floatFrame);
-        const idx2 = Math.min(total - 1, idx1 + 1);
-        const blend = floatFrame - idx1;
+      const img1 = loadedImagesRef.current[idx1];
+      const img2 = loadedImagesRef.current[idx2];
 
-        const img1 = loadedImagesRef.current[idx1];
-        const img2 = loadedImagesRef.current[idx2];
+      if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
+        const hRatio = width / img1.naturalWidth;
+        const vRatio = height / img1.naturalHeight;
+        const ratio = Math.max(hRatio, vRatio);
+        const drawW = Math.round(img1.naturalWidth * ratio);
+        const drawH = Math.round(img1.naturalHeight * ratio);
+        const shiftX = Math.round((width - drawW) / 2);
+        const shiftY = Math.round((height - drawH) / 2 + 45); // Shift down by 45px so top hand tips are fully unclipped
 
-        if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
-          const hRatio = width / img1.naturalWidth;
-          const vRatio = height / img1.naturalHeight;
-          const ratio = Math.max(hRatio, vRatio);
-          const drawW = Math.round(img1.naturalWidth * ratio);
-          const drawH = Math.round(img1.naturalHeight * ratio);
-          const shiftX = Math.round((width - drawW) / 2);
-          const shiftY = Math.round((height - drawH) / 2 + 45); // Shift down by 45px so top hand tips are fully unclipped
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(
+          img1, 0, 0, img1.naturalWidth, img1.naturalHeight,
+          shiftX, shiftY, drawW, drawH
+        );
 
-          ctx.globalAlpha = 1.0;
+        if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.01) {
+          ctx.globalAlpha = blend;
           ctx.drawImage(
-            img1, 0, 0, img1.naturalWidth, img1.naturalHeight,
+            img2, 0, 0, img2.naturalWidth, img2.naturalHeight,
             shiftX, shiftY, drawW, drawH
           );
-
-          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.001) {
-            ctx.globalAlpha = blend;
-            ctx.drawImage(
-              img2, 0, 0, img2.naturalWidth, img2.naturalHeight,
-              shiftX, shiftY, drawW, drawH
-            );
-          }
         }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
     render();

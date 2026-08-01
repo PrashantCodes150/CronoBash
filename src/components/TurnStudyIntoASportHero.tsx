@@ -44,11 +44,24 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
     if (!ctx) return;
 
     let animId: number;
+    let lastDrawnFrame = -1;
 
     const render = () => {
-      const rawProgress = smoothProgress.get();
-      // Quantize progress to 4 decimal places to eliminate sub-pixel floating micro-vibrations when stationary
-      const progress = Math.min(1, Math.max(0, Math.round(rawProgress * 10000) / 10000));
+      animId = requestAnimationFrame(render);
+
+      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
+      const total = loadedImagesRef.current.length;
+      if (total === 0) return;
+
+      const floatFrame = rawProgress * (total - 1);
+
+      // Deadzone check: Skip redrawing if frame position hasn't moved significantly when scroll is stationary
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+        return;
+      }
+
+      lastDrawnFrame = floatFrame;
+
       const width = canvas.width;
       const height = canvas.height;
 
@@ -56,46 +69,38 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const total = loadedImagesRef.current.length;
+      const idx1 = Math.floor(floatFrame);
+      const idx2 = Math.min(total - 1, idx1 + 1);
+      const blend = floatFrame - idx1; // Sub-frame interpolation ratio [0..1]
 
-      if (total > 0) {
-        // Calculate precise fractional float frame index (e.g. 42.6)
-        const floatFrame = progress * (total - 1);
-        const idx1 = Math.floor(floatFrame);
-        const idx2 = Math.min(total - 1, idx1 + 1);
-        const blend = floatFrame - idx1; // Sub-frame interpolation ratio [0..1]
+      const img1 = getFrameOrFallback(idx1);
+      const img2 = loadedImagesRef.current[idx2];
 
-        const img1 = getFrameOrFallback(idx1);
-        const img2 = loadedImagesRef.current[idx2];
+      // Draw Base Frame with integer pixel snapping to eliminate sub-pixel jitter
+      if (img1 && img1.complete) {
+        const hRatio = width / img1.width;
+        const vRatio = height / img1.height;
+        const ratio = Math.max(hRatio, vRatio);
+        const drawW = Math.round(img1.width * ratio);
+        const drawH = Math.round(img1.height * ratio);
+        const shiftX = Math.round((width - drawW) / 2);
+        const shiftY = Math.round((height - drawH) / 2);
 
-        // Draw Base Frame with integer pixel snapping to eliminate sub-pixel jitter
-        if (img1 && img1.complete) {
-          const hRatio = width / img1.width;
-          const vRatio = height / img1.height;
-          const ratio = Math.max(hRatio, vRatio);
-          const drawW = Math.round(img1.width * ratio);
-          const drawH = Math.round(img1.height * ratio);
-          const shiftX = Math.round((width - drawW) / 2);
-          const shiftY = Math.round((height - drawH) / 2);
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(
+          img1, 0, 0, img1.width, img1.height,
+          shiftX, shiftY, drawW, drawH
+        );
 
-          ctx.globalAlpha = 1.0;
+        // Sub-Frame Blend Transition with Next Frame (idx2) for 120fps motion morphing
+        if (idx1 !== idx2 && img2 && img2.complete && blend > 0.01) {
+          ctx.globalAlpha = blend;
           ctx.drawImage(
-            img1, 0, 0, img1.width, img1.height,
+            img2, 0, 0, img2.width, img2.height,
             shiftX, shiftY, drawW, drawH
           );
-
-          // Sub-Frame Blend Transition with Next Frame (idx2) for 120fps motion morphing
-          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.001) {
-            ctx.globalAlpha = blend;
-            ctx.drawImage(
-              img2, 0, 0, img2.width, img2.height,
-              shiftX, shiftY, drawW, drawH
-            );
-          }
         }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
     render();

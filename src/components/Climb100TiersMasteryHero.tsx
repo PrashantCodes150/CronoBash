@@ -74,8 +74,6 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
-
     const handleResize = () => {
       if (!canvas) return;
       canvas.width = canvas.clientWidth || window.innerWidth;
@@ -85,58 +83,68 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    let animId: number;
+    let lastDrawnFrame = -1;
+
     const render = () => {
+      animId = requestAnimationFrame(render);
+
       const total = loadedImagesRef.current.length;
-      if (total > 0) {
-        const floatFrame = Math.max(0, Math.min(total - 1, currentFrameObjRef.current.frame));
-        const idx1 = Math.floor(floatFrame);
-        const idx2 = Math.min(total - 1, idx1 + 1);
-        const blend = floatFrame - idx1;
+      const floatFrame = Math.max(0, Math.min(total - 1, currentFrameObjRef.current.frame));
 
-        const img1 = getFrameOrFallback(idx1);
-        const img2 = loadedImagesRef.current[idx2];
+      if (total === 0) return;
 
-        if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
-          const w = canvas.width;
-          const h = canvas.height;
-
-          ctx.clearRect(0, 0, w, h);
-
-          const imgRatio = img1.naturalWidth / img1.naturalHeight;
-          const canvasRatio = w / h;
-          let drawW = Math.round(w);
-          let drawH = Math.round(h);
-          let offsetX = 0;
-          let offsetY = 0;
-
-          if (canvasRatio > imgRatio) {
-            drawH = Math.round(w / imgRatio);
-            offsetY = Math.round((h - drawH) / 2);
-          } else {
-            drawW = Math.round(h * imgRatio);
-            offsetX = Math.round((w - drawW) / 2);
-          }
-
-          ctx.globalAlpha = 1.0;
-          ctx.drawImage(img1, offsetX, offsetY, drawW, drawH);
-
-          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.001) {
-            ctx.globalAlpha = blend;
-            ctx.drawImage(img2, offsetX, offsetY, drawW, drawH);
-          }
-
-          // Light, subtle vignette overlay for text legibility
-          ctx.globalAlpha = 1.0;
-          const gradient = ctx.createLinearGradient(0, 0, 0, h);
-          gradient.addColorStop(0, 'rgba(7, 11, 20, 0.25)');
-          gradient.addColorStop(0.5, 'rgba(7, 11, 20, 0.15)');
-          gradient.addColorStop(1, 'rgba(7, 11, 20, 0.35)');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, w, h);
-        }
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+        return;
       }
 
-      animId = requestAnimationFrame(render);
+      lastDrawnFrame = floatFrame;
+
+      const idx1 = Math.floor(floatFrame);
+      const idx2 = Math.min(total - 1, idx1 + 1);
+      const blend = floatFrame - idx1;
+
+      const img1 = getFrameOrFallback(idx1);
+      const img2 = loadedImagesRef.current[idx2];
+
+      if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        const imgRatio = img1.naturalWidth / img1.naturalHeight;
+        const canvasRatio = w / h;
+        let drawW = Math.round(w);
+        let drawH = Math.round(h);
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (canvasRatio > imgRatio) {
+          drawH = Math.round(w / imgRatio);
+          offsetY = Math.round((h - drawH) / 2);
+        } else {
+          drawW = Math.round(h * imgRatio);
+          offsetX = Math.round((w - drawW) / 2);
+        }
+
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(img1, offsetX, offsetY, drawW, drawH);
+
+        if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.01) {
+          ctx.globalAlpha = blend;
+          ctx.drawImage(img2, offsetX, offsetY, drawW, drawH);
+        }
+
+        // Light, subtle vignette overlay for text legibility
+        ctx.globalAlpha = 1.0;
+        const gradient = ctx.createLinearGradient(0, 0, 0, h);
+        gradient.addColorStop(0, 'rgba(7, 11, 20, 0.25)');
+        gradient.addColorStop(0.5, 'rgba(7, 11, 20, 0.15)');
+        gradient.addColorStop(1, 'rgba(7, 11, 20, 0.35)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+      }
     };
 
     render();
