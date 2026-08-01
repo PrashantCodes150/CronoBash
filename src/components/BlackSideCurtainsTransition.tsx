@@ -385,20 +385,20 @@ export default function BlackSideCurtainsTransition() {
   const card4Pos = useWaveTransform(c4T);
 
   // ── PURE WHITE BACKGROUND FOR PHASE 1 ENTRY -> PITCH BLACK STARFIELD FOR PHASE 2 MOMENTUM ──
-  const starfieldOpacity = useTransform(smoothProgress, [0.48, 0.53], [0, 1]);
+  const starfieldOpacity = useTransform(smoothProgress, [0.36, 0.42], [0, 1]);
 
   // ── LENIS-STYLE GIANT KEYHOLE TYPOGRAPHY UNFOLD ──
-  const lenisScale = useTransform(smoothProgress, [0.49, 0.57], [4.5, 1.0]);
-  const lenisX = useTransform(smoothProgress, [0.49, 0.57], ['26vw', '0vw']);
-  const lenisY = useTransform(smoothProgress, [0.49, 0.57], ['-25vh', '0vh']);
-  const lenisOpacity = useTransform(smoothProgress, [0.48, 0.53], [0, 1]);
+  const lenisScale = useTransform(smoothProgress, [0.36, 0.43], [4.5, 1.0]);
+  const lenisX = useTransform(smoothProgress, [0.36, 0.43], ['26vw', '0vw']);
+  const lenisY = useTransform(smoothProgress, [0.36, 0.43], ['-25vh', '0vh']);
+  const lenisOpacity = useTransform(smoothProgress, [0.36, 0.42], [0, 1]);
 
   // Hidden letters/words behind curtains reveal as curtains slide apart
-  const curtainHiddenLettersOpacity = useTransform(smoothProgress, [0.50, 0.55], [0, 1]);
+  const curtainHiddenLettersOpacity = useTransform(smoothProgress, [0.37, 0.42], [0, 1]);
 
-  // Hands video canvas starts fading in earlier (0.51 -> 0.57)
-  const videoCanvasOpacity = useTransform(smoothProgress, [0.51, 0.57], [0, 1]);
-  const darkOverlayOpacity = useTransform(smoothProgress, [0.51, 0.57], [0, 0.15]);
+  // Hands video canvas starts fading in as curtains part (0.37 -> 0.43)
+  const videoCanvasOpacity = useTransform(smoothProgress, [0.37, 0.43], [0, 1]);
+  const darkOverlayOpacity = useTransform(smoothProgress, [0.37, 0.43], [0, 0.15]);
 
   // ── SPACIOUS BENTO CARDS SCROLL TIMING ──
   const bento1Opacity = useTransform(smoothProgress, [0.44, 0.49, 0.53, 0.56], [0, 1, 1, 0]);
