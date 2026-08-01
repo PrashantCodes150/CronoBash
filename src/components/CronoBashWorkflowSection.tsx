@@ -56,53 +56,60 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     if (!ctx) return;
 
     let animId: number;
+    let lastDrawnFrame = -1;
 
     const render = () => {
-      const rawProgress = smoothProgress.get();
-      const progress = Math.min(1, Math.max(0, Math.round(rawProgress * 10000) / 10000));
+      animId = requestAnimationFrame(render);
+
+      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
+      const total = loadedImagesRef.current.length;
+      if (total === 0) return;
+
+      const floatFrame = rawProgress * (total - 1);
+
+      // Deadzone check: Skip redrawing if frame position hasn't moved when stationary
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+        return;
+      }
+
+      lastDrawnFrame = floatFrame;
+
       const width = canvas.width;
       const height = canvas.height;
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const total = loadedImagesRef.current.length;
+      const idx1 = Math.floor(floatFrame);
+      const idx2 = Math.min(total - 1, idx1 + 1);
+      const blend = floatFrame - idx1;
 
-      if (total > 0) {
-        const floatFrame = progress * (total - 1);
-        const idx1 = Math.floor(floatFrame);
-        const idx2 = Math.min(total - 1, idx1 + 1);
-        const blend = floatFrame - idx1;
+      const img1 = getFrameOrFallback(idx1);
+      const img2 = loadedImagesRef.current[idx2];
 
-        const img1 = getFrameOrFallback(idx1);
-        const img2 = loadedImagesRef.current[idx2];
+      if (img1 && img1.complete) {
+        const hRatio = width / img1.width;
+        const vRatio = height / img1.height;
+        const ratio = Math.max(hRatio, vRatio);
+        const drawW = Math.round(img1.width * ratio);
+        const drawH = Math.round(img1.height * ratio);
+        const shiftX = Math.round((width - drawW) / 2);
+        const shiftY = Math.round((height - drawH) / 2);
 
-        if (img1 && img1.complete) {
-          const hRatio = width / img1.width;
-          const vRatio = height / img1.height;
-          const ratio = Math.max(hRatio, vRatio);
-          const drawW = Math.round(img1.width * ratio);
-          const drawH = Math.round(img1.height * ratio);
-          const shiftX = Math.round((width - drawW) / 2);
-          const shiftY = Math.round((height - drawH) / 2);
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(
+          img1, 0, 0, img1.width, img1.height,
+          shiftX, shiftY, drawW, drawH
+        );
 
-          ctx.globalAlpha = 1.0;
+        if (idx1 !== idx2 && img2 && img2.complete && blend > 0.01) {
+          ctx.globalAlpha = blend;
           ctx.drawImage(
-            img1, 0, 0, img1.width, img1.height,
+            img2, 0, 0, img2.width, img2.height,
             shiftX, shiftY, drawW, drawH
           );
-
-          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.001) {
-            ctx.globalAlpha = blend;
-            ctx.drawImage(
-              img2, 0, 0, img2.width, img2.height,
-              shiftX, shiftY, drawW, drawH
-            );
-          }
         }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
     render();

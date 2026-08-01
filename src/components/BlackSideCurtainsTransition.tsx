@@ -115,8 +115,8 @@ export default function BlackSideCurtainsTransition() {
       scrub: 0.4, // GSAP smooth inertia scrubbing combined with Lenis
       onUpdate: (self) => {
         const p = self.progress;
-        if (p >= 0.49) {
-          const videoProgress = Math.min(1, Math.max(0, (p - 0.51) / 0.49));
+        if (p >= 0.38) {
+          const videoProgress = Math.min(1, Math.max(0, (p - 0.40) / 0.60));
           const targetFrame = videoProgress * 174;
           
           gsap.to(currentFrameObjRef.current, {
@@ -399,23 +399,24 @@ export default function BlackSideCurtainsTransition() {
   const darkOverlayOpacity = useTransform(smoothProgress, [0.51, 0.57], [0, 0.15]);
 
   // ── SPACIOUS BENTO CARDS SCROLL TIMING ──
-  const bento1Opacity = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [0, 1, 1, 0]);
-  const bento1Y = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [40, 0, 0, -30]);
+  const bento1Opacity = useTransform(smoothProgress, [0.44, 0.49, 0.53, 0.56], [0, 1, 1, 0]);
+  const bento1Y = useTransform(smoothProgress, [0.44, 0.49, 0.53, 0.56], [40, 0, 0, -30]);
 
-  const bento2Opacity = useTransform(smoothProgress, [0.70, 0.74, 0.78, 0.81], [0, 1, 1, 0]);
-  const bento2Y = useTransform(smoothProgress, [0.70, 0.74, 0.78, 0.81], [40, 0, 0, -30]);
+  const bento2Opacity = useTransform(smoothProgress, [0.56, 0.60, 0.64, 0.67], [0, 1, 1, 0]);
+  const bento2Y = useTransform(smoothProgress, [0.56, 0.60, 0.64, 0.67], [40, 0, 0, -30]);
 
-  const bento3Opacity = useTransform(smoothProgress, [0.81, 0.85, 0.89, 0.91], [0, 1, 1, 0]);
-  const bento3Y = useTransform(smoothProgress, [0.81, 0.85, 0.89, 0.91], [40, 0, 0, -30]);
+  const bento3Opacity = useTransform(smoothProgress, [0.67, 0.71, 0.75, 0.78], [0, 1, 1, 0]);
+  const bento3Y = useTransform(smoothProgress, [0.67, 0.71, 0.75, 0.78], [40, 0, 0, -30]);
 
-  const bento4Opacity = useTransform(smoothProgress, [0.91, 0.94, 0.96, 0.98], [0, 1, 1, 0]);
-  const bento4Y = useTransform(smoothProgress, [0.91, 0.94, 0.96, 0.98], [40, 0, 0, -30]);
+  const bento4Opacity = useTransform(smoothProgress, [0.78, 0.82, 0.86, 0.89], [0, 1, 1, 0]);
+  const bento4Y = useTransform(smoothProgress, [0.78, 0.82, 0.86, 0.89], [40, 0, 0, -30]);
 
-  const bento5Opacity = useTransform(smoothProgress, [0.98, 0.99, 1.00], [0, 1, 1]);
-  const bento5Y = useTransform(smoothProgress, [0.98, 0.99, 1.00], [40, 0, 0]);
+  // Card 5 appears at 0.89, becomes 100% visible at 0.93, and HOLDS FULLY VISIBLE & PINNED through 1.00!
+  const bento5Opacity = useTransform(smoothProgress, [0.89, 0.93, 1.00], [0, 1, 1]);
+  const bento5Y = useTransform(smoothProgress, [0.89, 0.93, 1.00], [40, 0, 0]);
 
   return (
-    <div ref={containerRef} className="relative h-[900vh] w-full bg-white">
+    <div ref={containerRef} className="relative h-[1200vh] w-full bg-white">
       
       {/* Sticky Full-Screen Viewport */}
       <div className="sticky top-0 h-screen w-full overflow-hidden z-30 flex items-center justify-center pointer-events-auto bg-white">
