@@ -22,7 +22,7 @@ export function Footer() {
               <img
                 src="/cronobash-icon.webp"
                 alt="CronoBash Emblem"
-                className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform"
               />
               <div className="font-sans text-2xl font-black tracking-tight flex items-center">
                 <span className="text-white">CRONO</span>

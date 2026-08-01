@@ -450,7 +450,7 @@ export default function LandingPage() {
             <img
               src="/cronobash-icon.webp"
               alt="CronoBash Emblem"
-              className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform"
             />
             <span
               className="font-bold text-[20px] sm:text-[24px] text-[#334155] tracking-normal"

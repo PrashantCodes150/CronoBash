@@ -112,7 +112,7 @@ export default function SignupPage() {
           <img
             src="/cronobash-icon.webp"
             alt="CronoBash Emblem"
-            className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+            className="w-11 h-11 object-contain group-hover:scale-105 transition-transform"
           />
           <span
             className="text-xl font-extrabold text-slate-[#334155] tracking-tight"
