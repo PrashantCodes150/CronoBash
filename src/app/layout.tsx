@@ -28,6 +28,10 @@ export default function RootLayout({
       className={`${inter.className} ${inter.variable} h-full antialiased`}
     >
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" href="/hero-frames/frame_001.webp" as="image" type="image/webp" />
+        <link rel="preload" href="/cronobash-icon.webp" as="image" type="image/webp" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"

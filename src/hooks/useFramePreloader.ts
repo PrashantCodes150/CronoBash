@@ -74,19 +74,16 @@ export function useFramePreloader(
     };
 
     const loadAll = async () => {
-      // Phase 1: High-Priority Initial Frames (0..priorityCount)
-      const priorityIndices = Array.from(
-        { length: Math.min(priorityCount, total) },
-        (_, i) => i
-      );
-      await Promise.all(priorityIndices.map((idx) => loadImage(idx)));
+      // Phase 1: Instantly load frame 0 & 1 for immediate page render (< 30ms)
+      const initialIndices = [0, 1].filter((i) => i < total);
+      await Promise.all(initialIndices.map((idx) => loadImage(idx)));
 
       if (isCancelled) return;
 
-      // Phase 2: Controlled Concurrency Queue for Remaining Frames
+      // Phase 2: Controlled Concurrency Queue for Remaining Frames in Background
       const remainingIndices = Array.from(
-        { length: Math.max(0, total - priorityCount) },
-        (_, i) => i + priorityCount
+        { length: total - initialIndices.length },
+        (_, i) => i + initialIndices.length
       );
 
       let poolIndex = 0;
