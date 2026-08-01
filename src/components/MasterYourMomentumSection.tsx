@@ -87,7 +87,7 @@ export default function MasterYourMomentumSection() {
         const img1 = loadedImagesRef.current[idx1];
         const img2 = loadedImagesRef.current[idx2];
 
-        if (img1 && img1.complete) {
+        if (img1 && img1.complete && img1.naturalWidth > 0) {
           const hRatio = width / img1.width;
           const vRatio = height / img1.height;
           const ratio = Math.max(hRatio, vRatio);
@@ -102,7 +102,7 @@ export default function MasterYourMomentumSection() {
             shiftX, shiftY, drawW, drawH
           );
 
-          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.001) {
+          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.001) {
             ctx.globalAlpha = blend;
             ctx.drawImage(
               img2, 0, 0, img2.width, img2.height,

@@ -77,7 +77,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       const img2 = loadedImagesRef.current[idx2];
 
       // Draw Base Frame with integer pixel snapping to eliminate sub-pixel jitter
-      if (img1 && img1.complete) {
+      if (img1 && img1.complete && img1.naturalWidth > 0) {
         const hRatio = width / img1.width;
         const vRatio = height / img1.height;
         const ratio = Math.max(hRatio, vRatio);
@@ -93,7 +93,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
         );
 
         // Sub-Frame Blend Transition with Next Frame (idx2) for 120fps motion morphing
-        if (idx1 !== idx2 && img2 && img2.complete && blend > 0.01) {
+        if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.01) {
           ctx.globalAlpha = blend;
           ctx.drawImage(
             img2, 0, 0, img2.width, img2.height,

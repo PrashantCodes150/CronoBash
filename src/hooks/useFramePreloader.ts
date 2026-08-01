@@ -12,7 +12,7 @@ export function useFramePreloader(
   frames: string[],
   options: UseFramePreloaderOptions = {}
 ) {
-  const { enabled = true, concurrency = 10, priorityCount = 12 } = options;
+  const { enabled = true, concurrency = 4, priorityCount = 8 } = options;
 
   const loadedImagesRef = useRef<HTMLImageElement[]>([]);
   const [loadedCount, setLoadedCount] = useState(0);
@@ -39,24 +39,36 @@ export function useFramePreloader(
       }
     };
 
-    const loadImage = (index: number): Promise<void> => {
+    const loadImage = (index: number, retries = 2): Promise<void> => {
       return new Promise((resolve) => {
         if (isCancelled) return resolve();
         const src = frames[index];
         const img = new Image();
         img.src = src;
 
-        const handleReady = () => {
-          imgArray[index] = img;
-          onSingleImageComplete(index, img);
+        const handleSuccess = () => {
+          if (img.naturalWidth > 0) {
+            imgArray[index] = img;
+            onSingleImageComplete(index, img);
+          }
           resolve();
         };
 
-        img.onload = handleReady;
-        img.onerror = handleReady;
+        const handleError = () => {
+          if (retries > 0 && !isCancelled) {
+            setTimeout(() => {
+              loadImage(index, retries - 1).then(resolve);
+            }, 250);
+          } else {
+            resolve();
+          }
+        };
+
+        img.onload = handleSuccess;
+        img.onerror = handleError;
 
         if ('decode' in img && typeof (img as any).decode === 'function') {
-          (img as any).decode().then(handleReady).catch(() => {});
+          (img as any).decode().then(handleSuccess).catch(handleError);
         }
       });
     };
