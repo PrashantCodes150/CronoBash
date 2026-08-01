@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import { useProductivityStore } from '@/lib/productivity-store';
 import { BADGES, Badge } from '@/lib/badges';
@@ -347,8 +348,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-10 h-10 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-bold text-xs mt-4">LOADING USER PROFILE...</p>
+        <LogoLoader size="md" text="LOADING USER PROFILE..." />
       </div>
     );
   }

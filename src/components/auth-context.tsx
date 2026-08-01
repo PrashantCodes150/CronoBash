@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { supabase, UserProfile, Wallet } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
+import LogoLoader from './LogoLoader';
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
@@ -268,12 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isPublicRoute = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'].includes(pathname);
   if (loading && !isPublicRoute) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-on-background">
-        <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-on-surface-variant font-label-mono text-xs mt-4 font-bold">INITIALIZING ARENA RIG...</p>
-      </div>
-    );
+    return <LogoLoader size="full" text="INITIALIZING ARENA RIG..." />;
   }
 
   return (

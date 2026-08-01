@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase, Room, RoomMember } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 
@@ -603,9 +604,8 @@ export default function RoomDetail() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#fafaf9] rounded-[32px] p-8">
-        <div className="w-12 h-12 border-4 border-[#334155] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[#44474c] font-bold text-sm mt-4 tracking-wide">SYNCHRONIZING ARENA LOBBY...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#fafaf9] rounded-[32px] p-8">
+        <LogoLoader size="md" text="SYNCHRONIZING ARENA LOBBY..." />
       </div>
     );
   }

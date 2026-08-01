@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -2913,12 +2914,7 @@ function StudySessionContent() {
 
 export default function StudySessionPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-on-surface-variant font-label-mono text-xs mt-4">INITIALIZING SPRINT RIG...</p>
-      </div>
-    }>
+    <Suspense fallback={<LogoLoader size="full" text="INITIALIZING SPRINT RIG..." />}>
       <StudySessionContent />
     </Suspense>
   );

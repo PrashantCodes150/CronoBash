@@ -8,6 +8,7 @@ import { supabase, Task, Room } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 import GreetingBanner from '@/components/GreetingBanner';
+import LogoLoader from '@/components/LogoLoader';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -498,9 +499,8 @@ export default function Dashboard() {
 
   if (loadingData && tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#ECEFF6] rounded-[32px] p-8">
-        <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-600 font-semibold text-sm mt-4 tracking-wide">LOADING DASHBOARD CONTROL...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#ECEFF6] rounded-[32px] p-8">
+        <LogoLoader size="md" text="LOADING DASHBOARD CONTROL..." />
       </div>
     );
   }

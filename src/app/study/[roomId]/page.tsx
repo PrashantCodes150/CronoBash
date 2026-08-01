@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import { useRoomEvents } from '@/hooks/useRoomEvents';
 import { useFocusDetection } from '@/lib/useFocusDetection';
@@ -398,12 +399,7 @@ export default function StudyRoomPage() {
   };
 
   if (loadingRoom) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#ECEFF6] p-8">
-        <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-600 font-semibold text-sm mt-4 tracking-wide">CONNECTING TO LIVE NEURAL ARENA...</p>
-      </div>
-    );
+    return <LogoLoader size="full" text="CONNECTING TO LIVE NEURAL ARENA..." />;
   }
 
   return (
