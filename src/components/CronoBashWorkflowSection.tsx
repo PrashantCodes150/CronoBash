@@ -25,9 +25,9 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (p) => {
       const progress = Math.min(1, Math.max(0, p));
-      if (progress < 0.22) setActiveStep(0);
-      else if (progress < 0.46) setActiveStep(1);
-      else if (progress < 0.72) setActiveStep(2);
+      if (progress < 0.25) setActiveStep(0);
+      else if (progress < 0.50) setActiveStep(1);
+      else if (progress < 0.75) setActiveStep(2);
       else setActiveStep(3);
     });
     return () => unsubscribe();
@@ -178,7 +178,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   const currentWorkflow = WORKFLOW_STEPS[activeStep];
 
   return (
-    <div ref={containerRef} id="workflow" className="relative h-[240vh] w-full bg-[#ECEFF6]">
+    <div ref={containerRef} id="workflow" className="relative h-[320vh] w-full bg-[#ECEFF6]">
       
       {/* Sticky Full-Screen Viewport Pinned while Video Frames Pan */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center items-center py-6 px-4">
@@ -281,13 +281,13 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
                   {/* Background Glow */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#334155]/5 rounded-full blur-3xl pointer-events-none" />
 
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence>
                     <motion.div
                       key={currentWorkflow.step}
-                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -15, scale: 0.97 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
                       className="space-y-6 z-10"
                     >
                       <div className="flex justify-between items-center border-b border-slate-200/50 pb-4">
