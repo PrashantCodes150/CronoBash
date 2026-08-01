@@ -74,6 +74,7 @@ export default function HangingCardsSection({ children }: HangingCardsSectionPro
             strokeWidth="3.5"
             strokeLinecap="round"
             filter="url(#orangeGlow)"
+            initial={{ d: "M 0 22 Q 360 32, 720 20 T 1440 22" }}
             animate={{
               d: [
                 "M 0 22 Q 360 32, 720 20 T 1440 22",
@@ -104,6 +105,7 @@ export default function HangingCardsSection({ children }: HangingCardsSectionPro
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   filter="url(#orangeGlow)"
+                  initial={{ d: initialPath }}
                   animate={{
                     d: item.pathKeyframes
                   }}
@@ -122,6 +124,7 @@ export default function HangingCardsSection({ children }: HangingCardsSectionPro
                   fill="#FF5500"
                   stroke="#FFFFFF"
                   strokeWidth={1.8}
+                  initial={{ cy: initialY }}
                   animate={{
                     cy: item.yKeyframes
                   }}
