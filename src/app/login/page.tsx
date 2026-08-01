@@ -26,17 +26,18 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        const msg = error.message && error.message !== '{}' ? error.message : 'Invalid email or password. Please check your credentials.';
+        setErrorMsg(msg);
         setLoading(false);
       } else {
         router.replace('/dashboard');
       }
     } catch (e: any) {
-      const msg = e?.message || String(e);
+      const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during sign in.';
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
         setErrorMsg('Cannot reach the server. Check your internet connection.');
       } else {
-        setErrorMsg('An unexpected error occurred: ' + msg);
+        setErrorMsg(msg);
       }
       setLoading(false);
     }

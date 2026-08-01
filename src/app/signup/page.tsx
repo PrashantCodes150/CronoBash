@@ -62,21 +62,22 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        const msg = error.message && error.message !== '{}' ? error.message : 'Server error during sign up. Please try signing in or use Google Login.';
+        setErrorMsg(msg);
       } else if (data?.user) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem(`cronobash_has_seen_onboarding_${data.user.id}`);
           localStorage.removeItem('cronobash_has_seen_onboarding');
           localStorage.removeItem('cronobash_user_onboarding_data');
         }
-        router.push('/onboarding');
+        router.push('/dashboard');
       }
     } catch (e: any) {
-      const msg = e?.message || String(e);
+      const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during signup.';
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
         setErrorMsg('Cannot reach the server. Check your internet connection.');
       } else {
-        setErrorMsg('An unexpected error occurred: ' + msg);
+        setErrorMsg(msg);
       }
     } finally {
       setLoading(false);
