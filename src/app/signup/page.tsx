@@ -62,7 +62,20 @@ export default function SignupPage() {
       });
 
       if (error) {
-        const msg = error.message && error.message !== '{}' ? error.message : 'Server error during sign up. Please try signing in or use Google Login.';
+        // Auto-fallback: Attempt sign-in in case user was created in auth.users before email/trigger error
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError && signInData?.user) {
+          router.push('/dashboard');
+          return;
+        }
+
+        const msg = error.message && error.message !== '{}'
+          ? error.message
+          : 'Database server error (HTTP 500). Please run the SQL trigger script in Supabase SQL Editor and toggle "Confirm email" OFF in Supabase Auth Settings.';
         setErrorMsg(msg);
       } else if (data?.user) {
         if (typeof window !== 'undefined') {
