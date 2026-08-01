@@ -40,13 +40,13 @@ export default function BlackSideCurtainsTransition() {
   // ── PHASE 1 SHUTTERS MOTION ──
   const leftCurtainX = useTransform(
     smoothProgress,
-    [0.02, 0.05, 0.48, 0.54],
+    [0.02, 0.05, 0.38, 0.44],
     ['-100%', '0%', '0%', '-100%']
   );
 
   const rightCurtainX = useTransform(
     smoothProgress,
-    [0.02, 0.05, 0.48, 0.54],
+    [0.02, 0.05, 0.38, 0.44],
     ['100%', '0%', '0%', '100%']
   );
 
@@ -54,10 +54,10 @@ export default function BlackSideCurtainsTransition() {
   const syncProgress = useTransform(
     smoothProgress,
     [
-      0.06, 0.09, 0.14, 0.17,
-      0.17, 0.20, 0.25, 0.28,
-      0.28, 0.31, 0.36, 0.39,
-      0.39, 0.42, 0.46, 0.49,
+      0.05, 0.08, 0.12, 0.14,
+      0.14, 0.17, 0.21, 0.23,
+      0.23, 0.26, 0.30, 0.32,
+      0.32, 0.35, 0.38, 0.40,
     ],
     [
       0, 1, 1, 0,
@@ -68,17 +68,17 @@ export default function BlackSideCurtainsTransition() {
   );
 
   // Phase 1 Cards (Spacious, Slow, Smooth Scroll Ranges)
-  const c1Opacity = useTransform(smoothProgress, [0.06, 0.09, 0.14, 0.17], [0, 1, 1, 0]);
-  const c1T = useTransform(smoothProgress, [0.06, 0.17], [0, 1]);
+  const c1Opacity = useTransform(smoothProgress, [0.05, 0.08, 0.12, 0.14], [0, 1, 1, 0]);
+  const c1T = useTransform(smoothProgress, [0.05, 0.14], [0, 1]);
 
-  const c2Opacity = useTransform(smoothProgress, [0.17, 0.20, 0.25, 0.28], [0, 1, 1, 0]);
-  const c2T = useTransform(smoothProgress, [0.17, 0.28], [0, 1]);
+  const c2Opacity = useTransform(smoothProgress, [0.14, 0.17, 0.21, 0.23], [0, 1, 1, 0]);
+  const c2T = useTransform(smoothProgress, [0.14, 0.23], [0, 1]);
 
-  const c3Opacity = useTransform(smoothProgress, [0.28, 0.31, 0.36, 0.39], [0, 1, 1, 0]);
-  const c3T = useTransform(smoothProgress, [0.28, 0.39], [0, 1]);
+  const c3Opacity = useTransform(smoothProgress, [0.23, 0.26, 0.30, 0.32], [0, 1, 1, 0]);
+  const c3T = useTransform(smoothProgress, [0.23, 0.32], [0, 1]);
 
-  const c4Opacity = useTransform(smoothProgress, [0.39, 0.42, 0.46, 0.49], [0, 1, 1, 0]);
-  const c4T = useTransform(smoothProgress, [0.39, 0.49], [0, 1]);
+  const c4Opacity = useTransform(smoothProgress, [0.32, 0.35, 0.38, 0.40], [0, 1, 1, 0]);
+  const c4T = useTransform(smoothProgress, [0.32, 0.40], [0, 1]);
 
   useEffect(() => {
     const unsubscribe = syncProgress.on('change', (v) => {

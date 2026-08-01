@@ -175,28 +175,28 @@ export default function DirectCashStakesSection() {
   });
 
   // ── LEFT PINNED TITLE ANIMATION ──────────
-  const titleOpacity = useTransform(smoothProgress, [0.00, 0.10], [0, 1]);
-  const titleScale = useTransform(smoothProgress, [0.00, 0.10], [0.85, 1.0]);
+  const titleOpacity = useTransform(smoothProgress, [0.00, 0.08], [0, 1]);
+  const titleScale = useTransform(smoothProgress, [0.00, 0.08], [0.85, 1.0]);
 
   // ── CARD 01 (Wallet) ─────────────────────────────────────
-  const card1Opacity = useTransform(smoothProgress, [0.08, 0.25], [0, 1]);
-  const card1X = useTransform(smoothProgress, [0.08, 0.25], [120, 0]);
-  const card1Scale = useTransform(smoothProgress, [0.08, 0.25], [0.88, 1.0]);
+  const card1Opacity = useTransform(smoothProgress, [0.08, 0.22], [0, 1]);
+  const card1X = useTransform(smoothProgress, [0.08, 0.22], [120, 0]);
+  const card1Scale = useTransform(smoothProgress, [0.08, 0.22], [0.88, 1.0]);
 
   // ── CARD 02 (Duels) ────────────────────────────────────
-  const card2Opacity = useTransform(smoothProgress, [0.35, 0.55], [0, 1]);
-  const card2X = useTransform(smoothProgress, [0.35, 0.55], [160, 45]);
-  const card2Y = useTransform(smoothProgress, [0.35, 0.55], [40, -15]);
-  const card2Scale = useTransform(smoothProgress, [0.35, 0.55], [0.88, 1.0]);
+  const card2Opacity = useTransform(smoothProgress, [0.28, 0.45], [0, 1]);
+  const card2X = useTransform(smoothProgress, [0.28, 0.45], [160, 45]);
+  const card2Y = useTransform(smoothProgress, [0.28, 0.45], [40, -15]);
+  const card2Scale = useTransform(smoothProgress, [0.28, 0.45], [0.88, 1.0]);
 
-  // ── CARD 03 (Pools) ────────────────────────────────────
-  const card3Opacity = useTransform(smoothProgress, [0.65, 0.85], [0, 1]);
-  const card3X = useTransform(smoothProgress, [0.65, 0.85], [200, 90]);
-  const card3Y = useTransform(smoothProgress, [0.65, 0.85], [60, -30]);
-  const card3Scale = useTransform(smoothProgress, [0.65, 0.85], [0.88, 1.0]);
+  // ── CARD 03 (Pools - Fully Arrives at 0.70 and Holds Through 1.00) ─────
+  const card3Opacity = useTransform(smoothProgress, [0.52, 0.70], [0, 1]);
+  const card3X = useTransform(smoothProgress, [0.52, 0.70], [200, 90]);
+  const card3Y = useTransform(smoothProgress, [0.52, 0.70], [60, -30]);
+  const card3Scale = useTransform(smoothProgress, [0.52, 0.70], [0.88, 1.0]);
 
   return (
-    <div ref={containerRef} id="stakes" className="relative h-[220vh] w-full bg-[#F8FAFC]">
+    <div ref={containerRef} id="stakes" className="relative h-[340vh] w-full bg-[#F8FAFC]">
       
       {/* Sticky Viewport Pinned Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10 z-10 perspective-[1200px] bg-[#F8FAFC]">
