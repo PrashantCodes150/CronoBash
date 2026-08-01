@@ -542,6 +542,11 @@ export default function Dashboard() {
               onClick={() => setIsArenaDropdownOpen(!isArenaDropdownOpen)}
               className="bg-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 cursor-pointer hover:shadow transition-all group"
             >
+              <img
+                src="/cronobash-icon.webp"
+                alt="CronoBash Emblem"
+                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+              />
               <span className="font-extrabold text-xs sm:text-sm text-gray-900">Focus Arena</span>
               <span className={`material-symbols-outlined text-gray-400 text-base transition-transform ${isArenaDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>

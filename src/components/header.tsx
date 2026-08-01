@@ -330,13 +330,13 @@ export default function Header() {
         
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer select-none no-underline">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group cursor-pointer select-none no-underline">
             <img
               src="/cronobash-icon.webp"
               alt="CronoBash Emblem"
-              className="w-6 h-6 sm:w-7 sm:h-7 object-contain group-hover:scale-105 transition-transform"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-sm sm:text-base font-bold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
               CronoBash
             </span>
           </Link>
