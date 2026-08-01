@@ -43,6 +43,21 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
+    const handleResize = () => {
+      if (!canvas) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const displayWidth = canvas.clientWidth || window.innerWidth;
+      const displayHeight = canvas.clientHeight || window.innerHeight;
+
+      if (canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr) {
+        canvas.width = displayWidth * dpr;
+        canvas.height = displayHeight * dpr;
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     let animId: number;
     let lastDrawnFrame = -1;
 
@@ -59,8 +74,6 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
         return;
       }
-
-      lastDrawnFrame = floatFrame;
 
       const width = canvas.width;
       const height = canvas.height;
@@ -100,25 +113,12 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
             shiftX, shiftY, drawW, drawH
           );
         }
+
+        lastDrawnFrame = floatFrame;
       }
     };
 
     render();
-
-    const handleResize = () => {
-      if (!canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const displayWidth = canvas.clientWidth || window.innerWidth;
-      const displayHeight = canvas.clientHeight || window.innerHeight;
-
-      if (canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr) {
-        canvas.width = displayWidth * dpr;
-        canvas.height = displayHeight * dpr;
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
 
     return () => {
       cancelAnimationFrame(animId);

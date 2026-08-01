@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/(hero-frames|mastery-frames|workflow-frames|momentum-frames|momentum-loop-frames|scroll-frames|auth-frames)/:path*',
+        source: '/(hero-frames|mastery-frames|workflow-frames|momentum-frames|momentum-loop-frames|scroll-frames|auth-frames|frames|backgrounds)/:path*',
         headers: [
           {
             key: 'Cache-Control',

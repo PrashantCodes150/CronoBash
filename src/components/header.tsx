@@ -334,9 +334,9 @@ export default function Header() {
             <img
               src="/cronobash-icon.webp"
               alt="CronoBash Emblem"
-              className="w-9 h-9 sm:w-10 sm:h-10 object-contain group-hover:scale-105 transition-transform"
+              className="w-6 h-6 sm:w-7 sm:h-7 object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-base sm:text-xl font-bold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <span className="text-sm sm:text-base font-bold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
               CronoBash
             </span>
           </Link>

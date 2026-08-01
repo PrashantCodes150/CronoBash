@@ -78,8 +78,6 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
         return;
       }
 
-      lastDrawnFrame = floatFrame;
-
       const idx1 = Math.floor(floatFrame);
       const idx2 = Math.min(total - 1, idx1 + 1);
       const blend = floatFrame - idx1;
@@ -118,6 +116,8 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
 
         // Light, subtle vignette overlay for text legibility
         ctx.globalAlpha = 1.0;
+        lastDrawnFrame = floatFrame;
+
         const gradient = ctx.createLinearGradient(0, 0, 0, h);
         gradient.addColorStop(0, 'rgba(7, 11, 20, 0.25)');
         gradient.addColorStop(0.5, 'rgba(7, 11, 20, 0.15)');

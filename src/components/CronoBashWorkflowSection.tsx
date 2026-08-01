@@ -84,8 +84,6 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
         return;
       }
 
-      lastDrawnFrame = floatFrame;
-
       const width = canvas.width;
       const height = canvas.height;
 
@@ -121,6 +119,8 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
             shiftX, shiftY, drawW, drawH
           );
         }
+
+        lastDrawnFrame = floatFrame;
       }
     };
 

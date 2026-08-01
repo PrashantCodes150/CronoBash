@@ -89,10 +89,10 @@ export default function LoginPage() {
           <img
             src="/cronobash-icon.webp"
             alt="CronoBash Emblem"
-            className="w-11 h-11 object-contain group-hover:scale-105 transition-transform"
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain group-hover:scale-105 transition-transform"
           />
           <span
-            className="text-xl font-extrabold text-slate-900 tracking-tight"
+            className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight"
             style={{ fontFamily: "'Syne', sans-serif" }}
           >
             CronoBash

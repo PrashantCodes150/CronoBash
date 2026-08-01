@@ -9,46 +9,36 @@ interface LogoLoaderProps {
 }
 
 export default function LogoLoader({
-  text = 'Entering Arena...',
   size = 'md',
   className = '',
 }: LogoLoaderProps) {
   const iconSizes = {
-    sm: 'w-10 h-10',
-    md: 'w-16 h-16',
-    lg: 'w-24 h-24',
-    full: 'w-24 h-24 sm:w-28 sm:h-28',
+    sm: 'w-8 h-8',
+    md: 'w-12 h-12',
+    lg: 'w-16 h-16',
+    full: 'w-16 h-16 sm:w-20 sm:h-20',
   };
 
   const content = (
-    <div className={`flex flex-col items-center justify-center space-y-4 select-none ${className}`}>
+    <div className={`flex flex-col items-center justify-center select-none ${className}`}>
       {/* Animated Glowing Logo Emblem */}
       <div className="relative flex items-center justify-center">
         {/* Soft Ambient Pulsing Orange Aura */}
         <div className="absolute inset-0 bg-[#FF5500]/30 rounded-full blur-2xl animate-pulse" />
         
-        {/* Shimmering Outer Ring */}
-        <div className="absolute -inset-3 rounded-full border border-[#FF5500]/30 animate-ping opacity-30" />
+        {/* Shimmering Outer Ring 1 */}
+        <div className="absolute -inset-4 rounded-full border border-[#FF5500]/40 animate-ping opacity-40" style={{ animationDuration: '2s' }} />
+
+        {/* Shimmering Outer Ring 2 */}
+        <div className="absolute -inset-2 rounded-full border border-[#FF5500]/20 animate-pulse" />
 
         {/* Floating Pulsing Logo Image */}
         <img
           src="/cronobash-icon.webp"
-          alt="CronoBash Loading"
-          className={`${iconSizes[size]} object-contain animate-bounce relative z-10 drop-shadow-[0_0_20px_rgba(255,85,0,0.4)]`}
-          style={{ animationDuration: '1.8s' }}
+          alt="Loading..."
+          className={`${iconSizes[size]} object-contain animate-bounce relative z-10 drop-shadow-[0_0_25px_rgba(255,85,0,0.5)]`}
+          style={{ animationDuration: '1.6s' }}
         />
-      </div>
-
-      {/* Brand Text + Subtitle */}
-      <div className="text-center space-y-1 z-10">
-        <div className="text-xl sm:text-2xl font-black tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
-          CronoBash
-        </div>
-        {text && (
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center gap-1 font-mono">
-            <span>{text}</span>
-          </div>
-        )}
       </div>
     </div>
   );

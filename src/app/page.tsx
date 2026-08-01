@@ -450,10 +450,10 @@ export default function LandingPage() {
             <img
               src="/cronobash-icon.webp"
               alt="CronoBash Emblem"
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain group-hover:scale-105 transition-transform"
             />
             <span
-              className="font-bold text-[20px] sm:text-[24px] text-[#334155] tracking-normal"
+              className="font-bold text-base sm:text-lg text-[#334155] tracking-normal"
               style={{ fontFamily: "'Syne', sans-serif" }}
             >
               CronoBash
