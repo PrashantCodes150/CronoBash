@@ -18,7 +18,12 @@ export function Footer() {
           
           {/* Brand Column (5 cols) */}
           <div className="md:col-span-5 space-y-4">
-            <Link href="/" className="inline-flex items-center group cursor-pointer select-none no-underline">
+            <Link href="/" className="inline-flex items-center gap-3 group cursor-pointer select-none no-underline">
+              <img
+                src="/cronobash-icon.webp"
+                alt="CronoBash Emblem"
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
+              />
               <div className="font-sans text-2xl font-black tracking-tight flex items-center">
                 <span className="text-white">CRONO</span>
                 <span className="text-[#FF5500]">BASH</span>

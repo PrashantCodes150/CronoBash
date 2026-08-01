@@ -442,13 +442,22 @@ export default function LandingPage() {
               : undefined,
           }}
         >
-          {/* Brand */}
+          {/* Brand Logo */}
           <Link
             href="/"
-            className="font-bold text-[20px] sm:text-[24px] text-[#334155] tracking-normal hover:opacity-80 transition-opacity ml-2 sm:ml-6"
-            style={{ fontFamily: "'Syne', sans-serif" }}
+            className="flex items-center gap-2.5 ml-2 sm:ml-6 group no-underline"
           >
-            CronoBash
+            <img
+              src="/cronobash-icon.webp"
+              alt="CronoBash Emblem"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
+            />
+            <span
+              className="font-bold text-[20px] sm:text-[24px] text-[#334155] tracking-normal"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              CronoBash
+            </span>
           </Link>
 
           {/* Desktop Nav Links */}

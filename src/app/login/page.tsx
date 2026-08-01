@@ -85,10 +85,12 @@ export default function LoginPage() {
       
       {/* Top Header */}
       <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg">
-            C
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <img
+            src="/cronobash-icon.webp"
+            alt="CronoBash Emblem"
+            className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+          />
           <span
             className="text-xl font-extrabold text-slate-900 tracking-tight"
             style={{ fontFamily: "'Syne', sans-serif" }}
