@@ -66,7 +66,8 @@ export default function MasterYourMomentumSection() {
     let animId: number;
 
     const render = () => {
-      const progress = Math.min(1, Math.max(0, smoothProgress.get()));
+      const rawProgress = smoothProgress.get();
+      const progress = Math.min(1, Math.max(0, Math.round(rawProgress * 10000) / 10000));
       const width = canvas.width;
       const height = canvas.height;
 
@@ -90,20 +91,22 @@ export default function MasterYourMomentumSection() {
           const hRatio = width / img1.width;
           const vRatio = height / img1.height;
           const ratio = Math.max(hRatio, vRatio);
-          const shiftX = (width - img1.width * ratio) / 2;
-          const shiftY = (height - img1.height * ratio) / 2;
+          const drawW = Math.round(img1.width * ratio);
+          const drawH = Math.round(img1.height * ratio);
+          const shiftX = Math.round((width - drawW) / 2);
+          const shiftY = Math.round((height - drawH) / 2);
 
           ctx.globalAlpha = 1.0;
           ctx.drawImage(
             img1, 0, 0, img1.width, img1.height,
-            shiftX, shiftY, img1.width * ratio, img1.height * ratio
+            shiftX, shiftY, drawW, drawH
           );
 
-          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.005) {
+          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.001) {
             ctx.globalAlpha = blend;
             ctx.drawImage(
               img2, 0, 0, img2.width, img2.height,
-              shiftX, shiftY, img2.width * ratio, img2.height * ratio
+              shiftX, shiftY, drawW, drawH
             );
           }
         }
@@ -178,7 +181,7 @@ export default function MasterYourMomentumSection() {
         {/* Fullscreen Apple-Style Frame Animation Canvas (Reveals on scroll step 2) */}
         <motion.canvas
           ref={canvasRef}
-          style={{ opacity: canvasOpacity }}
+          style={{ opacity: canvasOpacity, transform: 'translateZ(0)', willChange: 'transform', backfaceVisibility: 'hidden' }}
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
         />
 

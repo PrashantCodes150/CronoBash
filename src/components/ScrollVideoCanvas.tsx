@@ -78,13 +78,15 @@ export default function ScrollVideoCanvas({
           const hRatio = width / img.width;
           const vRatio = height / img.height;
           const ratio = Math.max(hRatio, vRatio);
-          const centerShift_x = (width - img.width * ratio) / 2;
-          const centerShift_y = (height - img.height * ratio) / 2;
+          const drawW = Math.round(img.width * ratio);
+          const drawH = Math.round(img.height * ratio);
+          const centerShift_x = Math.round((width - drawW) / 2);
+          const centerShift_y = Math.round((height - drawH) / 2);
 
           ctx.drawImage(
             img,
             0, 0, img.width, img.height,
-            centerShift_x, centerShift_y, img.width * ratio, img.height * ratio
+            centerShift_x, centerShift_y, drawW, drawH
           );
         }
       } 

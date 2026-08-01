@@ -313,20 +313,22 @@ export default function BlackSideCurtainsTransition() {
           const hRatio = width / img1.naturalWidth;
           const vRatio = height / img1.naturalHeight;
           const ratio = Math.max(hRatio, vRatio);
-          const shiftX = (width - img1.naturalWidth * ratio) / 2;
-          const shiftY = (height - img1.naturalHeight * ratio) / 2 + 45; // Shift down by 45px so top hand tips are fully unclipped
+          const drawW = Math.round(img1.naturalWidth * ratio);
+          const drawH = Math.round(img1.naturalHeight * ratio);
+          const shiftX = Math.round((width - drawW) / 2);
+          const shiftY = Math.round((height - drawH) / 2 + 45); // Shift down by 45px so top hand tips are fully unclipped
 
           ctx.globalAlpha = 1.0;
           ctx.drawImage(
             img1, 0, 0, img1.naturalWidth, img1.naturalHeight,
-            shiftX, shiftY, img1.naturalWidth * ratio, img1.naturalHeight * ratio
+            shiftX, shiftY, drawW, drawH
           );
 
-          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.005) {
+          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.001) {
             ctx.globalAlpha = blend;
             ctx.drawImage(
               img2, 0, 0, img2.naturalWidth, img2.naturalHeight,
-              shiftX, shiftY, img2.naturalWidth * ratio, img2.naturalHeight * ratio
+              shiftX, shiftY, drawW, drawH
             );
           }
         }
@@ -429,7 +431,7 @@ export default function BlackSideCurtainsTransition() {
           {/* Hands Video Frame Animation Canvas */}
           <motion.canvas
             ref={videoCanvasRef}
-            style={{ opacity: videoCanvasOpacity }}
+            style={{ opacity: videoCanvasOpacity, transform: 'translateZ(0)', willChange: 'transform', backfaceVisibility: 'hidden' }}
             className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
           />
 

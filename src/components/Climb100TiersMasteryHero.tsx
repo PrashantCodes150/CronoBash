@@ -104,23 +104,23 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
 
           const imgRatio = img1.naturalWidth / img1.naturalHeight;
           const canvasRatio = w / h;
-          let drawW = w;
-          let drawH = h;
+          let drawW = Math.round(w);
+          let drawH = Math.round(h);
           let offsetX = 0;
           let offsetY = 0;
 
           if (canvasRatio > imgRatio) {
-            drawH = w / imgRatio;
-            offsetY = (h - drawH) / 2;
+            drawH = Math.round(w / imgRatio);
+            offsetY = Math.round((h - drawH) / 2);
           } else {
-            drawW = h * imgRatio;
-            offsetX = (w - drawW) / 2;
+            drawW = Math.round(h * imgRatio);
+            offsetX = Math.round((w - drawW) / 2);
           }
 
           ctx.globalAlpha = 1.0;
           ctx.drawImage(img1, offsetX, offsetY, drawW, drawH);
 
-          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.005) {
+          if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.001) {
             ctx.globalAlpha = blend;
             ctx.drawImage(img2, offsetX, offsetY, drawW, drawH);
           }
@@ -214,6 +214,7 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
         {/* Scroll Video Canvas Background (100% VISIBLE & BRIGHT) */}
         <canvas
           ref={canvasRef}
+          style={{ transform: 'translateZ(0)', willChange: 'transform', backfaceVisibility: 'hidden' }}
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
         />
 
