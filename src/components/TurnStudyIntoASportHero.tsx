@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { useFramePreloader } from '@/hooks/useFramePreloader';
 
 interface TurnStudyIntoASportHeroProps {
   frames: string[];
@@ -12,8 +13,7 @@ interface TurnStudyIntoASportHeroProps {
 export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoASportHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const loadedImagesRef = useRef<HTMLImageElement[]>([]);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+
 
   // Track scroll progress through the pinned Hero section
   const { scrollYProgress } = useScroll({
@@ -29,34 +29,12 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
     restDelta: 0.0001,
   });
 
-  // Preload and async-decode frame images for zero-lag GPU execution
-  useEffect(() => {
-    if (!frames || frames.length === 0) return;
-
-    let count = 0;
-    const imgArray: HTMLImageElement[] = [];
-
-    frames.forEach((src, idx) => {
-      const img = new Image();
-      img.src = src;
-      
-      const onImageReady = () => {
-        count++;
-        if (count === frames.length) {
-          setImagesLoaded(true);
-        }
-      };
-
-      img.onload = onImageReady;
-      if (typeof img.decode === 'function') {
-        img.decode().then(onImageReady).catch(() => {});
-      }
-
-      imgArray[idx] = img;
-    });
-
-    loadedImagesRef.current = imgArray;
-  }, [frames]);
+  // Queue-batched frame preloading & fallback rendering
+  const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
+    enabled: true,
+    concurrency: 12,
+    priorityCount: 15,
+  });
 
   // Ultra-Smooth Sub-Frame Alpha Interpolation Render Loop
   useEffect(() => {
@@ -85,10 +63,10 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1; // Sub-frame interpolation ratio [0..1]
 
-        const img1 = loadedImagesRef.current[idx1];
+        const img1 = getFrameOrFallback(idx1);
         const img2 = loadedImagesRef.current[idx2];
 
-        // Draw Base Frame (idx1)
+        // Draw Base Frame (idx1 or closest ready fallback frame)
         if (img1 && img1.complete) {
           const hRatio = width / img1.width;
           const vRatio = height / img1.height;

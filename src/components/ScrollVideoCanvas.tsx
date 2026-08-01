@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useFramePreloader } from '@/hooks/useFramePreloader';
 
 interface ScrollVideoCanvasProps {
   /** Optional array of image frame URLs */
@@ -24,8 +25,6 @@ export default function ScrollVideoCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const loadedImagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameIndexRef = useRef(0);
 
   // Track scroll progress within pinned container
@@ -40,33 +39,11 @@ export default function ScrollVideoCanvas({
     restDelta: 0.001,
   });
 
-  // 1. Preload image frames if provided
-  useEffect(() => {
-    if (!frames || frames.length === 0) return;
-
-    let loadedCount = 0;
-    const imgArray: HTMLImageElement[] = [];
-
-    frames.forEach((src, idx) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === frames.length) {
-          setImagesLoaded(true);
-        }
-      };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === frames.length) {
-          setImagesLoaded(true);
-        }
-      };
-      imgArray[idx] = img;
-    });
-
-    loadedImagesRef.current = imgArray;
-  }, [frames]);
+  const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
+    enabled: true,
+    concurrency: 12,
+    priorityCount: 10,
+  });
 
   // 2. Render Loop on Scroll Update
   useEffect(() => {
@@ -94,7 +71,7 @@ export default function ScrollVideoCanvas({
         );
 
         currentFrameIndexRef.current = frameIndex;
-        const img = loadedImagesRef.current[frameIndex];
+        const img = getFrameOrFallback(frameIndex);
 
         if (img && img.complete) {
           // Draw image centered aspect-fit/cover

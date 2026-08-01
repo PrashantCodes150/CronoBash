@@ -345,10 +345,10 @@ export default function LandingPage() {
     async function fetchPlatformStats() {
       try {
         // Query total study session durations from Supabase
-        const { data: sessionData } = await supabase.from('study_sessions').select('duration');
+        const { data: sessionData } = await supabase.from('study_sessions').select('focus_seconds');
         let totalSecs = 0;
         if (sessionData && sessionData.length > 0) {
-          totalSecs = sessionData.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+          totalSecs = sessionData.reduce((acc, curr: any) => acc + (curr.focus_seconds || 0), 0);
         }
         const hoursLogged = Math.max(1420, Math.floor(totalSecs / 3600));
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
+import { useFramePreloader } from '@/hooks/useFramePreloader';
 
 interface CronoBashWorkflowSectionProps {
   frames: string[];
@@ -12,8 +13,6 @@ interface CronoBashWorkflowSectionProps {
 export default function CronoBashWorkflowSection({ frames, user }: CronoBashWorkflowSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const loadedImagesRef = useRef<HTMLImageElement[]>([]);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
 
   // Track scroll progress through the pinned Section (300vh = exactly 1 natural scroll step per card)
@@ -42,34 +41,12 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     restDelta: 0.0001,
   });
 
-  // Preload and async-decode frame images for zero-lag GPU execution
-  useEffect(() => {
-    if (!frames || frames.length === 0) return;
-
-    let count = 0;
-    const imgArray: HTMLImageElement[] = [];
-
-    frames.forEach((src, idx) => {
-      const img = new Image();
-      img.src = src;
-
-      const onImageReady = () => {
-        count++;
-        if (count === frames.length) {
-          setImagesLoaded(true);
-        }
-      };
-
-      img.onload = onImageReady;
-      if (typeof img.decode === 'function') {
-        img.decode().then(onImageReady).catch(() => {});
-      }
-
-      imgArray[idx] = img;
-    });
-
-    loadedImagesRef.current = imgArray;
-  }, [frames]);
+  // Queue-batched frame preloading & fallback rendering
+  const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
+    enabled: true,
+    concurrency: 12,
+    priorityCount: 12,
+  });
 
   // Full-bleed video frame canvas render loop with 120fps sub-frame interpolation
   useEffect(() => {
@@ -96,7 +73,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1;
 
-        const img1 = loadedImagesRef.current[idx1];
+        const img1 = getFrameOrFallback(idx1);
         const img2 = loadedImagesRef.current[idx2];
 
         if (img1 && img1.complete) {

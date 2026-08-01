@@ -7,6 +7,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { BADGES } from '@/lib/badges';
 import { BadgeDisplay } from '@/components/study/BadgeDisplay';
 
+import { useFramePreloader } from '@/hooks/useFramePreloader';
+
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -18,8 +20,6 @@ interface Climb100TiersMasteryHeroProps {
 export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMasteryHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
   const currentFrameObjRef = useRef({ frame: 0 });
 
   // Pin section for 240vh for smooth scroll-driven video frames transition + right-to-left emblem scrollytelling
@@ -36,35 +36,12 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     restDelta: 0.0001,
   });
 
-  // Preload frames into image cache with robust fallback handling
-  useEffect(() => {
-    if (frames.length === 0) return;
-
-    let loadedCount = 0;
-    const imgArray: HTMLImageElement[] = [];
-
-    const handleReady = () => {
-      loadedCount++;
-      if (loadedCount >= frames.length) {
-        setImagesLoaded(true);
-      }
-    };
-
-    frames.forEach((src, idx) => {
-      const img = new Image();
-      img.onload = handleReady;
-      img.onerror = handleReady;
-      img.src = src;
-
-      if ('decode' in img && typeof (img as any).decode === 'function') {
-        (img as any).decode().catch(() => {});
-      }
-
-      imgArray[idx] = img;
-    });
-
-    setImages(imgArray);
-  }, [frames]);
+  // Queue-batched frame preloader
+  const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
+    enabled: true,
+    concurrency: 12,
+    priorityCount: 12,
+  });
 
   // ── GSAP & LENIS SMOOTH VIDEO FRAME SCRUBBING ──
   useEffect(() => {
@@ -109,15 +86,15 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     window.addEventListener('resize', handleResize);
 
     const render = () => {
-      const total = images.length;
+      const total = loadedImagesRef.current.length;
       if (total > 0) {
         const floatFrame = Math.max(0, Math.min(total - 1, currentFrameObjRef.current.frame));
         const idx1 = Math.floor(floatFrame);
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1;
 
-        const img1 = images[idx1];
-        const img2 = images[idx2];
+        const img1 = getFrameOrFallback(idx1);
+        const img2 = loadedImagesRef.current[idx2];
 
         if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
           const w = canvas.width;
@@ -168,7 +145,7 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [imagesLoaded, images]);
+  }, []);
 
   // ── Left Column Header Motion ──
   const headerOpacity = useTransform(smoothProgress, [0, 0.05, 0.95, 1.0], [0.6, 1, 1, 0.6]);
