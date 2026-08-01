@@ -23,7 +23,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   const currentFrameRef = useRef(0);
 
   // Viewport Intersection Check for Lazy Preloading on Scroll
-  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px', once: true });
+  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px' });
 
   // Track scroll progress through the pinned Section
   const { scrollYProgress } = useScroll({
@@ -63,6 +63,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
 
   // Full-bleed video frame canvas render loop with 120fps sub-frame interpolation
   useEffect(() => {
+    if (!isInView) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -145,7 +146,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isInView]);
 
   // Original 4 Workflow Steps Data
   const WORKFLOW_STEPS = [

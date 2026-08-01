@@ -23,7 +23,7 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
   const currentFrameObjRef = useRef({ frame: 0 });
 
   // Viewport Intersection Check for Lazy Preloading on Scroll
-  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px', once: true });
+  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px' });
 
   // Pin section for 240vh for smooth scroll-driven video frames transition + right-to-left emblem scrollytelling
   const { scrollYProgress } = useScroll({
@@ -48,6 +48,7 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
 
   // Draw current frame on canvas with sub-frame blend interpolation
   useEffect(() => {
+    if (!isInView) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -133,7 +134,7 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isInView]);
 
   // ── Left Column Header Motion ──
   const headerOpacity = useTransform(smoothProgress, [0, 0.05, 0.95, 1.0], [0.6, 1, 1, 0.6]);

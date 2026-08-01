@@ -144,14 +144,18 @@ void main() {
     window.addEventListener('mousemove', handleMouseMove);
 
     let animId: number;
+    let lastTime = 0;
     function render(t: number) {
       if (!gl || !canvas) return;
+      animId = requestAnimationFrame(render);
+      if (t - lastTime < 30) return; // Throttle ambient background shader to 30fps to free 75% CPU/GPU resources
+      lastTime = t;
+
       gl.viewport(0, 0, canvas.width, canvas.height);
       if (uTime) gl.uniform1f(uTime, t * 0.001);
       if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
       if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animId = requestAnimationFrame(render);
     }
     animId = requestAnimationFrame(render);
 

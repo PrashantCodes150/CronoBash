@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion, useScroll, useSpring, useTransform, useInView } from 'framer-motion';
 import { useFramePreloader } from '@/hooks/useFramePreloader';
 
 interface TurnStudyIntoASportHeroProps {
@@ -13,6 +13,7 @@ interface TurnStudyIntoASportHeroProps {
 export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoASportHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px' });
 
 
   // Track scroll progress through the pinned Hero section
@@ -38,6 +39,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
 
   // Ultra-Smooth Sub-Frame Alpha Interpolation Render Loop
   useEffect(() => {
+    if (!isInView) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -124,7 +126,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [smoothProgress]);
+  }, [smoothProgress, isInView]);
 
   // Smooth fade out of text content as user reaches the end of the hero scroll sequence
   const opacityFade = useTransform(smoothProgress, [0.75, 0.95], [1, 0]);

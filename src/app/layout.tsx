@@ -14,6 +14,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CronoBash — Study with Friends, Compete Globally",
   description: "Join 1v1 study battles, track focus with AI, climb leaderboards, and earn rewards.",
+  metadataBase: new URL('https://cronobash.vercel.app'),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -33,15 +43,7 @@ export default function RootLayout({
         <link rel="preload" href="/hero-frames/frame_001.webp" as="image" type="image/webp" />
         <link rel="preload" href="/cronobash-icon.webp" as="image" type="image/webp" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Archivo:wght@400;500;600;700;800;900&family=Azeret+Mono:wght@400;500;600;700&family=Fragment+Mono&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Edu+NSW+ACT+Cursive:wght@400..700&family=Playwrite+AR+Guides&family=Playwrite+DE+SAS:wght@100..400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&family=Syne:wght@600;700;800&family=Archivo:wght@400;500;600;700;800;900&family=Azeret+Mono:wght@400;500;600;700&family=Fragment+Mono&display=swap"
           rel="stylesheet"
         />
         <script
