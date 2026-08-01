@@ -33,11 +33,11 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     return () => unsubscribe();
   }, [scrollYProgress]);
 
-  // Ultra-Responsive 1-to-1 Scroll Tracking (Zero Lag, Butter-Smooth 120fps)
+  // Ultra-Smooth 120fps Scroll Tracking (Zero Lag, Silk-Smooth Video Motion)
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 450,
-    damping: 35,
-    mass: 0.02,
+    stiffness: 300,
+    damping: 32,
+    mass: 0.04,
     restDelta: 0.0001,
   });
 
@@ -61,7 +61,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     const render = () => {
       animId = requestAnimationFrame(render);
 
-      const rawProgress = Math.min(1, Math.max(0, scrollYProgress.get()));
+      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
       const total = loadedImagesRef.current.length;
       if (total === 0) return;
 
@@ -222,7 +222,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
                       onClick={() => setActiveStep(idx)}
                       className={`p-4 sm:p-5 rounded-3xl border transition-all duration-300 cursor-pointer ${
                         isActive
-                          ? 'bg-white/40 backdrop-blur-xl border-white/80 shadow-[0_15px_35px_rgba(51,65,85,0.12)] ring-1 ring-[#FF5500]/40 scale-[1.02]'
+                          ? 'bg-white/40 backdrop-blur-xl border-white/80 shadow-[0_15px_35px_rgba(51,65,85,0.12)] ring-1 ring-[#FF5500]/40'
                           : 'bg-white/15 backdrop-blur-md border-white/50 shadow-sm hover:bg-white/30'
                       }`}
                     >
