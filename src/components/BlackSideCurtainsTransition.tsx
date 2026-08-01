@@ -40,13 +40,13 @@ export default function BlackSideCurtainsTransition() {
   // ── PHASE 1 SHUTTERS MOTION ──
   const leftCurtainX = useTransform(
     smoothProgress,
-    [0.02, 0.06, 0.34, 0.40],
+    [0.02, 0.05, 0.48, 0.54],
     ['-100%', '0%', '0%', '-100%']
   );
 
   const rightCurtainX = useTransform(
     smoothProgress,
-    [0.02, 0.06, 0.34, 0.40],
+    [0.02, 0.05, 0.48, 0.54],
     ['100%', '0%', '0%', '100%']
   );
 
@@ -54,10 +54,10 @@ export default function BlackSideCurtainsTransition() {
   const syncProgress = useTransform(
     smoothProgress,
     [
-      0.07, 0.09, 0.13, 0.15,
-      0.16, 0.18, 0.22, 0.24,
-      0.25, 0.27, 0.30, 0.32,
-      0.33, 0.35, 0.38, 0.40,
+      0.06, 0.09, 0.14, 0.17,
+      0.17, 0.20, 0.25, 0.28,
+      0.28, 0.31, 0.36, 0.39,
+      0.39, 0.42, 0.46, 0.49,
     ],
     [
       0, 1, 1, 0,
@@ -67,18 +67,18 @@ export default function BlackSideCurtainsTransition() {
     ]
   );
 
-  // Phase 1 Cards
-  const c1Opacity = useTransform(smoothProgress, [0.07, 0.09, 0.13, 0.15], [0, 1, 1, 0]);
-  const c1T = useTransform(smoothProgress, [0.07, 0.15], [0, 1]);
+  // Phase 1 Cards (Spacious, Slow, Smooth Scroll Ranges)
+  const c1Opacity = useTransform(smoothProgress, [0.06, 0.09, 0.14, 0.17], [0, 1, 1, 0]);
+  const c1T = useTransform(smoothProgress, [0.06, 0.17], [0, 1]);
 
-  const c2Opacity = useTransform(smoothProgress, [0.16, 0.18, 0.22, 0.24], [0, 1, 1, 0]);
-  const c2T = useTransform(smoothProgress, [0.16, 0.24], [0, 1]);
+  const c2Opacity = useTransform(smoothProgress, [0.17, 0.20, 0.25, 0.28], [0, 1, 1, 0]);
+  const c2T = useTransform(smoothProgress, [0.17, 0.28], [0, 1]);
 
-  const c3Opacity = useTransform(smoothProgress, [0.25, 0.27, 0.30, 0.32], [0, 1, 1, 0]);
-  const c3T = useTransform(smoothProgress, [0.25, 0.32], [0, 1]);
+  const c3Opacity = useTransform(smoothProgress, [0.28, 0.31, 0.36, 0.39], [0, 1, 1, 0]);
+  const c3T = useTransform(smoothProgress, [0.28, 0.39], [0, 1]);
 
-  const c4Opacity = useTransform(smoothProgress, [0.33, 0.35, 0.38, 0.40], [0, 1, 1, 0]);
-  const c4T = useTransform(smoothProgress, [0.33, 0.40], [0, 1]);
+  const c4Opacity = useTransform(smoothProgress, [0.39, 0.42, 0.46, 0.49], [0, 1, 1, 0]);
+  const c4T = useTransform(smoothProgress, [0.39, 0.49], [0, 1]);
 
   useEffect(() => {
     const unsubscribe = syncProgress.on('change', (v) => {
@@ -115,8 +115,8 @@ export default function BlackSideCurtainsTransition() {
       scrub: 0.4, // GSAP smooth inertia scrubbing combined with Lenis
       onUpdate: (self) => {
         const p = self.progress;
-        if (p >= 0.36) {
-          const videoProgress = Math.min(1, Math.max(0, (p - 0.38) / 0.62));
+        if (p >= 0.49) {
+          const videoProgress = Math.min(1, Math.max(0, (p - 0.51) / 0.49));
           const targetFrame = videoProgress * 174;
           
           gsap.to(currentFrameObjRef.current, {
@@ -358,12 +358,12 @@ export default function BlackSideCurtainsTransition() {
     };
   }, []);
 
-  // Helper hook to compute exact (X, Y) coordinates along wave
+  // Helper hook to compute exact (X, Y) coordinates along wave (Gentle, smooth motion)
   const useWaveTransform = (tVal: any) => {
-    const yPos = useTransform(tVal, [0, 1], ['-210px', '210px']);
+    const yPos = useTransform(tVal, [0, 1], ['-60px', '60px']);
     const xPos = useTransform(tVal, (t: number) => {
       const angle = t * Math.PI - Math.PI / 2;
-      return `${Math.cos(angle) * 110}px`;
+      return `${Math.cos(angle) * 35}px`;
     });
     return { x: xPos, y: yPos };
   };
@@ -374,39 +374,39 @@ export default function BlackSideCurtainsTransition() {
   const card4Pos = useWaveTransform(c4T);
 
   // ── PURE WHITE BACKGROUND FOR PHASE 1 ENTRY -> PITCH BLACK STARFIELD FOR PHASE 2 MOMENTUM ──
-  const starfieldOpacity = useTransform(smoothProgress, [0.34, 0.38], [0, 1]);
+  const starfieldOpacity = useTransform(smoothProgress, [0.48, 0.53], [0, 1]);
 
   // ── LENIS-STYLE GIANT KEYHOLE TYPOGRAPHY UNFOLD ──
-  const lenisScale = useTransform(smoothProgress, [0.34, 0.44], [4.5, 1.0]);
-  const lenisX = useTransform(smoothProgress, [0.34, 0.44], ['26vw', '0vw']);
-  const lenisY = useTransform(smoothProgress, [0.34, 0.44], ['-25vh', '0vh']);
-  const lenisOpacity = useTransform(smoothProgress, [0.33, 0.38], [0, 1]);
+  const lenisScale = useTransform(smoothProgress, [0.49, 0.57], [4.5, 1.0]);
+  const lenisX = useTransform(smoothProgress, [0.49, 0.57], ['26vw', '0vw']);
+  const lenisY = useTransform(smoothProgress, [0.49, 0.57], ['-25vh', '0vh']);
+  const lenisOpacity = useTransform(smoothProgress, [0.48, 0.53], [0, 1]);
 
   // Hidden letters/words behind curtains reveal as curtains slide apart
-  const curtainHiddenLettersOpacity = useTransform(smoothProgress, [0.35, 0.42], [0, 1]);
+  const curtainHiddenLettersOpacity = useTransform(smoothProgress, [0.50, 0.55], [0, 1]);
 
-  // Hands video canvas starts fading in earlier (0.38 -> 0.44)
-  const videoCanvasOpacity = useTransform(smoothProgress, [0.38, 0.44], [0, 1]);
-  const darkOverlayOpacity = useTransform(smoothProgress, [0.38, 0.44], [0, 0.15]);
+  // Hands video canvas starts fading in earlier (0.51 -> 0.57)
+  const videoCanvasOpacity = useTransform(smoothProgress, [0.51, 0.57], [0, 1]);
+  const darkOverlayOpacity = useTransform(smoothProgress, [0.51, 0.57], [0, 0.15]);
 
   // ── SPACIOUS BENTO CARDS SCROLL TIMING ──
-  const bento1Opacity = useTransform(smoothProgress, [0.44, 0.49, 0.54, 0.57], [0, 1, 1, 0]);
-  const bento1Y = useTransform(smoothProgress, [0.44, 0.49, 0.54, 0.57], [40, 0, 0, -30]);
+  const bento1Opacity = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [0, 1, 1, 0]);
+  const bento1Y = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [40, 0, 0, -30]);
 
-  const bento2Opacity = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [0, 1, 1, 0]);
-  const bento2Y = useTransform(smoothProgress, [0.57, 0.62, 0.67, 0.70], [40, 0, 0, -30]);
+  const bento2Opacity = useTransform(smoothProgress, [0.70, 0.74, 0.78, 0.81], [0, 1, 1, 0]);
+  const bento2Y = useTransform(smoothProgress, [0.70, 0.74, 0.78, 0.81], [40, 0, 0, -30]);
 
-  const bento3Opacity = useTransform(smoothProgress, [0.70, 0.75, 0.80, 0.83], [0, 1, 1, 0]);
-  const bento3Y = useTransform(smoothProgress, [0.70, 0.75, 0.80, 0.83], [40, 0, 0, -30]);
+  const bento3Opacity = useTransform(smoothProgress, [0.81, 0.85, 0.89, 0.91], [0, 1, 1, 0]);
+  const bento3Y = useTransform(smoothProgress, [0.81, 0.85, 0.89, 0.91], [40, 0, 0, -30]);
 
-  const bento4Opacity = useTransform(smoothProgress, [0.83, 0.88, 0.92, 0.94], [0, 1, 1, 0]);
-  const bento4Y = useTransform(smoothProgress, [0.83, 0.88, 0.92, 0.94], [40, 0, 0, -30]);
+  const bento4Opacity = useTransform(smoothProgress, [0.91, 0.94, 0.96, 0.98], [0, 1, 1, 0]);
+  const bento4Y = useTransform(smoothProgress, [0.91, 0.94, 0.96, 0.98], [40, 0, 0, -30]);
 
-  const bento5Opacity = useTransform(smoothProgress, [0.94, 0.97, 1.00], [0, 1, 1]);
-  const bento5Y = useTransform(smoothProgress, [0.94, 0.97, 1.00], [40, 0, 0]);
+  const bento5Opacity = useTransform(smoothProgress, [0.98, 0.99, 1.00], [0, 1, 1]);
+  const bento5Y = useTransform(smoothProgress, [0.98, 0.99, 1.00], [40, 0, 0]);
 
   return (
-    <div ref={containerRef} className="relative h-[750vh] w-full bg-white">
+    <div ref={containerRef} className="relative h-[900vh] w-full bg-white">
       
       {/* Sticky Full-Screen Viewport */}
       <div className="sticky top-0 h-screen w-full overflow-hidden z-30 flex items-center justify-center pointer-events-auto bg-white">

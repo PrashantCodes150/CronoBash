@@ -94,26 +94,30 @@ export function useFramePreloader(
     };
   }, [frames, enabled, concurrency, priorityCount]);
 
-  // Helper to find nearest loaded frame if specific frame is still downloading over network
+  const lastValidFrameRef = useRef<HTMLImageElement | null>(null);
+
+  // Helper to get exact frame or hold last valid rendered frame without back-and-forth jumping
   const getFrameOrFallback = (targetIndex: number): HTMLImageElement | null => {
     const images = loadedImagesRef.current;
-    if (!images || images.length === 0) return null;
+    if (!images || images.length === 0) return lastValidFrameRef.current;
 
     const clampedIndex = Math.min(images.length - 1, Math.max(0, targetIndex));
-    if (images[clampedIndex] && images[clampedIndex].complete) {
-      return images[clampedIndex];
+    const targetImg = images[clampedIndex];
+
+    if (targetImg && targetImg.complete && targetImg.naturalWidth > 0) {
+      lastValidFrameRef.current = targetImg;
+      return targetImg;
     }
 
-    // Search backward for closest ready frame
+    // If target frame is still downloading, hold the last successfully rendered frame
+    if (lastValidFrameRef.current) {
+      return lastValidFrameRef.current;
+    }
+
+    // Fallback search backwards only for initial render setup
     for (let i = clampedIndex - 1; i >= 0; i--) {
-      if (images[i] && images[i].complete) {
-        return images[i];
-      }
-    }
-
-    // Search forward for closest ready frame
-    for (let i = clampedIndex + 1; i < images.length; i++) {
-      if (images[i] && images[i].complete) {
+      if (images[i] && images[i].complete && images[i].naturalWidth > 0) {
+        lastValidFrameRef.current = images[i];
         return images[i];
       }
     }

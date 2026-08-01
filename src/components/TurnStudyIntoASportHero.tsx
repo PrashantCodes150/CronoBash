@@ -81,7 +81,7 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
           );
 
           // Sub-Frame Blend Transition with Next Frame (idx2) for 120fps motion morphing
-          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.005) {
+          if (idx1 !== idx2 && img2 && img2.complete && blend > 0.001) {
             ctx.globalAlpha = blend;
             ctx.drawImage(
               img2, 0, 0, img2.width, img2.height,
