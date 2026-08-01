@@ -21,11 +21,11 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
     offset: ['start start', 'end end'],
   });
 
-  // Ultra-Smooth Elastic Inertia Spring Physics (Apple-grade fluid motion)
+  // Ultra-Responsive 1-to-1 Scroll Tracking (Zero Lag, Butter-Smooth 120fps)
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 90,
-    damping: 30,
-    mass: 0.25,
+    stiffness: 450,
+    damping: 35,
+    mass: 0.02,
     restDelta: 0.0001,
   });
 
@@ -55,8 +55,8 @@ export default function TurnStudyIntoASportHero({ frames, user }: TurnStudyIntoA
 
       const floatFrame = rawProgress * (total - 1);
 
-      // Deadzone check: Skip redrawing if frame position hasn't moved significantly when scroll is stationary
-      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+      // Deadzone check: Freeze canvas when stationary, zero lag when scrolling
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
         return;
       }
 

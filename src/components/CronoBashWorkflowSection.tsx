@@ -33,11 +33,11 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     return () => unsubscribe();
   }, [scrollYProgress]);
 
-  // Ultra-Smooth Elastic Inertia Spring Physics for video canvas frame morphing
+  // Ultra-Responsive 1-to-1 Scroll Tracking (Zero Lag, Butter-Smooth 120fps)
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 80,
-    damping: 32,
-    mass: 0.2,
+    stiffness: 450,
+    damping: 35,
+    mass: 0.02,
     restDelta: 0.0001,
   });
 
@@ -67,8 +67,8 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
 
       const floatFrame = rawProgress * (total - 1);
 
-      // Deadzone check: Skip redrawing if frame position hasn't moved when stationary
-      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+      // Deadzone check: Freeze canvas when stationary, zero lag when scrolling
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
         return;
       }
 

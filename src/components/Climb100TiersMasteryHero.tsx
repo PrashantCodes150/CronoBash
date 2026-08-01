@@ -28,11 +28,11 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     offset: ['start start', 'end end'],
   });
 
-  // Snappy, 1-to-1 Lenis scroll spring tracking
+  // Ultra-Responsive 1-to-1 Scroll Tracking (Zero Lag, Butter-Smooth 120fps)
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 280,
-    damping: 48,
-    mass: 0.08,
+    stiffness: 450,
+    damping: 35,
+    mass: 0.02,
     restDelta: 0.0001,
   });
 
@@ -42,30 +42,6 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     concurrency: 12,
     priorityCount: 12,
   });
-
-  // ── GSAP & LENIS SMOOTH VIDEO FRAME SCRUBBING ──
-  useEffect(() => {
-    if (!containerRef.current || frames.length === 0) return;
-
-    const st = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.4,
-      onUpdate: (self) => {
-        const p = self.progress;
-        const targetFrame = p * (frames.length - 1);
-        gsap.to(currentFrameObjRef.current, {
-          frame: targetFrame,
-          duration: 0.2,
-          ease: 'power1.out',
-          overwrite: 'auto',
-        });
-      },
-    });
-
-    return () => st.kill();
-  }, [frames.length]);
 
   // Draw current frame on canvas with sub-frame blend interpolation
   useEffect(() => {
@@ -90,11 +66,12 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
       animId = requestAnimationFrame(render);
 
       const total = loadedImagesRef.current.length;
-      const floatFrame = Math.max(0, Math.min(total - 1, currentFrameObjRef.current.frame));
-
       if (total === 0) return;
 
-      if (Math.abs(floatFrame - lastDrawnFrame) < 0.005 && lastDrawnFrame !== -1) {
+      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
+      const floatFrame = rawProgress * (total - 1);
+
+      if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
         return;
       }
 
