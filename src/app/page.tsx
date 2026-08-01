@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion';
 import { useAuth } from '@/components/auth-context';
@@ -302,6 +302,20 @@ export default function LandingPage() {
     return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Memoized Frame Arrays (100% Prevents Array Object Re-Creation on Re-Renders)
+  const heroFrames = useMemo(
+    () => Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    []
+  );
+  const masteryFrames = useMemo(
+    () => Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    []
+  );
+  const workflowFrames = useMemo(
+    () => Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    []
+  );
+
   // Parallax Mouse Handler for Hero Cards
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   useEffect(() => {
@@ -496,7 +510,7 @@ export default function LandingPage() {
 
       {/* ── TURN STUDY INTO A SPORT: PINNED SCROLL-DRIVEN 3D FRAME ANIMATION HERO ── */}
       <TurnStudyIntoASportHero
-        frames={Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={heroFrames}
         user={user}
       />
 
@@ -514,7 +528,7 @@ export default function LandingPage() {
 
       {/* ── SECTION 2: 100 LEVEL EMBLEM MASTERY (Pinned Scroll Video Canvas Hero) ── */}
       <Climb100TiersMasteryHero
-        frames={Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={masteryFrames}
       />
 
       {/* Motivational Ticker Strip below Emblem Mastery */}
@@ -522,7 +536,7 @@ export default function LandingPage() {
 
       {/* ── SECTION 3: INTERACTIVE ANIMATED WORKFLOW SHOWCASE (Pinned Scroll Video Canvas Hero) ── */}
       <CronoBashWorkflowSection
-        frames={Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`)}
+        frames={workflowFrames}
       />
 
       {/* ── SECTION 4: COMMUNITY TESTIMONIALS (BUILT FOR DEEP WORK FIGHTERS) ── */}

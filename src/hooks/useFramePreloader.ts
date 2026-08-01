@@ -18,6 +18,8 @@ export function useFramePreloader(
   const [loadedCount, setLoadedCount] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const framesKey = frames && frames.length > 0 ? `${frames.length}:${frames[0]}:${frames[frames.length - 1]}` : '';
+
   useEffect(() => {
     if (!frames || frames.length === 0 || !enabled) return;
 
@@ -92,7 +94,7 @@ export function useFramePreloader(
     return () => {
       isCancelled = true;
     };
-  }, [frames, enabled, concurrency, priorityCount]);
+  }, [framesKey, enabled, concurrency, priorityCount]);
 
   const lastValidFrameRef = useRef<HTMLImageElement | null>(null);
 
