@@ -220,6 +220,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session.user);
         setLoading(false);
         fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
+
+        if (event === 'SIGNED_IN') {
+          router.replace('/dashboard');
+        }
       } else {
         setUser(null);
         setProfile(null);
