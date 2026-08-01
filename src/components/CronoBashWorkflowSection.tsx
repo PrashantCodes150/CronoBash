@@ -61,7 +61,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     const render = () => {
       animId = requestAnimationFrame(render);
 
-      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
+      const rawProgress = Math.min(1, Math.max(0, scrollYProgress.get()));
       const total = loadedImagesRef.current.length;
       if (total === 0) return;
 
@@ -178,7 +178,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   const currentWorkflow = WORKFLOW_STEPS[activeStep];
 
   return (
-    <div ref={containerRef} id="workflow" className="relative h-[360vh] w-full bg-[#ECEFF6]">
+    <div ref={containerRef} id="workflow" className="relative h-[240vh] w-full bg-[#ECEFF6]">
       
       {/* Sticky Full-Screen Viewport Pinned while Video Frames Pan */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center items-center py-6 px-4">

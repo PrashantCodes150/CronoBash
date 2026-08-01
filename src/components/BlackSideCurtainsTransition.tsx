@@ -369,10 +369,12 @@ export default function BlackSideCurtainsTransition() {
 
   // Helper hook to compute exact (X, Y) coordinates along wave (Gentle, smooth motion)
   const useWaveTransform = (tVal: any) => {
-    const yPos = useTransform(tVal, [0, 1], ['-60px', '60px']);
+    const yPos = useTransform(tVal, [0, 1], ['-50px', '50px']);
     const xPos = useTransform(tVal, (t: number) => {
       const angle = t * Math.PI - Math.PI / 2;
-      return `${Math.cos(angle) * 35}px`;
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+      const maxDisplacement = isMobile ? 8 : 30;
+      return `${Math.cos(angle) * maxDisplacement}px`;
     });
     return { x: xPos, y: yPos };
   };
@@ -424,7 +426,7 @@ export default function BlackSideCurtainsTransition() {
         {/* ── PURE WHITE BACKGROUND BEHIND PHASE 1 CURTAINS ── */}
         <div className="absolute inset-0 z-0 bg-white" />
 
-        {/* ── BENEATH LAYER (z-10): STARFIELD & HANDS VIDEO CANVAS ── */}
+        {/* ── PITCH BLACK STARFIELD STAGE (z-10): Hands Video & 5 Bento Cards Reveal ── */}
         <motion.div
           style={{ opacity: starfieldOpacity }}
           className="absolute inset-0 z-10 w-full h-full flex items-center justify-center overflow-hidden bg-[#050711]"
@@ -479,25 +481,25 @@ export default function BlackSideCurtainsTransition() {
           </motion.div>
 
           {/* ── CENTER-RIGHT CARDS VIEWPORT ── */}
-          <div className="absolute top-1/2 -translate-y-1/2 right-5 sm:right-10 lg:right-16 w-[92%] sm:w-[420px] lg:w-[450px] h-[380px] sm:h-[420px] flex items-center justify-center z-20">
+          <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-10 lg:right-16 w-[94%] sm:w-[420px] lg:w-[450px] h-[380px] sm:h-[420px] flex items-center justify-center z-20">
 
             {/* CARD 01 */}
             <motion.div
               style={{ opacity: bento1Opacity, y: bento1Y }}
-              className="absolute w-full rounded-3xl p-7 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
+              className="absolute w-full rounded-3xl p-5 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <span className="text-4xl sm:text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
                     01
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
                   Focus Sprint Timers
                 </h3>
 
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
                   Synchronized 25m & 50m Pomodoro sprint timers built with live squad sync to lock into flow state.
                 </p>
               </div>
@@ -506,21 +508,21 @@ export default function BlackSideCurtainsTransition() {
             {/* CARD 02 */}
             <motion.div
               style={{ opacity: bento2Opacity, y: bento2Y }}
-              className="absolute w-full rounded-3xl p-7 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
+              className="absolute w-full rounded-3xl p-5 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <span className="text-4xl sm:text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
                     02
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
                   Deep Flow Analytics
                 </h3>
 
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
-                  Track your daily focus hours, peak productivity heatmaps, and consistency metrics in real time.
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
+                  Real-time streak analytics, focus distribution heatmaps, and weekly performance telemetry.
                 </p>
               </div>
             </motion.div>
@@ -528,20 +530,20 @@ export default function BlackSideCurtainsTransition() {
             {/* CARD 03 */}
             <motion.div
               style={{ opacity: bento3Opacity, y: bento3Y }}
-              className="absolute w-full rounded-3xl p-7 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
+              className="absolute w-full rounded-3xl p-5 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <span className="text-4xl sm:text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
                     03
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
                   Multiplayer Squad Arenas
                 </h3>
 
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
                   Join live study rooms with peer camera feeds, active focus logs, and real-time accountability.
                 </p>
               </div>
@@ -550,20 +552,20 @@ export default function BlackSideCurtainsTransition() {
             {/* CARD 04 */}
             <motion.div
               style={{ opacity: bento4Opacity, y: bento4Y }}
-              className="absolute w-full rounded-3xl p-7 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
+              className="absolute w-full rounded-3xl p-5 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <span className="text-4xl sm:text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
                     04
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
                   Distraction Sentinel
                 </h3>
 
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
                   On-device micro-movement tracking and active tab detection keep your focus uninterrupted.
                 </p>
               </div>
@@ -572,20 +574,20 @@ export default function BlackSideCurtainsTransition() {
             {/* CARD 05 */}
             <motion.div
               style={{ opacity: bento5Opacity, y: bento5Y }}
-              className="absolute w-full rounded-3xl p-7 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
+              className="absolute w-full rounded-3xl p-5 sm:p-9 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] bg-[#070b19]/50 backdrop-blur-2xl text-white flex flex-col justify-between ring-1 ring-white/10"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <span className="text-4xl sm:text-5xl font-black text-[#FF5500] tracking-tighter" style={{ fontFamily: "'Syne', sans-serif" }}>
                     05
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
                   Competitive Tier Ranks
                 </h3>
 
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
                   Climb ranks from Bronze to Overlord by logging verified focus hours and dominating leaderboards.
                 </p>
               </div>
@@ -598,7 +600,7 @@ export default function BlackSideCurtainsTransition() {
         {/* ── LEFT SHUTTER (z-40): Canvas Stage & 4 Floating Cards ── */}
         <motion.div
           style={{ x: leftCurtainX }}
-          className="absolute top-0 left-0 w-full md:w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center overflow-hidden"
+          className="absolute top-0 left-0 w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center overflow-hidden"
         >
           {/* Full-Bleed Canvas */}
           <canvas
@@ -607,7 +609,7 @@ export default function BlackSideCurtainsTransition() {
           />
 
           {/* Glassmorphic 4 Cards Stage */}
-          <div className="relative z-20 w-full max-w-md px-4 flex items-center justify-center">
+          <div className="relative z-20 w-full max-w-md px-2 sm:px-4 flex items-center justify-center">
             
             {/* CARD 1: COMPETITION */}
             <motion.div
@@ -616,15 +618,15 @@ export default function BlackSideCurtainsTransition() {
                 x: card1Pos.x,
                 y: card1Pos.y,
               }}
-              className="absolute w-[92%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-2.5"
+              className="absolute w-[94%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-1.5 sm:space-y-2.5"
             >
               <h4
-                className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none"
+                className="text-base sm:text-2xl font-black uppercase tracking-tight leading-none"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
               >
                 Competition
               </h4>
-              <p className="text-xs sm:text-sm font-semibold leading-relaxed tracking-normal text-slate-800">
+              <p className="text-[11px] sm:text-sm font-semibold leading-snug sm:leading-relaxed tracking-normal text-slate-800">
                 Battle peer fighters in 1v1 focus match duels where live camera sync and timer tracking prove who maintains flow state under pressure.
               </p>
             </motion.div>
@@ -636,15 +638,15 @@ export default function BlackSideCurtainsTransition() {
                 x: card2Pos.x,
                 y: card2Pos.y,
               }}
-              className="absolute w-[92%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-2.5"
+              className="absolute w-[94%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-1.5 sm:space-y-2.5"
             >
               <h4
-                className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none"
+                className="text-base sm:text-2xl font-black uppercase tracking-tight leading-none"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
               >
                 Real Squad Accountability
               </h4>
-              <p className="text-xs sm:text-sm font-semibold leading-relaxed tracking-normal text-slate-800">
+              <p className="text-[11px] sm:text-sm font-semibold leading-snug sm:leading-relaxed tracking-normal text-slate-800">
                 Join live multiplayer study rooms where peer presence, real-time focus logs, and synchronized sprint timers keep everyone locked in without distraction.
               </p>
             </motion.div>
@@ -656,15 +658,15 @@ export default function BlackSideCurtainsTransition() {
                 x: card3Pos.x,
                 y: card3Pos.y,
               }}
-              className="absolute w-[92%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-2.5"
+              className="absolute w-[94%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-1.5 sm:space-y-2.5"
             >
               <h4
-                className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none"
+                className="text-base sm:text-2xl font-black uppercase tracking-tight leading-none"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
               >
                 Stakes
               </h4>
-              <p className="text-xs sm:text-sm font-semibold leading-relaxed tracking-normal text-slate-800">
+              <p className="text-[11px] sm:text-sm font-semibold leading-snug sm:leading-relaxed tracking-normal text-slate-800">
                 Stake cash on your study sessions in 1v1 duels or squad pools, earning verified payouts directly to your wallet when you complete your targets.
               </p>
             </motion.div>
@@ -676,15 +678,15 @@ export default function BlackSideCurtainsTransition() {
                 x: card4Pos.x,
                 y: card4Pos.y,
               }}
-              className="absolute w-[92%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-2.5"
+              className="absolute w-[94%] sm:w-[380px] bg-white/40 backdrop-blur-xl border border-white/80 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] ring-1 ring-[#FF5500]/40 overflow-hidden space-y-1.5 sm:space-y-2.5"
             >
               <h4
-                className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none"
+                className="text-base sm:text-2xl font-black uppercase tracking-tight leading-none"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
               >
                 Unstoppable Sport
               </h4>
-              <p className="text-xs sm:text-sm font-semibold leading-relaxed tracking-normal text-slate-800">
+              <p className="text-[11px] sm:text-sm font-semibold leading-snug sm:leading-relaxed tracking-normal text-slate-800">
                 Level up tier ranks from Bronze to Overlord by logging verified focus hours, turning daily study discipline into an addictive competitive sport.
               </p>
             </motion.div>
@@ -695,12 +697,12 @@ export default function BlackSideCurtainsTransition() {
         {/* ── RIGHT SHUTTER (z-40): Solitary Study text ── */}
         <motion.div
           style={{ x: rightCurtainX }}
-          className="absolute top-0 right-0 w-full md:w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center p-6 md:p-14 overflow-hidden"
+          className="absolute top-0 right-0 w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center p-3 sm:p-6 md:p-14 overflow-hidden"
         >
-          <div className="max-w-lg space-y-6 text-left">
-            <div className="space-y-3">
+          <div className="max-w-lg space-y-3 sm:space-y-6 text-left">
+            <div className="space-y-1.5 sm:space-y-3">
               <h2
-                className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]"
+                className="text-2xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FFFFFF' }}
               >
                 Solitary Study <br />
@@ -708,14 +710,14 @@ export default function BlackSideCurtainsTransition() {
               </h2>
 
               <h3
-                className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05]"
+                className="text-xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight leading-[1.05]"
                 style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
               >
                 Welcome to the Arena.
               </h3>
             </div>
 
-            <p className="text-base sm:text-lg leading-relaxed font-medium" style={{ color: '#FFFFFF' }}>
+            <p className="text-xs sm:text-base lg:text-lg leading-relaxed font-medium" style={{ color: '#FFFFFF' }}>
               Willpower alone fails.{' '}
               <span className="font-extrabold" style={{ color: '#FF5500' }}>Competition</span>,{' '}
               <span className="font-extrabold" style={{ color: '#FF5500' }}>real squad accountability</span>, and{' '}
