@@ -2,8 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, AnimatePresence } from 'framer-motion';
 import { useFramePreloader } from '@/hooks/useFramePreloader';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface CronoBashWorkflowSectionProps {
   frames: string[];
@@ -14,32 +20,36 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeStep, setActiveStep] = useState(0);
+  const currentFrameRef = useRef(0);
 
-  // Track scroll progress through the pinned Section (300vh = exactly 1 natural scroll step per card)
+  // Track scroll progress through the pinned Section
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end'],
   });
 
-  // Instantaneous step trigger based on raw scrollYProgress
+  // GSAP Smooth ScrollTrigger Video Frame Scrubbing (Lenis Sync, Butter-Smooth 120fps)
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on('change', (p) => {
-      const progress = Math.min(1, Math.max(0, p));
-      if (progress < 0.25) setActiveStep(0);
-      else if (progress < 0.50) setActiveStep(1);
-      else if (progress < 0.75) setActiveStep(2);
-      else setActiveStep(3);
-    });
-    return () => unsubscribe();
-  }, [scrollYProgress]);
+    if (!containerRef.current || frames.length === 0) return;
 
-  // Ultra-Smooth 120fps Scroll Tracking (Zero Lag, Silk-Smooth Video Motion)
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 300,
-    damping: 32,
-    mass: 0.04,
-    restDelta: 0.0001,
-  });
+    const st = ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.3,
+      onUpdate: (self) => {
+        const p = self.progress;
+        currentFrameRef.current = p * (frames.length - 1);
+        const progress = Math.min(1, Math.max(0, p));
+        if (progress < 0.25) setActiveStep(0);
+        else if (progress < 0.50) setActiveStep(1);
+        else if (progress < 0.75) setActiveStep(2);
+        else setActiveStep(3);
+      },
+    });
+
+    return () => st.kill();
+  }, [frames.length]);
 
   // Queue-batched frame preloading & fallback rendering
   const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
@@ -61,11 +71,10 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     const render = () => {
       animId = requestAnimationFrame(render);
 
-      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
       const total = loadedImagesRef.current.length;
       if (total === 0) return;
 
-      const floatFrame = rawProgress * (total - 1);
+      const floatFrame = Math.max(0, Math.min(total - 1, currentFrameRef.current));
 
       // Deadzone check: Freeze canvas when stationary, zero lag when scrolling
       if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
@@ -133,7 +142,7 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [smoothProgress]);
+  }, []);
 
   // Original 4 Workflow Steps Data
   const WORKFLOW_STEPS = [
@@ -276,17 +285,17 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
 
               {/* Right Column: Original Dynamic Glass Preview Mockup Box */}
               <div className="lg:col-span-6">
-                <div className="bg-white/35 backdrop-blur-2xl border border-white/80 rounded-3xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(51,65,85,0.15)] min-h-[350px] flex flex-col justify-between relative overflow-hidden">
+                <div className="bg-white/35 backdrop-blur-2xl border border-white/80 rounded-3xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(51,65,85,0.15)] h-[390px] sm:h-[420px] flex flex-col justify-between relative overflow-hidden">
                   
                   {/* Background Glow */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#334155]/5 rounded-full blur-3xl pointer-events-none" />
 
-                  <AnimatePresence>
+                  <AnimatePresence mode="wait">
                     <motion.div
                       key={currentWorkflow.step}
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.15, ease: 'easeOut' }}
                       className="space-y-6 z-10"
                     >
