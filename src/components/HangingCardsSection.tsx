@@ -90,45 +90,50 @@ export default function HangingCardsSection({ children }: HangingCardsSectionPro
           />
 
           {/* Synchronized Locked Vertical Drop Strings */}
-          {attachments.map((item, idx) => (
-            <g key={idx}>
-              {/* Vertical String attached to Cable */}
-              <motion.path
-                d={item.pathKeyframes[0]}
-                fill="none"
-                stroke="#FF5500"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                filter="url(#orangeGlow)"
-                animate={{
-                  d: item.pathKeyframes
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
+          {attachments.map((item, idx) => {
+            const initialPath = item.pathKeyframes[0] || `M ${item.x} 20 Q ${item.x} 35, ${item.x} 50`;
+            const initialY = item.yKeyframes[0] ?? 20;
 
-              {/* Cable Joint Knot Circle - Locked on Cable Path */}
-              <motion.circle
-                cx={item.x}
-                cy={item.yKeyframes[0]}
-                r={4}
-                fill="#FF5500"
-                stroke="#FFFFFF"
-                strokeWidth={1.8}
-                animate={{
-                  cy: item.yKeyframes
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-            </g>
-          ))}
+            return (
+              <g key={idx}>
+                {/* Vertical String attached to Cable */}
+                <motion.path
+                  d={initialPath}
+                  fill="none"
+                  stroke="#FF5500"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  filter="url(#orangeGlow)"
+                  animate={{
+                    d: item.pathKeyframes
+                  }}
+                  transition={{
+                    duration: 3.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+
+                {/* Cable Joint Knot Circle - Locked on Cable Path */}
+                <motion.circle
+                  cx={item.x}
+                  cy={initialY}
+                  r={4}
+                  fill="#FF5500"
+                  stroke="#FFFFFF"
+                  strokeWidth={1.8}
+                  animate={{
+                    cy: item.yKeyframes
+                  }}
+                  transition={{
+                    duration: 3.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </g>
+            );
+          })}
         </svg>
       </div>
 

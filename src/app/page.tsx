@@ -569,7 +569,7 @@ export default function LandingPage() {
                   name: 'Prashant Singh',
                   role: 'CS Undergrad & Competitive Programmer',
                   quote: 'I went from struggling with 20-minute study sessions to logging 4 hours of intense flow state daily. The 1v1 money duels make procrastination impossible.',
-                  avatar: '/prashant_singh.jpg',
+                  avatar: '/prashant_singh.webp',
                   rating: 5.0,
                 },
                 {
