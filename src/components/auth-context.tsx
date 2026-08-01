@@ -240,10 +240,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
     const isPublicRoute = publicRoutes.includes(pathname);
 
+    const hasOAuthParams = typeof window !== 'undefined' && (
+      window.location.search.includes('code=') ||
+      window.location.hash.includes('access_token') ||
+      window.location.hash.includes('error=')
+    );
+
     if (!user && !isPublicRoute) {
       router.replace('/login');
-    } else if (user && (pathname === '/login' || pathname === '/signup' || (typeof window !== 'undefined' && window.location.hash.includes('access_token')))) {
-      router.replace('/dashboard');
+    } else if (user) {
+      if (pathname === '/login' || pathname === '/signup' || hasOAuthParams) {
+        if (hasOAuthParams && typeof window !== 'undefined') {
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+          } catch (e) {}
+        }
+        router.replace('/dashboard');
+      }
     }
   }, [user, pathname, loading, router]);
 

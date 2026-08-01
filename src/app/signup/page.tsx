@@ -85,11 +85,11 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://focus-arena-gamma.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/onboarding`
+          redirectTo: `${origin}/dashboard`
         }
       });
       if (error) setErrorMsg(error.message);
