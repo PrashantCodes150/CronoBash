@@ -21,6 +21,7 @@ import MotivationalTickerSection from '@/components/MotivationalTickerSection';
 import MasteryMotivationalTickerSection from '@/components/MasteryMotivationalTickerSection';
 import CronoBashWorkflowSection from '@/components/CronoBashWorkflowSection';
 import Interactive3dCtaCard from '@/components/Interactive3dCtaCard';
+import LogoLoader from '@/components/LogoLoader';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -232,6 +233,22 @@ const WORKFLOW_STEPS = [
 
 export default function LandingPage() {
   const { user } = useAuth();
+  const [isPageReady, setIsPageReady] = useState(false);
+
+  // Preload initial hero frame before revealing home screen
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/hero-frames/frame_001.webp';
+    const onReady = () => {
+      setTimeout(() => setIsPageReady(true), 350);
+    };
+    img.onload = onReady;
+    img.onerror = onReady;
+
+    if (img.complete && img.naturalWidth > 0) {
+      onReady();
+    }
+  }, []);
 
   // ── OFFICIAL LENIS 120FPS SMOOTH INERTIA SCROLL ENGINE ──
   useEffect(() => {
@@ -404,6 +421,20 @@ export default function LandingPage() {
   return (
     <div className="bg-transparent text-[#1c1917] font-sans relative antialiased selection:bg-[#334155] selection:text-white min-h-screen">
       
+      {/* Full-Screen Animated Logo Buffering Screen during Initial Frame Loading */}
+      <AnimatePresence>
+        {!isPageReady && (
+          <motion.div
+            key="home-buffering-loader"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
+            className="fixed inset-0 z-[100]"
+          >
+            <LogoLoader size="full" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* WebGL Ambient Background */}
       <WebGLShaderBackground />
 
