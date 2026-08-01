@@ -343,19 +343,23 @@ export default function Header() {
         </div>
 
         {/* Desktop Quick Nav Links */}
-        <div className="hidden lg:flex items-center gap-1 bg-white/40 backdrop-blur-xl p-1 rounded-full border border-white/30 shadow-[0_4px_16px_0_rgba(0,0,0,0.06)] text-xs font-bold text-[#44474c]">
+        <div className="hidden md:flex items-center gap-1 bg-white/40 backdrop-blur-xl p-1 rounded-full border border-white/30 shadow-[0_4px_16px_0_rgba(0,0,0,0.06)] text-xs font-bold text-[#44474c] overflow-x-auto">
           {[
             { name: 'Dashboard', href: '/dashboard' },
             { name: 'Focus Sprints', href: '/study' },
             { name: 'Squad Arenas', href: '/rooms' },
+            { name: 'Buddies', href: '/buddies' },
+            { name: 'Tasks', href: '/tasks' },
+            { name: 'Analytics', href: '/analytics' },
+            { name: 'Leaderboard', href: '/leaderboard' },
           ].map(link => {
-            const active = pathname === link.href;
+            const active = pathname === link.href || pathname.startsWith(link.href + '/');
             return (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`px-4 py-2 rounded-full transition-all ${
-                  active ? 'bg-[#334155] text-white shadow-sm' : 'hover:text-[#334155] hover:bg-white/60'
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full transition-all whitespace-nowrap ${
+                  active ? 'bg-[#334155] text-white shadow-sm font-extrabold' : 'hover:text-[#334155] hover:bg-white/60'
                 }`}
               >
                 {link.name}
