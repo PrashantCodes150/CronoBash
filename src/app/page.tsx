@@ -526,23 +526,23 @@ export default function LandingPage() {
       />
 
       {/* ── SECTION 4: COMMUNITY TESTIMONIALS (BUILT FOR DEEP WORK FIGHTERS) ── */}
-      <section className="py-20 sm:py-28 relative z-20 border-t border-slate-200/50">
-        <div className="max-w-[1440px] mx-auto px-5 md:px-16">
-          <FadeUp className="max-w-3xl mb-8 text-center mx-auto">
+      <section className="py-14 sm:py-28 relative z-20 border-t border-slate-200/50">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-16">
+          <FadeUp className="max-w-3xl mb-6 sm:mb-8 text-center mx-auto">
             <h2
-              className="text-[42px] sm:text-[56px] text-[#334155] font-extrabold mb-4 leading-[1.1]"
+              className="text-[28px] sm:text-[56px] text-[#334155] font-extrabold mb-2 sm:mb-4 leading-[1.1]"
               style={{ fontFamily: "'Syne', sans-serif" }}
             >
               Built for Deep Work Fighters.
             </h2>
-            <p className="text-lg sm:text-xl text-[#44474c]">
+            <p className="text-sm sm:text-xl text-[#44474c] px-2">
               See how students and professionals use CronoBash to build daily focus habits and win cash duels.
             </p>
           </FadeUp>
 
           {/* Vibrating Electric Orange Cable & Hanging Testimonial Cards */}
           <HangingCardsSection>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
               {[
                 {
                   name: 'Sakshami Singh',
@@ -573,7 +573,7 @@ export default function LandingPage() {
                 return (
                   <FadeUp key={t.name} delay={idx * 0.1}>
                     <HangingCardItem index={idx} className="h-full">
-                      <div className="h-full rounded-3xl p-7 border border-white/90 shadow-xl bg-white/90 backdrop-blur-2xl flex flex-col justify-between space-y-6 relative overflow-hidden group hover:border-[#334155]/30 transition-all duration-300">
+                      <div className="h-full rounded-3xl p-5 sm:p-7 border border-white/90 shadow-xl bg-white/90 backdrop-blur-2xl flex flex-col justify-between space-y-4 sm:space-y-6 relative overflow-hidden group hover:border-[#334155]/30 transition-all duration-300">
                         
                         {/* Top Dynamic Star Rating Header */}
                         <div className="space-y-4">

@@ -45,8 +45,8 @@ export default function HangingCardsSection({ children }: HangingCardsSectionPro
   return (
     <div className="relative w-full pt-8 pb-4">
       
-      {/* ── SINGLE TOP HORIZONTAL ELECTRIC ORANGE VIBRATING CABLE ── */}
-      <div className="relative w-full h-12 overflow-visible pointer-events-none select-none z-30">
+      {/* ── SINGLE TOP HORIZONTAL ELECTRIC ORANGE VIBRATING CABLE (DESKTOP ONLY) ── */}
+      <div className="hidden md:block relative w-full h-12 overflow-visible pointer-events-none select-none z-30">
         <svg
           className="w-full h-full overflow-visible"
           viewBox="0 0 1440 50"
@@ -170,8 +170,8 @@ export function HangingCardItem({
       }}
       className={`relative ${className}`}
     >
-      {/* ── PUNCHED HOLE (GROMMET) & 2-ROUND ORANGE STRING LOOP WRAP ── */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none select-none">
+      {/* ── PUNCHED HOLE (GROMMET) & 2-ROUND ORANGE STRING LOOP WRAP (DESKTOP ONLY) ── */}
+      <div className="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 z-40 flex-col items-center pointer-events-none select-none">
         
         {/* Double Orange String Loop (2 rounds threaded) */}
         <div className="relative w-6 h-3.5 -mb-2 flex items-center justify-center">

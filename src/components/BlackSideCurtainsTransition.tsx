@@ -600,7 +600,7 @@ export default function BlackSideCurtainsTransition() {
         {/* ── LEFT SHUTTER (z-40): Canvas Stage & 4 Floating Cards ── */}
         <motion.div
           style={{ x: leftCurtainX }}
-          className="absolute top-0 left-0 w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center overflow-hidden"
+          className="absolute top-0 left-0 w-[calc(50%+1px)] h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center overflow-hidden"
         >
           {/* Full-Bleed Canvas */}
           <canvas
@@ -697,7 +697,7 @@ export default function BlackSideCurtainsTransition() {
         {/* ── RIGHT SHUTTER (z-40): Solitary Study text ── */}
         <motion.div
           style={{ x: rightCurtainX }}
-          className="absolute top-0 right-0 w-1/2 h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center p-3 sm:p-6 md:p-14 overflow-hidden"
+          className="absolute top-0 right-0 w-[calc(50%+1px)] h-full bg-[#070B14] shadow-2xl z-40 flex items-center justify-center p-3 sm:p-6 md:p-14 overflow-hidden"
         >
           <div className="max-w-lg space-y-3 sm:space-y-6 text-left">
             <div className="space-y-1.5 sm:space-y-3">
