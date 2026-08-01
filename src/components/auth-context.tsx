@@ -241,9 +241,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!user && !isPublicRoute) {
-      router.push('/login');
-    } else if (user && (pathname === '/login' || pathname === '/signup')) {
-      router.push('/dashboard');
+      router.replace('/login');
+    } else if (user && (pathname === '/login' || pathname === '/signup' || (typeof window !== 'undefined' && window.location.hash.includes('access_token')))) {
+      router.replace('/dashboard');
     }
   }, [user, pathname, loading, router]);
 

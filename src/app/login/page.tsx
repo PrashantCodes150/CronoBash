@@ -29,24 +29,6 @@ export default function LoginPage() {
         setErrorMsg(error.message);
         setLoading(false);
       } else {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user?.id;
-
-        if (userId) {
-          const { data: userProfile } = await supabase
-            .from('users')
-            .select('has_seen_onboarding')
-            .eq('id', userId)
-            .maybeSingle();
-
-          const userLocalSeen = typeof window !== 'undefined' && localStorage.getItem(`cronobash_has_seen_onboarding_${userId}`) === 'true';
-          const dbSeen = userProfile?.has_seen_onboarding === true;
-
-          if (!userLocalSeen && !dbSeen) {
-            router.replace('/onboarding');
-            return;
-          }
-        }
         router.replace('/dashboard');
       }
     } catch (e: any) {
