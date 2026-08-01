@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, AnimatePresence, useInView } from 'framer-motion';
 import { useFramePreloader } from '@/hooks/useFramePreloader';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -21,6 +21,9 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeStep, setActiveStep] = useState(0);
   const currentFrameRef = useRef(0);
+
+  // Viewport Intersection Check for Lazy Preloading on Scroll
+  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px', once: true });
 
   // Track scroll progress through the pinned Section
   const { scrollYProgress } = useScroll({
@@ -51,11 +54,11 @@ export default function CronoBashWorkflowSection({ frames, user }: CronoBashWork
     return () => st.kill();
   }, [frames.length]);
 
-  // Queue-batched frame preloading & fallback rendering
+  // Queue-batched lazy frame preloader (starts downloading when user scrolls near section)
   const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
-    enabled: true,
-    concurrency: 12,
-    priorityCount: 12,
+    enabled: isInView,
+    concurrency: 4,
+    priorityCount: 8,
   });
 
   // Full-bleed video frame canvas render loop with 120fps sub-frame interpolation

@@ -11,7 +11,7 @@ if (typeof window !== 'undefined') {
 
 // Pre-generated 175 frame paths for the extracted video frames (Verified exact count in public/momentum-frames)
 const MOMENTUM_FRAMES = Array.from({ length: 175 }, (_, i) => 
-  `/momentum-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`
+  `/momentum-frames/frame_${String(i + 1).padStart(3, '0')}.webp`
 );
 
 export default function BlackSideCurtainsTransition() {

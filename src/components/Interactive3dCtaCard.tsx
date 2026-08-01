@@ -44,7 +44,7 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
     const imgArray: HTMLImageElement[] = [];
 
     for (let i = 1; i <= totalFrames; i++) {
-      const src = `/workflow-frames/frame_${String(i).padStart(3, '0')}.jpg`;
+      const src = `/workflow-frames/frame_${String(i).padStart(3, '0')}.webp`;
       const img = new Image();
       const onImageReady = () => {
         count++;

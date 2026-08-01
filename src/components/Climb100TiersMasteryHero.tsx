@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { BADGES } from '@/lib/badges';
@@ -22,6 +22,9 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const currentFrameObjRef = useRef({ frame: 0 });
 
+  // Viewport Intersection Check for Lazy Preloading on Scroll
+  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px', once: true });
+
   // Pin section for 240vh for smooth scroll-driven video frames transition + right-to-left emblem scrollytelling
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -36,11 +39,11 @@ export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMaster
     restDelta: 0.0001,
   });
 
-  // Queue-batched frame preloader
+  // Queue-batched lazy frame preloader (starts downloading when user scrolls near section)
   const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
-    enabled: true,
-    concurrency: 12,
-    priorityCount: 12,
+    enabled: isInView,
+    concurrency: 4,
+    priorityCount: 8,
   });
 
   // Draw current frame on canvas with sub-frame blend interpolation

@@ -5,7 +5,7 @@ import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 
 // Pre-generated 185 frame paths for the extracted video frames
 const MOMENTUM_FRAMES = Array.from({ length: 185 }, (_, i) => 
-  `/momentum-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`
+  `/momentum-frames/frame_${String(i + 1).padStart(3, '0')}.webp`
 );
 
 export default function MasterYourMomentumSection() {

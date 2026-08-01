@@ -304,15 +304,15 @@ export default function LandingPage() {
 
   // Memoized Frame Arrays (100% Prevents Array Object Re-Creation on Re-Renders)
   const heroFrames = useMemo(
-    () => Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    () => Array.from({ length: 240 }, (_, i) => `/hero-frames/frame_${String(i + 1).padStart(3, '0')}.webp`),
     []
   );
   const masteryFrames = useMemo(
-    () => Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    () => Array.from({ length: 170 }, (_, i) => `/mastery-frames/frame_${String(i + 1).padStart(3, '0')}.webp`),
     []
   );
   const workflowFrames = useMemo(
-    () => Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.jpg`),
+    () => Array.from({ length: 220 }, (_, i) => `/workflow-frames/frame_${String(i + 1).padStart(3, '0')}.webp`),
     []
   );
 

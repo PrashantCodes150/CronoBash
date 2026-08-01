@@ -35,7 +35,7 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
 
     for (let i = 1; i <= totalFrames; i++) {
       const img = new Image();
-      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.jpg`;
+      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.webp`;
       img.onload = handleReady;
       img.onerror = handleReady;
       img.src = filename;
