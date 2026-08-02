@@ -126,7 +126,10 @@ export default function SignupPage() {
           <img
             src="/cronobash-icon.webp"
             alt="CronoBash Emblem"
-            className="w-7 h-7 sm:w-8 sm:h-8 object-contain group-hover:scale-105 transition-transform"
+            className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/cronobash-icon.png';
+            }}
           />
           <span
             className="text-base sm:text-lg font-extrabold text-[#334155] tracking-tight"

@@ -235,19 +235,39 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [isPageReady, setIsPageReady] = useState(false);
 
-  // Preload initial hero frame before revealing home screen
+  // Preload initial hero frames before revealing home screen
   useEffect(() => {
-    const img = new Image();
-    img.src = '/hero-frames/frame_001.webp';
-    const onReady = () => {
+    let loadedCount = 0;
+    const targetCount = 12;
+    let isDone = false;
+
+    const onFinish = () => {
+      if (isDone) return;
+      isDone = true;
       setTimeout(() => setIsPageReady(true), 350);
     };
-    img.onload = onReady;
-    img.onerror = onReady;
 
-    if (img.complete && img.naturalWidth > 0) {
-      onReady();
+    const checkComplete = () => {
+      loadedCount++;
+      if (loadedCount >= targetCount) {
+        onFinish();
+      }
+    };
+
+    for (let i = 1; i <= targetCount; i++) {
+      const img = new Image();
+      img.src = `/hero-frames/frame_${String(i).padStart(3, '0')}.webp`;
+      img.onload = checkComplete;
+      img.onerror = checkComplete;
+
+      if (img.complete && img.naturalWidth > 0) {
+        checkComplete();
+      }
     }
+
+    // Safety fallback timeout after 2.5s
+    const fallbackTimer = setTimeout(onFinish, 2500);
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   // ── OFFICIAL LENIS 120FPS SMOOTH INERTIA SCROLL ENGINE ──
