@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import CronoBashLogoIcon from './CronoBashLogoIcon';
 
 interface LogoLoaderProps {
   text?: string;
@@ -34,15 +35,18 @@ export default function LogoLoader({
         <div className="absolute -inset-2 rounded-full border border-[#FF5500]/25 animate-pulse" />
 
         {/* Floating Pulsing Logo Image */}
-        <img
-          src="/cronobash-icon.webp"
-          alt="CronoBash Loading..."
-          className={`${iconSizes[size]} object-contain animate-bounce relative z-10 drop-shadow-[0_0_25px_rgba(255,85,0,0.6)]`}
-          style={{ animationDuration: '1.4s' }}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/cronobash-icon.png';
-          }}
-        />
+        <div className={`relative ${iconSizes[size]} flex items-center justify-center`}>
+          <img
+            src="/cronobash-icon.png"
+            alt="CronoBash Loading..."
+            className="w-full h-full object-contain animate-bounce relative z-10 drop-shadow-[0_0_25px_rgba(255,85,0,0.6)]"
+            style={{ animationDuration: '1.4s' }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <CronoBashLogoIcon className="w-full h-full absolute inset-0 animate-bounce drop-shadow-[0_0_20px_rgba(255,85,0,0.5)]" />
+        </div>
       </div>
 
       {text && (

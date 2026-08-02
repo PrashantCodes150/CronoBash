@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, Room } from '@/lib/supabaseClient';
+import LogoLoader from '@/components/LogoLoader';
 
 export default function ArenaPage() {
   const router = useRouter();
@@ -130,8 +131,8 @@ export default function ArenaPage() {
             <h3 className="font-display text-sm font-bold text-on-surface uppercase tracking-wider">Live Squad Feeds</h3>
             
             {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-6 h-6 border-2 border-primary-container border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex justify-center py-6">
+                <LogoLoader size="sm" text="LOADING ARENA FEEDS..." />
               </div>
             ) : liveRooms.length === 0 ? (
               <p className="text-xs text-on-surface-variant font-mono">No live squads currently online</p>
