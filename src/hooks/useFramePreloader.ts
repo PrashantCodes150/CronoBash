@@ -12,7 +12,9 @@ export function useFramePreloader(
   frames: string[],
   options: UseFramePreloaderOptions = {}
 ) {
-  const { enabled = true, concurrency = 4, priorityCount = 8 } = options;
+  // Dynamically scale concurrency based on device hardware to prevent CPU lock on budget mobile devices
+  const hardwareConcurrency = typeof window !== 'undefined' && navigator.hardwareConcurrency ? Math.min(4, Math.max(2, Math.floor(navigator.hardwareConcurrency / 2))) : 3;
+  const { enabled = true, concurrency = hardwareConcurrency, priorityCount = 8 } = options;
 
   const loadedImagesRef = useRef<HTMLImageElement[]>([]);
   const [loadedCount, setLoadedCount] = useState(0);
