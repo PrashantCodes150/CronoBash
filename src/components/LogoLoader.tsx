@@ -9,6 +9,7 @@ interface LogoLoaderProps {
 }
 
 export default function LogoLoader({
+  text,
   size = 'md',
   className = '',
 }: LogoLoaderProps) {
@@ -20,7 +21,7 @@ export default function LogoLoader({
   };
 
   const content = (
-    <div className={`flex flex-col items-center justify-center select-none ${className}`}>
+    <div className={`flex flex-col items-center justify-center select-none gap-3 ${className}`}>
       {/* Animated Glowing Logo Emblem */}
       <div className="relative flex items-center justify-center">
         {/* Soft Ambient Pulsing Orange Aura */}
@@ -35,11 +36,21 @@ export default function LogoLoader({
         {/* Floating Pulsing Logo Image */}
         <img
           src="/cronobash-icon.webp"
-          alt="Loading..."
-          className={`${iconSizes[size]} object-contain animate-bounce relative z-10 drop-shadow-[0_0_25px_rgba(255,85,0,0.5)]`}
-          style={{ animationDuration: '1.6s' }}
+          alt="CronoBash Loading..."
+          className={`${iconSizes[size]} object-contain animate-bounce relative z-10 drop-shadow-[0_0_25px_rgba(255,85,0,0.6)]`}
+          style={{ animationDuration: '1.4s' }}
+          onError={(e) => {
+            // Fallback to PNG if WebP isn't supported in old browser
+            (e.target as HTMLImageElement).src = '/cronobash-icon.png';
+          }}
         />
       </div>
+
+      {text && (
+        <span className="text-xs font-bold tracking-widest uppercase text-slate-500 animate-pulse">
+          {text}
+        </span>
+      )}
     </div>
   );
 
