@@ -27,10 +27,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     if (typeof window !== 'undefined') {
-      const isLocalSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true' || localStorage.getItem('cronobash_has_seen_onboarding') === 'true';
-      if (isLocalSeen) return;
+      const isUserSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true';
+      if (isUserSeen) return;
     }
-    if (profile && profile.has_seen_onboarding === false) {
+    if (profile && !profile.has_seen_onboarding) {
       router.replace('/onboarding');
     }
   }, [user, profile?.has_seen_onboarding, router]);
@@ -542,11 +542,12 @@ export default function Dashboard() {
               onClick={() => setIsArenaDropdownOpen(!isArenaDropdownOpen)}
               className="bg-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 cursor-pointer hover:shadow transition-all group"
             >
-              <img
-                src="/cronobash-icon.webp"
-                alt="CronoBash Emblem"
-                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
-              />
+              <span
+                className="text-lg sm:text-xl text-black leading-none select-none mr-1"
+                style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+              >
+                CronoBash
+              </span>
               <span className="font-extrabold text-xs sm:text-sm text-gray-900">Focus Arena</span>
               <span className={`material-symbols-outlined text-gray-400 text-base transition-transform ${isArenaDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>

@@ -50,7 +50,7 @@ export function TimeTrackerWidget() {
   };
 
   return (
-    <div className="morphism-card bg-white p-5 space-y-4 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:border-[#10B981] transition-all">
+    <div className="morphism-card bg-white p-5 rounded-[24px] space-y-4 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:border-[#10B981] transition-all">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">

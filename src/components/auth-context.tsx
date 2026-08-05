@@ -23,10 +23,10 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   wallet: null,
   loading: true,
-  refreshWallet: async () => {},
-  refreshProfile: async () => {},
-  updateProfileLocally: () => {},
-  signOut: async () => {},
+  refreshWallet: async () => { },
+  refreshProfile: async () => { },
+  updateProfileLocally: () => { },
+  signOut: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -49,11 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined') {
       try {
         const userId = userObj?.id;
-        const raw = userId 
-          ? localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data')
-          : localStorage.getItem('cronobash_user_onboarding_data');
+        const raw = userId ? localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) : null;
         if (raw) savedLocalOnboarding = JSON.parse(raw);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const userMeta = userObj?.user_metadata || {};
@@ -74,12 +72,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const sound_effects = rawProfile?.sound_effects || userMeta?.sound_effects || savedLocalOnboarding?.sound_effects || 'Mechanical Key Clicks';
     const leaderboard_privacy = rawProfile?.leaderboard_privacy || userMeta?.leaderboard_privacy || savedLocalOnboarding?.leaderboard_privacy || 'Public Profile';
     const camera_verified = rawProfile?.camera_verified !== undefined ? rawProfile.camera_verified : (userMeta?.camera_verified !== undefined ? userMeta.camera_verified : (savedLocalOnboarding?.camera_verified !== undefined ? savedLocalOnboarding.camera_verified : true));
-    
-    // Crucial Fix: If ANY source indicates onboarding is completed, return true!
+
+    let isSeenLocal = false;
+    if (typeof window !== 'undefined') {
+      const uId = rawProfile?.id || userObj?.id;
+      if (uId) {
+        try {
+          isSeenLocal =
+            localStorage.getItem(`cronobash_has_seen_onboarding_${uId}`) === 'true' ||
+            localStorage.getItem(`onboarding_seen_${uId}`) === 'true';
+        } catch (e) {}
+      }
+    }
+
     const has_seen_onboarding = Boolean(
-      rawProfile?.has_seen_onboarding || 
-      userMeta?.has_seen_onboarding || 
-      savedLocalOnboarding?.has_seen_onboarding
+      rawProfile?.has_seen_onboarding === true ||
+      userMeta?.has_seen_onboarding === true ||
+      savedLocalOnboarding?.has_seen_onboarding === true ||
+      isSeenLocal === true
     );
 
     return {
@@ -119,9 +129,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let savedLocalOnboarding: any = null;
         if (typeof window !== 'undefined') {
           try {
-            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data');
+            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`);
             if (raw) savedLocalOnboarding = JSON.parse(raw);
-          } catch (e) {}
+          } catch (e) { }
         }
         const initialAvatar = savedLocalOnboarding?.avatar_url || activeUserObj?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
         const initialName = metaName || savedLocalOnboarding?.name || activeUserObj?.user_metadata?.name || 'Arena Fighter';
@@ -133,7 +143,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             name: initialName,
             full_name: initialName,
             email: email || '',
-            avatar_url: initialAvatar
+            avatar_url: initialAvatar,
+            has_seen_onboarding: false
           })
           .select()
           .single();
@@ -190,6 +201,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('cronobash_user_onboarding_data');
+        localStorage.removeItem('cronobash_has_seen_onboarding');
+      } catch (e) {}
+    }
     setUser(null);
     setProfile(null);
     setWallet(null);
@@ -220,10 +237,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session.user);
         setLoading(false);
         fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
-
-        if (event === 'SIGNED_IN') {
-          router.replace('/dashboard');
-        }
       } else {
         setUser(null);
         setProfile(null);
@@ -257,12 +270,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (hasOAuthParams && typeof window !== 'undefined') {
           try {
             window.history.replaceState(null, '', window.location.pathname);
-          } catch (e) {}
+          } catch (e) { }
         }
-        router.replace('/dashboard');
+        if (profile && !profile.has_seen_onboarding) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/dashboard');
+        }
       }
     }
-  }, [user, pathname, loading, router]);
+  }, [user, profile, pathname, loading, router]);
 
   // Online status heartbeat
   useEffect(() => {

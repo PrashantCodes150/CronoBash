@@ -331,16 +331,11 @@ export default function Header() {
         
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group cursor-pointer select-none no-underline">
-            <img
-              src="/cronobash-icon.webp"
-              alt="CronoBash Emblem"
-              className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/cronobash-icon.png';
-              }}
-            />
-            <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <Link href="/dashboard" className="select-none cursor-pointer no-underline flex items-center">
+            <span
+              className="text-2xl sm:text-[28px] text-black leading-none select-none"
+              style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+            >
               CronoBash
             </span>
           </Link>

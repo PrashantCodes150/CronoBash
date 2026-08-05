@@ -201,13 +201,12 @@ export default function ProfilePage() {
       }
 
       // 3. LocalStorage onboarding cache sync
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && user?.id) {
         try {
-          const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`) || localStorage.getItem('cronobash_user_onboarding_data');
+          const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`);
           const prev = raw ? JSON.parse(raw) : {};
           const merged = { ...prev, ...updatedData };
           localStorage.setItem(`cronobash_user_onboarding_data_${user.id}`, JSON.stringify(merged));
-          localStorage.setItem('cronobash_user_onboarding_data', JSON.stringify(merged));
         } catch (e) {}
       }
 
@@ -324,12 +323,9 @@ export default function ProfilePage() {
 
   // Saved Onboarding Data Fallback (Ensures 100% real-time reflection of user's selected preferences)
   const savedOnboarding = useMemo(() => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined' || !user?.id) return null;
     try {
-      const uId = user?.id;
-      const raw = uId 
-        ? localStorage.getItem(`cronobash_user_onboarding_data_${uId}`) || localStorage.getItem('cronobash_user_onboarding_data')
-        : localStorage.getItem('cronobash_user_onboarding_data');
+      const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;

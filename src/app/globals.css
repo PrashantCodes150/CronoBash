@@ -1,53 +1,72 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1D1D1F;
-  --color-on-primary: #FFFFFF;
-  --color-primary-container: #3B82F6;
-  --color-on-primary-container: #FFFFFF;
-  
-  --color-secondary: #4F46E5;
-  --color-on-secondary: #FFFFFF;
-  
-  --color-background: #ECEFF6;
-  --color-on-background: #0F172A;
-  
-  --color-surface: #FFFFFF;
-  --color-on-surface: #0F172A;
-  --color-on-surface-variant: #475569;
-  
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Geist", sans-serif;
+  --font-display: "Special Elite", serif;
+
+  /* CronoBash base tokens */
+  --color-crono-dark:   #0a0a0a;
+  --color-crono-text:   #1a1a1a;
+  --color-crono-muted:  #767676;
+  --color-crono-accent: #905831;
+
+  /* Surface / material palette (matches HTML design system) */
+  --color-surface:                    #fcf9f8;
+  --color-surface-bright:             #fcf9f8;
+  --color-surface-dim:                #dcd9d9;
+  --color-surface-container-lowest:   #ffffff;
+  --color-surface-container-low:      #f6f3f2;
+  --color-surface-container:          #f0eded;
+  --color-surface-container-high:     #eae7e7;
+  --color-surface-container-highest:  #e5e2e1;
+  --color-surface-variant:            #e5e2e1;
+  --color-on-surface:                 #1c1b1b;
+  --color-on-surface-variant:         #444748;
+  --color-outline:                    #747878;
+  --color-outline-variant:            #c4c7c7;
+  --color-primary:                    #000000;
+  --color-wandor-dark:                #0a0a0a;
+  --color-prompt-brown:               #905831;
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto !important;
   color-scheme: light;
 }
 
-/* Global High Contrast Theme Tokens */
-:root {
-  --background: #ECEFF6;
-  --foreground: #0F172A;
-  --surface-container: #FFFFFF;
-  --outline-variant: #E2E8F0;
+/* ─── LENIS SMOOTH SCROLL MANDATORY STYLES ─────────────────── */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 body {
-  background-color: #ECEFF6;
-  color: #0F172A;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #fcf9f8;
+  color: #1c1b1b;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  overflow-x: hidden;
   line-height: 1.5;
-  font-weight: 400;
 }
 
-/* High Contrast Headings */
+/* Reset heading weights so sections can control their own */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
@@ -55,128 +74,82 @@ p, span, label {
   color: inherit;
 }
 
-/* Claymorphism & Morphism Utility Classes */
+/* ─── GLASS UTILITY CLASSES ─────────────────────────────── */
+
+/* Strong glass — used for hero card, bento grid cells */
+.liquid-glass {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 1);
+}
+
+/* Softer glass — used for pillar cards */
+.liquid-glass-muted {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Morphism card base with smooth rounded corners */
 .morphism-card {
-  background: #FFFFFF;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.035), 0 1px 3px rgba(0, 0, 0, 0.02);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1.5rem;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .morphism-card:hover {
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
-    transform: translateY(-2px);
-  }
+/* ─── SCROLL REVEAL ──────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
 }
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
 
-.morphism-card-flat {
-  background: #FFFFFF;
-  border-radius: 24px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
-}
+/* ─── SCROLLBAR ──────────────────────────────────────────── */
+.custom-scrollbar { scroll-behavior: smooth; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f6f3f2; border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #c4c7c7; border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #747878; }
 
-.morphism-badge {
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.morphism-btn {
-  background: #FFFFFF;
-  border-radius: 9999px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .morphism-btn:hover {
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-    transform: scale(1.04);
-  }
-}
-
-.card-base {
-  background: #FFFFFF;
-  border-radius: 20px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease-in-out;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .card-base:hover {
-    background: #FFFFFF;
-    border-color: #3B82F6;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
-  }
-}
-
-.glass-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-}
-
-/* Custom Scrollbar for inner elements */
-.custom-scrollbar {
-  scroll-behavior: smooth;
-}
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #F1F5F9;
-  border-radius: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3B82F6;
-}
-
-/* Mobile Responsive Utilities */
+/* ─── SAFE AREAS ─────────────────────────────────────────── */
 @layer utilities {
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-  /* Bottom nav spacer — prevents content from hiding behind fixed bottom bar */
-  .pb-bottom-nav {
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
-  }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-area-top    { padding-top:    env(safe-area-inset-top, 0px); }
+  .pb-bottom-nav    { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 }
 
-/* Active tap feedback for mobile — subtle scale pulse instead of hover lift */
-@media (hover: none) and (pointer: coarse) {
-  .morphism-card:active,
-  .card-base:active,
-  .morphism-btn:active {
-    transform: scale(0.98);
-    transition-duration: 0.1s;
-  }
-}
-
-/* Touch-friendly targets - enforce 44px minimum on mobile */
-@media (max-width: 640px) {
-  button, a, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  /* Don't force min-width on inline text links */
-  a:has(img), a span:not(.material-symbols-outlined) {
-    min-width: auto;
-  }
-}
-
-/* Prevent horizontal overflow globally */
+/* ─── OVERFLOW GUARD ─────────────────────────────────────── */
 #__next, body, main {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* Explicit CTA White Text Utility */
+.cta-text-white {
+  color: #ffffff !important;
+}
+
+/* Material Symbols Font Rule */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
 }

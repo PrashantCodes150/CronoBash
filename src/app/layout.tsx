@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-context";
 import LayoutWrapper from "@/components/layout-wrapper";
+import SmoothScroll from "@/components/SmoothScroll";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,18 +13,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CronoBash — Study with Friends, Compete Globally",
-  description: "Join 1v1 study battles, track focus with AI, climb leaderboards, and earn rewards.",
+  title: "CronoBash — Where focus becomes a game.",
+  description: "Join 1v1 focus duels, track AI distraction telemetry, climb global leaderboards, and build daily study habits with your squad.",
   metadataBase: new URL('https://cronobash.vercel.app'),
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      noimageindex: false,
-    },
-  },
 };
 
 export default function RootLayout({
@@ -34,16 +26,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
-      className={`${inter.className} ${inter.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" href="/hero-frames/frame_001.webp" as="image" type="image/webp" />
-        <link rel="preload" href="/cronobash-icon.webp" as="image" type="image/webp" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&family=Syne:wght@600;700;800&family=Archivo:wght@400;500;600;700;800;900&family=Azeret+Mono:wght@400;500;600;700&family=Fragment+Mono&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Special+Elite&family=Geist:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <script
@@ -65,9 +54,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#ECEFF6] text-[#0F172A] font-sans antialiased">
         <AuthProvider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
+          <SmoothScroll>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </SmoothScroll>
         </AuthProvider>
       </body>
     </html>

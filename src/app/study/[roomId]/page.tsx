@@ -406,7 +406,7 @@ export default function StudyRoomPage() {
     <div
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="min-h-screen bg-[#ECEFF6] text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none outline-none"
+      className="min-h-screen bg-[#B7B8B8] text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none outline-none"
     >
       <Toaster position="top-right" toastOptions={{ className: 'bg-white border border-slate-200 text-slate-900 font-bold text-xs shadow-lg' }} />
 

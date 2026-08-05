@@ -1,282 +1,114 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React from 'react';
+import { motion } from 'framer-motion';
+import LottiePlayer from '@/components/LottiePlayer';
 import { BADGES } from '@/lib/badges';
 import { BadgeDisplay } from '@/components/study/BadgeDisplay';
 
-import { useFramePreloader } from '@/hooks/useFramePreloader';
+const TIERS = [
+  {
+    badgeObj: BADGES[0], // Level 1: Noob Starter 🔰
+    title: 'Bronze Scholar',
+    level: 'LEVEL 1 - 25',
+    badgeLabel: 'Noob Starter 🔰',
+    desc: 'The foundation of focus. Access to basic squads, analytics, and Level 1-25 badges.',
+    delay: 0.1,
+  },
+  {
+    badgeObj: BADGES[49], // Level 50: Obsidian Shield 🛡️
+    title: 'Silver Strategist',
+    level: 'LEVEL 26 - 50',
+    badgeLabel: 'Obsidian Shield 🛡️',
+    desc: 'Refined routines. Unlocks advanced analytics, duel matchmaking, and Level 26-50 badges.',
+    delay: 0.2,
+  },
+  {
+    badgeObj: BADGES[74], // Level 75: Synapse Emperor 👑
+    title: 'Gold Focus Master',
+    level: 'LEVEL 51 - 75',
+    badgeLabel: 'Synapse Emperor 👑',
+    desc: 'Elite cognitive endurance. Custom arena cosmetics and Level 51-75 badges unlocked.',
+    delay: 0.3,
+  },
+  {
+    badgeObj: BADGES[99], // Level 100: Supreme Arena Overlord 👑
+    title: 'Diamond Scholar',
+    level: 'LEVEL 76 - 100',
+    badgeLabel: 'Supreme Overlord 👑',
+    desc: 'Absolute mastery. Highest yield multipliers, exclusive leaderboards, and Level 100 crown badge.',
+    delay: 0.4,
+  },
+];
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-interface Climb100TiersMasteryHeroProps {
-  frames: string[];
-}
-
-export default function Climb100TiersMasteryHero({ frames }: Climb100TiersMasteryHeroProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const currentFrameObjRef = useRef({ frame: 0 });
-
-  // Viewport Intersection Check for Lazy Preloading on Scroll
-  const isInView = useInView(containerRef, { margin: '300px 0px 300px 0px' });
-
-  // Pin section for 240vh for smooth scroll-driven video frames transition + right-to-left emblem scrollytelling
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
-  });
-
-  // Ultra-Responsive 1-to-1 Scroll Tracking (Zero Lag, Butter-Smooth 120fps)
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 450,
-    damping: 35,
-    mass: 0.02,
-    restDelta: 0.0001,
-  });
-
-  // Queue-batched lazy frame preloader (starts downloading when user scrolls near section)
-  const { loadedImagesRef, getFrameOrFallback } = useFramePreloader(frames, {
-    enabled: isInView,
-    concurrency: 4,
-    priorityCount: 8,
-  });
-
-  // Draw current frame on canvas with sub-frame blend interpolation
-  useEffect(() => {
-    if (!isInView) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const handleResize = () => {
-      if (!canvas) return;
-      canvas.width = canvas.clientWidth || window.innerWidth;
-      canvas.height = canvas.clientHeight || window.innerHeight;
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    let animId: number;
-    let lastDrawnFrame = -1;
-
-    const render = () => {
-      animId = requestAnimationFrame(render);
-
-      const total = loadedImagesRef.current.length;
-      if (total === 0) return;
-
-      const rawProgress = Math.min(1, Math.max(0, smoothProgress.get()));
-      const floatFrame = rawProgress * (total - 1);
-
-      if (Math.abs(floatFrame - lastDrawnFrame) < 0.001 && lastDrawnFrame !== -1) {
-        return;
-      }
-
-      const idx1 = Math.floor(floatFrame);
-      const idx2 = Math.min(total - 1, idx1 + 1);
-      const blend = floatFrame - idx1;
-
-      const img1 = getFrameOrFallback(idx1);
-      const img2 = loadedImagesRef.current[idx2];
-
-      if (img1 && img1.complete && img1.naturalWidth > 0 && img1.naturalHeight > 0) {
-        const w = canvas.width;
-        const h = canvas.height;
-
-        ctx.clearRect(0, 0, w, h);
-
-        const imgRatio = img1.naturalWidth / img1.naturalHeight;
-        const canvasRatio = w / h;
-        let drawW = Math.round(w);
-        let drawH = Math.round(h);
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (canvasRatio > imgRatio) {
-          drawH = Math.round(w / imgRatio);
-          offsetY = Math.round((h - drawH) / 2);
-        } else {
-          drawW = Math.round(h * imgRatio);
-          offsetX = Math.round((w - drawW) / 2);
-        }
-
-        ctx.globalAlpha = 1.0;
-        ctx.drawImage(img1, offsetX, offsetY, drawW, drawH);
-
-        if (idx1 !== idx2 && img2 && img2.complete && img2.naturalWidth > 0 && blend > 0.01) {
-          ctx.globalAlpha = blend;
-          ctx.drawImage(img2, offsetX, offsetY, drawW, drawH);
-        }
-
-        // Light, subtle vignette overlay for text legibility
-        ctx.globalAlpha = 1.0;
-        lastDrawnFrame = floatFrame;
-
-        const gradient = ctx.createLinearGradient(0, 0, 0, h);
-        gradient.addColorStop(0, 'rgba(7, 11, 20, 0.25)');
-        gradient.addColorStop(0.5, 'rgba(7, 11, 20, 0.15)');
-        gradient.addColorStop(1, 'rgba(7, 11, 20, 0.35)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, w, h);
-      }
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isInView]);
-
-  // ── Left Column Header Motion ──
-  const headerOpacity = useTransform(smoothProgress, [0, 0.05, 0.95, 1.0], [0.6, 1, 1, 0.6]);
-
-  // ── RIGHT-TO-LEFT EMBLEM TRANSITIONS ──
-  const b1X = useTransform(smoothProgress, [0.02, 0.08, 0.26, 0.30], ['120%', '0%', '0%', '-120%']);
-  const b1Opacity = useTransform(smoothProgress, [0.02, 0.08, 0.26, 0.30], [0, 1, 1, 0]);
-
-  const b2X = useTransform(smoothProgress, [0.28, 0.33, 0.51, 0.55], ['120%', '0%', '0%', '-140%']);
-  const b2Opacity = useTransform(smoothProgress, [0.28, 0.33, 0.51, 0.55], [0, 1, 1, 0]);
-
-  const b3X = useTransform(smoothProgress, [0.53, 0.58, 0.76, 0.80], ['120%', '0%', '0%', '-140%']);
-  const b3Opacity = useTransform(smoothProgress, [0.53, 0.58, 0.76, 0.80], [0, 1, 1, 0]);
-
-  const b4X = useTransform(smoothProgress, [0.78, 0.84, 1.00], ['120%', '0%', '0%']);
-  const b4Opacity = useTransform(smoothProgress, [0.78, 0.84, 1.00], [0, 1, 1]);
-
-  const tiers = [
-    {
-      tier: 'BRONZE TIER',
-      title: 'Bronze Scholar',
-      xp: '1,000 XP',
-      badgeIndex: 0,
-      colorHex: '#F59E0B',
-      glow: 'drop-shadow-[0_0_35px_rgba(245,158,11,0.6)]'
-    },
-    {
-      tier: 'SILVER TIER',
-      title: 'Silver Strategist',
-      xp: '8,500 XP',
-      badgeIndex: 24,
-      colorHex: '#67E8F9',
-      glow: 'drop-shadow-[0_0_35px_rgba(103,232,249,0.6)]'
-    },
-    {
-      tier: 'GOLD TIER',
-      title: 'Gold Flow Titan',
-      xp: '34,000 XP',
-      badgeIndex: 49,
-      colorHex: '#FACC15',
-      glow: 'drop-shadow-[0_0_35px_rgba(234,179,8,0.6)]'
-    },
-    {
-      tier: 'OVERLORD TIER',
-      title: 'Arena Overlord',
-      xp: '120,000 XP',
-      badgeIndex: 99,
-      colorHex: '#FF5500',
-      glow: 'drop-shadow-[0_0_40px_rgba(255,85,0,0.7)]'
-    },
-  ];
-
-  const motionStates = [
-    { x: b1X, opacity: b1Opacity },
-    { x: b2X, opacity: b2Opacity },
-    { x: b3X, opacity: b3Opacity },
-    { x: b4X, opacity: b4Opacity },
-  ];
-
+export default function Climb100TiersMasteryHero() {
   return (
-    <div ref={containerRef} id="levels" className="relative h-[240vh] w-full bg-[#070B14]">
-      
-      {/* Sticky Full-Screen Viewport Pinned while Video Frames Pan */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center py-10">
+    <section id="levels" className="py-20 sm:py-28 w-full max-w-[1200px] mx-auto px-6 md:px-16 relative z-20">
+
+      {/* Header — Thick Title & Boxer Lottie Animation On The Same Plane */}
+      <div suppressHydrationWarning={true} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8 border-b border-surface-variant/40 pb-4 sm:pb-6 reveal">
         
-        {/* Scroll Video Canvas Background (100% VISIBLE & BRIGHT) */}
-        <canvas
-          ref={canvasRef}
-          style={{ transform: 'translateZ(0)', willChange: 'transform', backfaceVisibility: 'hidden' }}
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-        />
+        <div className="max-w-2xl space-y-2">
+          <h2
+            className="text-[clamp(32px,4.5vw,50px)] font-black text-[#0a0a0a] tracking-tight leading-[1.04] font-sans drop-shadow-xs"
+            style={{ fontWeight: 900 }}
+          >
+            Progressive Mastery Tiers
+          </h2>
+          <p className="text-base sm:text-lg text-on-surface-variant font-normal leading-relaxed font-sans">
+            Climb the ranks through consistent, uninterrupted deep work. Each tier unlocks new arena aesthetics and higher base token yields.
+          </p>
+        </div>
 
-        {/* Content Stage */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 md:px-16 w-full">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* ── LEFT COLUMN: Title Hierarchy ── */}
-            <motion.div
-              style={{ opacity: headerOpacity }}
-              className="lg:col-span-5 space-y-4 text-left relative p-2"
-            >
-              {/* Soft Black Faded Glow Vignette Behind Text Only */}
-              <div className="absolute -inset-6 bg-gradient-to-r from-black/60 via-black/30 to-transparent blur-2xl -z-10 pointer-events-none rounded-full" />
-
-              <div className="space-y-2">
-                <h2
-                  className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05] uppercase drop-shadow-md"
-                  style={{ fontFamily: "'Syne', sans-serif", color: '#FFFFFF' }}
-                >
-                  Unlock Mastery <br />
-                  <span className="italic font-serif font-normal lowercase" style={{ color: '#FFFFFF' }}>emblem</span>
-                </h2>
-
-                <h3
-                  className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.05] uppercase drop-shadow-md"
-                  style={{ fontFamily: "'Syne', sans-serif", color: '#FF5500' }}
-                >
-                  Badges.
-                </h3>
-              </div>
-
-              <p
-                className="text-base sm:text-xl leading-relaxed tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] font-semibold pt-2 max-w-md"
-                style={{ color: '#FFFFFF', fontFamily: "'Dancing Script', 'Edu NSW ACT Cursive', cursive" }}
-              >
-                Prove daily focus discipline. Every sprint earns XP, evolving your emblem identity as you rise to undisputed Overlord.
-              </p>
-            </motion.div>
-
-            {/* ── RIGHT COLUMN: Raw Vector Emblems Stage ── */}
-            <div className="lg:col-span-7 relative h-[360px] sm:h-[340px] flex items-center justify-center">
-              
-              {tiers.map((t, idx) => {
-                const badge = BADGES[t.badgeIndex] || BADGES[0];
-                const motionState = motionStates[idx];
-
-                return (
-                  <motion.div
-                    key={t.tier}
-                    style={{
-                      x: motionState.x,
-                      opacity: motionState.opacity,
-                    }}
-                    className="absolute flex flex-col items-center justify-center p-4 transition-transform duration-300 hover:scale-110 z-20"
-                  >
-                    {/* Pure Raw Vector Emblem Badge */}
-                    <div className={t.glow}>
-                      <BadgeDisplay badge={badge} size="xl" isUnlocked={true} />
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-            </div>
-
-          </div>
-
+        {/* Student Lottie Animation on the Same Plane */}
+        <div className="w-36 h-36 sm:w-48 sm:h-48 md:w-56 md:h-56 flex items-center justify-center shrink-0 self-start md:self-center -my-4">
+          <LottiePlayer
+            src="/lottie/student.json"
+            className="w-full h-full object-contain pointer-events-none drop-shadow-sm"
+            loop={true}
+            autoplay={true}
+          />
         </div>
 
       </div>
 
-    </div>
+      {/* Animated Tier Cards with True Website SVG Vector Badges */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {TIERS.map((t) => (
+          <motion.div
+            key={t.title}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: t.delay }}
+            whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+            className="bg-surface-container-lowest/90 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center text-center border border-outline-variant/30 hover:border-prompt-brown/40 hover:shadow-lg transition-all duration-300 relative overflow-hidden group cursor-pointer"
+          >
+            {/* True Website Badge SVG Display */}
+            <div className="mb-4 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+              <BadgeDisplay badge={t.badgeObj} size="md" isUnlocked={true} />
+            </div>
+            
+            <h4 className="text-[20px] leading-[28px] font-medium text-[#0a0a0a] mb-1 relative z-10 font-sans group-hover:text-prompt-brown transition-colors">
+              {t.title}
+            </h4>
+            
+            <p className="text-[12px] font-semibold tracking-[0.05em] text-outline mb-3 uppercase relative z-10 font-sans">
+              {t.level}
+            </p>
+
+            {/* True Website Badge Label */}
+            <span className="text-[11px] font-semibold text-prompt-brown mb-4 font-sans bg-surface-container-low px-3 py-1 rounded-full border border-outline-variant/20 group-hover:border-prompt-brown/30 relative z-10 transition-colors">
+              {t.badgeLabel}
+            </span>
+
+            <p className="text-[15px] leading-[22px] text-on-surface-variant text-sm font-normal relative z-10 font-sans">
+              {t.desc}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+    </section>
   );
 }

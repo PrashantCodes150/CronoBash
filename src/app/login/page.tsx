@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import InteractiveAuthBackground from '@/components/InteractiveAuthBackground';
 
@@ -68,18 +69,10 @@ export default function LoginPage() {
       
       {/* Top Header */}
       <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <img
-            src="/cronobash-icon.webp"
-            alt="CronoBash Emblem"
-            className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/cronobash-icon.png';
-            }}
-          />
+        <Link href="/" className="select-none">
           <span
-            className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight"
-            style={{ fontFamily: "'Syne', sans-serif" }}
+            className="text-[28px] text-black leading-none select-none"
+            style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
           >
             CronoBash
           </span>
@@ -89,8 +82,8 @@ export default function LoginPage() {
           href="/"
           className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Back to Home
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <span>Back to Home</span>
         </Link>
       </header>
 
@@ -110,7 +103,7 @@ export default function LoginPage() {
 
           {errorMsg && (
             <div className="bg-red-50/90 backdrop-blur-md border border-red-200 rounded-2xl p-3.5 text-xs text-red-600 mb-5 flex items-center gap-2 font-medium">
-              <span className="material-symbols-outlined text-base text-red-500">error</span>
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -182,13 +175,15 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors focus:outline-none"
                   onClick={() => setShowPassword(!showPassword)}
                   type="button"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-slate-400" />
+                  )}
                 </button>
               </div>
             </div>
@@ -196,7 +191,7 @@ export default function LoginPage() {
             <div className="pt-2">
               <button
                 disabled={loading}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-4 text-xs font-semibold shadow-xs transition-all duration-150 active:scale-[0.99] disabled:opacity-50"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-4 text-xs font-semibold shadow-xs transition-all duration-150 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                 type="submit"
               >
                 {loading ? 'Signing In...' : 'Sign In'}
