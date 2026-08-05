@@ -153,3 +153,19 @@ p, span, label {
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── MOBILE TOUCH & VIEWPORT OPTIMIZATIONS ───────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+  html, body {
+    touch-action: manipulation;
+  }
+
+  /* Prevent automatic font scaling/zoom on iOS Safari input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
