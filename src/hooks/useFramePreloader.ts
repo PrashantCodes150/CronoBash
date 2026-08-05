@@ -48,7 +48,10 @@ export function useFramePreloader(
         const img = new Image();
         img.src = src;
 
+        let isHandled = false;
         const handleSuccess = () => {
+          if (isHandled) return;
+          isHandled = true;
           if (img.naturalWidth > 0) {
             imgArray[index] = img;
             onSingleImageComplete(index, img);
@@ -57,11 +60,13 @@ export function useFramePreloader(
         };
 
         const handleError = () => {
+          if (isHandled) return;
           if (retries > 0 && !isCancelled) {
             setTimeout(() => {
               loadImage(index, retries - 1).then(resolve);
             }, 250);
           } else {
+            isHandled = true;
             resolve();
           }
         };
@@ -70,7 +75,9 @@ export function useFramePreloader(
         img.onerror = handleError;
 
         if ('decode' in img && typeof (img as any).decode === 'function') {
-          (img as any).decode().then(handleSuccess).catch(handleError);
+          (img as any).decode().then(handleSuccess).catch(() => {
+            // decode failure fallback to standard onload handler
+          });
         }
       });
     };
