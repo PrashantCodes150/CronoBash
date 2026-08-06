@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import { useRoomEvents } from '@/hooks/useRoomEvents';
 import { useFocusDetection } from '@/lib/useFocusDetection';
@@ -398,19 +399,14 @@ export default function StudyRoomPage() {
   };
 
   if (loadingRoom) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#ECEFF6] p-8">
-        <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-600 font-semibold text-sm mt-4 tracking-wide">CONNECTING TO LIVE NEURAL ARENA...</p>
-      </div>
-    );
+    return <LogoLoader size="full" text="CONNECTING TO LIVE NEURAL ARENA..." />;
   }
 
   return (
     <div
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="min-h-screen bg-[#ECEFF6] text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none outline-none"
+      className="min-h-screen bg-[#B7B8B8] text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none outline-none"
     >
       <Toaster position="top-right" toastOptions={{ className: 'bg-white border border-slate-200 text-slate-900 font-bold text-xs shadow-lg' }} />
 

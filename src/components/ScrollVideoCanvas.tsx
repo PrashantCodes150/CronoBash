@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useFramePreloader } from '@/hooks/useFramePreloader';
 
 interface ScrollVideoCanvasProps {
   /** Optional array of image frame URLs */
@@ -12,20 +13,21 @@ interface ScrollVideoCanvasProps {
   title?: string;
   /** Section subtitle */
   subtitle?: string;
+  /** Hide the centered title overlay when using a custom overlay layout */
+  showOverlay?: boolean;
 }
 
 export default function ScrollVideoCanvas({
   frames = [],
   videoSrc = '',
   title = 'CYBERNETIC FOCUS ARENA',
-  subtitle = 'SCROLL TO EXPLORE THE ARENA IN MOTION'
+  subtitle = 'SCROLL TO EXPLORE THE ARENA IN MOTION',
+  showOverlay = true,
 }: ScrollVideoCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const loadedImagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameIndexRef = useRef(0);
 
   // Track scroll progress within pinned container
@@ -40,29 +42,11 @@ export default function ScrollVideoCanvas({
     restDelta: 0.001,
   });
 
-  // 1. Preload image frames if provided
-  useEffect(() => {
-    if (!frames || frames.length === 0) return;
-
-    const loadedSet = new Set<number>();
-    const imgArray: HTMLImageElement[] = [];
-
-    frames.forEach((src, idx) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
-          setImagesLoaded(true);
-        }
-      };
-      imgArray[idx] = img;
-    });
-
-    loadedImagesRef.current = imgArray;
-  }, [frames]);
+  const { loadedImagesRef, loadedCount, getFrameOrFallback } = useFramePreloader(frames, {
+    enabled: true,
+    concurrency: 12,
+    priorityCount: 10,
+  });
 
   // 2. Render Loop on Scroll Update
   useEffect(() => {
@@ -82,7 +66,8 @@ export default function ScrollVideoCanvas({
       ctx.clearRect(0, 0, width, height);
 
       // MODE A: Image Sequence Frames
-      if (loadedImagesRef.current.length > 0) {
+      const hasLoadedFrames = loadedImagesRef.current.some((frame) => frame && frame.complete && frame.naturalWidth > 0);
+      if (hasLoadedFrames) {
         const totalFrames = loadedImagesRef.current.length;
         const frameIndex = Math.min(
           totalFrames - 1,
@@ -90,26 +75,22 @@ export default function ScrollVideoCanvas({
         );
 
         currentFrameIndexRef.current = frameIndex;
-        
-        let targetIdx = frameIndex;
-        while (targetIdx > 0 && (!loadedImagesRef.current[targetIdx] || !loadedImagesRef.current[targetIdx].complete)) {
-          targetIdx--;
-        }
-
-        const img = loadedImagesRef.current[targetIdx] || loadedImagesRef.current[0];
+        const img = getFrameOrFallback(frameIndex);
 
         if (img && img.complete) {
           // Draw image centered aspect-fit/cover
           const hRatio = width / img.width;
           const vRatio = height / img.height;
           const ratio = Math.max(hRatio, vRatio);
-          const centerShift_x = (width - img.width * ratio) / 2;
-          const centerShift_y = (height - img.height * ratio) / 2;
+          const drawW = Math.round(img.width * ratio);
+          const drawH = Math.round(img.height * ratio);
+          const centerShift_x = Math.round((width - drawW) / 2);
+          const centerShift_y = Math.round((height - drawH) / 2);
 
           ctx.drawImage(
             img,
             0, 0, img.width, img.height,
-            centerShift_x, centerShift_y, img.width * ratio, img.height * ratio
+            centerShift_x, centerShift_y, drawW, drawH
           );
         }
       } 
@@ -223,26 +204,28 @@ export default function ScrollVideoCanvas({
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        <motion.div
-          style={{ opacity: titleOpacity, scale: titleScale }}
-          className="relative z-10 text-center px-4 max-w-4xl mx-auto space-y-4 pointer-events-none select-none"
-        >
-          <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-bold uppercase tracking-widest text-[#3B82F6] bg-blue-950/60 border border-blue-500/30 px-4 py-1.5 rounded-full backdrop-blur-md shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse"></span>
-            SCROLL-TRIGGERED 3D CINEMATIC
-          </span>
-
-          <h2
-            className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight uppercase leading-tight font-mono drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]"
-            style={{ fontFamily: "'Syne', sans-serif" }}
+        {showOverlay && (
+          <motion.div
+            style={{ opacity: titleOpacity, scale: titleScale }}
+            className="relative z-10 text-center px-4 max-w-4xl mx-auto space-y-4 pointer-events-none select-none"
           >
-            {title}
-          </h2>
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-bold uppercase tracking-widest text-[#3B82F6] bg-blue-950/60 border border-blue-500/30 px-4 py-1.5 rounded-full backdrop-blur-md shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse"></span>
+              SCROLL-TRIGGERED 3D CINEMATIC
+            </span>
 
-          <p className="text-xs sm:text-base font-mono text-slate-300 tracking-widest uppercase font-bold max-w-xl mx-auto drop-shadow-md">
-            {subtitle}
-          </p>
-        </motion.div>
+            <h2
+              className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight uppercase leading-tight font-mono drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              {title}
+            </h2>
+
+            <p className="text-xs sm:text-base font-mono text-slate-300 tracking-widest uppercase font-bold max-w-xl mx-auto drop-shadow-md">
+              {subtitle}
+            </p>
+          </motion.div>
+        )}
 
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950 via-transparent to-slate-950/80" />
       </div>

@@ -8,6 +8,7 @@ import { supabase, Task, Room } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 import GreetingBanner from '@/components/GreetingBanner';
+import LogoLoader from '@/components/LogoLoader';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -26,10 +27,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     if (typeof window !== 'undefined') {
-      const isLocalSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true' || localStorage.getItem('cronobash_has_seen_onboarding') === 'true';
-      if (isLocalSeen) return;
+      const isUserSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true';
+      if (isUserSeen) return;
     }
-    if (profile && profile.has_seen_onboarding === false) {
+    if (profile && !profile.has_seen_onboarding) {
       router.replace('/onboarding');
     }
   }, [user, profile?.has_seen_onboarding, router]);
@@ -498,9 +499,8 @@ export default function Dashboard() {
 
   if (loadingData && tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#ECEFF6] rounded-[32px] p-8">
-        <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-600 font-semibold text-sm mt-4 tracking-wide">LOADING DASHBOARD CONTROL...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#ECEFF6] rounded-[32px] p-8">
+        <LogoLoader size="md" text="LOADING DASHBOARD CONTROL..." />
       </div>
     );
   }
@@ -542,6 +542,12 @@ export default function Dashboard() {
               onClick={() => setIsArenaDropdownOpen(!isArenaDropdownOpen)}
               className="bg-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 cursor-pointer hover:shadow transition-all group"
             >
+              <span
+                className="text-lg sm:text-xl text-black leading-none select-none mr-1"
+                style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+              >
+                CronoBash
+              </span>
               <span className="font-extrabold text-xs sm:text-sm text-gray-900">Focus Arena</span>
               <span className={`material-symbols-outlined text-gray-400 text-base transition-transform ${isArenaDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>

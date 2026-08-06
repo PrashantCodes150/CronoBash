@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { ChallengeCard } from '@/components/study/ChallengeCard';
 import { Target, Award, ShieldCheck, Flame } from 'lucide-react';
 
+import LogoLoader from '@/components/LogoLoader';
+
 interface DailyChallenge {
   id: string;
   title: string;
@@ -105,7 +107,9 @@ export default function ChallengesPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-xs text-neutral-500 font-mono">Loading active quests...</div>
+        <div className="py-12 flex flex-col items-center justify-center">
+          <LogoLoader size="md" text="FETCHING DAILY MISSIONS..." />
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {challenges.map(c => (

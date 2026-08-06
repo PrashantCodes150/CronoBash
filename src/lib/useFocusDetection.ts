@@ -17,6 +17,7 @@ interface UseFocusDetectionResult {
 interface UseFocusDetectionOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   enabled: boolean;
+  isPaperMode?: boolean;
   detectionInterval?: number;
 }
 
@@ -57,6 +58,7 @@ function eyeAspectRatio(
 export function useFocusDetection({
   videoRef,
   enabled,
+  isPaperMode = false,
   detectionInterval = 1000,
 }: UseFocusDetectionOptions): UseFocusDetectionResult {
   const [isFocused, setIsFocused] = useState(true);
@@ -146,6 +148,17 @@ export function useFocusDetection({
 
       consecutiveNoFaceRef.current = 0;
       setFaceDetected(true);
+
+      // Paper Study Mode: When studying on paper/desk, looking down is 100% valid focus with zero penalty!
+      if (isPaperMode) {
+        setEyeOpen(true);
+        setFacingScreen(true);
+        setIsFocused(true);
+        setGazeScore(100);
+        setPoseStability(100);
+        return;
+      }
+
       const landmarks = results.faceLandmarks[0];
 
       const leftEAR = eyeAspectRatio(landmarks, LEFT_EYE_TOP, LEFT_EYE_BOTTOM, LEFT_EYE_INNER, LEFT_EYE_OUTER);

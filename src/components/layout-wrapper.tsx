@@ -8,7 +8,7 @@ import Footer from './Footer';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding', '/study'];
+  const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding'];
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study/');
 
   if (hideLayout) {

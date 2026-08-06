@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { ShieldCheck, Flame, Lightbulb, TrendingUp, Calendar, Zap, Award } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
+import LogoLoader from '@/components/LogoLoader';
+
 interface WeeklyStat {
   day: string;
   hours: number;
@@ -57,8 +59,8 @@ export default function AICoachDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
-        Generating your focus coach report...
+      <div className="min-h-[400px] flex items-center justify-center">
+        <LogoLoader size="md" text="GENERATING AI COACH INSIGHTS..." />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 
@@ -330,9 +331,8 @@ export default function BuddiesPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#ECEFF6] rounded-[32px] p-8">
-        <div className="w-12 h-12 border-4 border-[#8B5CF6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-600 font-semibold text-sm mt-4 tracking-wide">SYNCHRONIZING SQUAD COMMAND CENTER...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#ECEFF6] rounded-[32px] p-8">
+        <LogoLoader size="md" text="SYNCHRONIZING SQUAD COMMAND CENTER..." />
       </div>
     );
   }

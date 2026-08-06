@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase } from '@/lib/supabaseClient';
 import { useProductivityStore } from '@/lib/productivity-store';
 import { BADGES, Badge } from '@/lib/badges';
@@ -200,13 +201,12 @@ export default function ProfilePage() {
       }
 
       // 3. LocalStorage onboarding cache sync
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && user?.id) {
         try {
-          const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`) || localStorage.getItem('cronobash_user_onboarding_data');
+          const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`);
           const prev = raw ? JSON.parse(raw) : {};
           const merged = { ...prev, ...updatedData };
           localStorage.setItem(`cronobash_user_onboarding_data_${user.id}`, JSON.stringify(merged));
-          localStorage.setItem('cronobash_user_onboarding_data', JSON.stringify(merged));
         } catch (e) {}
       }
 
@@ -323,12 +323,9 @@ export default function ProfilePage() {
 
   // Saved Onboarding Data Fallback (Ensures 100% real-time reflection of user's selected preferences)
   const savedOnboarding = useMemo(() => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined' || !user?.id) return null;
     try {
-      const uId = user?.id;
-      const raw = uId 
-        ? localStorage.getItem(`cronobash_user_onboarding_data_${uId}`) || localStorage.getItem('cronobash_user_onboarding_data')
-        : localStorage.getItem('cronobash_user_onboarding_data');
+      const raw = localStorage.getItem(`cronobash_user_onboarding_data_${user.id}`);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -347,8 +344,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-10 h-10 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-bold text-xs mt-4">LOADING USER PROFILE...</p>
+        <LogoLoader size="md" text="LOADING USER PROFILE..." />
       </div>
     );
   }

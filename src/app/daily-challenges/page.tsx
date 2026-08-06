@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast, Toaster } from 'react-hot-toast';
 import { Award, Target, Flame, ChevronRight, Coins } from 'lucide-react';
 
+import LogoLoader from '@/components/LogoLoader';
+
 interface Challenge {
   id: string;
   title: string;
@@ -115,8 +117,8 @@ export default function DailyChallengesPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-xs font-mono text-neutral-500">
-            LOADING ACTIVE QUESTS...
+          <div className="py-12 flex flex-col items-center justify-center">
+            <LogoLoader size="md" text="LOADING ACTIVE QUESTS..." />
           </div>
         ) : (
           <div className="space-y-4">

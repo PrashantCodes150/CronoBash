@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-context';
+import LogoLoader from '@/components/LogoLoader';
 import { supabase, Room } from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 
@@ -544,9 +545,8 @@ export default function RoomsLobby() {
               </div>
             </div>
           ) : loadingRooms ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[28px] border border-white/80">
-              <div className="w-10 h-10 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-slate-500 font-bold text-xs mt-4">FETCHING ACTIVE ARENAS...</p>
+            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-[28px] border border-white/80">
+              <LogoLoader size="md" text="FETCHING ACTIVE ARENAS..." />
             </div>
           ) : filteredRooms.length === 0 ? (
             <div className="morphism-card bg-white text-center py-20 space-y-4 rounded-[28px] border border-white/80">

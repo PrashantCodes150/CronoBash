@@ -249,13 +249,14 @@ export default function OnboardingPage() {
       // 1. Instantly update React context state
       updateProfileLocally(onboardingPayload as any);
 
-      // 2. Instant Local Storage backup for zero-lag route guarding
-      if (typeof window !== 'undefined') {
+      // 2. User-scoped Local Storage backup for zero-lag route guarding
+      if (typeof window !== 'undefined' && user?.id) {
         try {
           localStorage.setItem(`cronobash_has_seen_onboarding_${user.id}`, 'true');
-          localStorage.setItem('cronobash_has_seen_onboarding', 'true');
           localStorage.setItem(`cronobash_user_onboarding_data_${user.id}`, JSON.stringify(onboardingPayload));
-          localStorage.setItem('cronobash_user_onboarding_data', JSON.stringify(onboardingPayload));
+          // Clean legacy global keys so they never contaminate other user accounts
+          localStorage.removeItem('cronobash_has_seen_onboarding');
+          localStorage.removeItem('cronobash_user_onboarding_data');
         } catch (err) {}
       }
 
@@ -311,11 +312,11 @@ export default function OnboardingPage() {
 
       {/* Top Header - Matches Login & Signup Header */}
       <header className="relative z-10 w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg">
-            C
-          </div>
-          <span className="text-xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
+        <Link href="/" className="select-none">
+          <span
+            className="text-[28px] text-black leading-none select-none"
+            style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+          >
             CronoBash
           </span>
         </Link>

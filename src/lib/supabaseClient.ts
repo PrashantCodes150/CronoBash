@@ -6,8 +6,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const isConfigured = supabaseUrl && supabaseAnonKey;
 
 export const supabase = createClient(
-  isConfigured ? supabaseUrl : 'https://placeholder-url.supabase.co',
-  isConfigured ? supabaseAnonKey : 'placeholder-key'
+  isConfigured ? supabaseUrl : 'https://abcdefghijklmnopqrst.supabase.co',
+  isConfigured ? supabaseAnonKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy'
 );
 
 export interface UserProfile {

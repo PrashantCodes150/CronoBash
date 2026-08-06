@@ -43,9 +43,14 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
       {/* ── LEFT VERTICAL ICON RAIL (EXACT STYLING FROM REFERENCE IMAGE) ── */}
       <aside className="w-16 md:w-20 bg-white border border-white/80 rounded-[28px] shadow-sm flex flex-col items-center justify-between py-6 h-[calc(100vh-32px)] sticky top-4">
         
-        {/* Top Logo Avatar */}
-        <Link href="/dashboard" className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md transition-transform hover:scale-110">
-          CB
+        {/* Top Logo Emblem */}
+        <Link href="/dashboard" className="flex items-center justify-center group cursor-pointer transition-transform hover:scale-105 p-1 select-none">
+          <span
+            className="text-[20px] md:text-[22px] text-black leading-none select-none tracking-tight"
+            style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+          >
+            CronoBash
+          </span>
         </Link>
 
         {/* Navigation Icons */}

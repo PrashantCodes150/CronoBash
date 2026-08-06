@@ -9,6 +9,7 @@ import { BADGES } from '@/lib/badges';
 import confetti from 'canvas-confetti';
 import { VerifiedBadge } from '@/components/study/VerifiedBadge';
 import { BadgeDisplay } from '@/components/study/BadgeDisplay';
+import CronoBashLogoIcon from './CronoBashLogoIcon';
 
 interface AppNotification {
   id: string;
@@ -320,9 +321,9 @@ export default function Header() {
     };
   }, [user]);
 
-  // Hidden on root landing and auth pages for layout simplicity
-  const authRoutes = ['/', '/login', '/signup', '/onboarding'];
-  if (authRoutes.includes(pathname)) return null;
+  // Hidden on root landing, auth, and legal/privacy policy pages for layout simplicity
+  const hiddenRoutes = ['/', '/login', '/signup', '/onboarding', '/privacy', '/terms', '/refund', '/legal'];
+  if (hiddenRoutes.includes(pathname)) return null;
 
   return (
     <header className="sticky top-4 z-40 w-full max-w-[1440px] mx-auto px-3 sm:px-4 md:px-8 mb-4 sm:mb-6">
@@ -330,11 +331,11 @@ export default function Header() {
         
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer select-none no-underline">
-            <span className="material-symbols-outlined text-[#334155] text-xl sm:text-2xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>
-              timer
-            </span>
-            <span className="text-base sm:text-xl font-bold tracking-tight text-[#334155]" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <Link href="/dashboard" className="select-none cursor-pointer no-underline flex items-center">
+            <span
+              className="text-2xl sm:text-[28px] text-black leading-none select-none"
+              style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
+            >
               CronoBash
             </span>
           </Link>

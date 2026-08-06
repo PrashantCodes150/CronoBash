@@ -6,6 +6,8 @@ import { LeaderboardRow } from '@/components/study/LeaderboardRow';
 import { LeaderboardFilters } from '@/components/study/LeaderboardFilters';
 import { Trophy, HelpCircle, ArrowUpCircle } from 'lucide-react';
 
+import LogoLoader from '@/components/LogoLoader';
+
 interface LeaderboardUser {
   user_id: string;
   name: string;
@@ -121,7 +123,9 @@ export default function LeaderboardPage() {
       {/* Leaderboard Table */}
       <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 shadow-md overflow-hidden text-[#1c1917]">
         {loading ? (
-          <div className="text-center py-12 text-xs text-slate-400 font-semibold">Querying top standings...</div>
+          <div className="py-12 flex flex-col items-center justify-center">
+            <LogoLoader size="md" text="QUERYING GLOBAL STANDINGS..." />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">

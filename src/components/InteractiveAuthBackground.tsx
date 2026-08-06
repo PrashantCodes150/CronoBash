@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import SplineSceneContainer from '@/components/SplineSceneContainer';
 
 interface InteractiveAuthBackgroundProps {
   totalFrames?: number;
+  splineSceneUrl?: string;
 }
 
-export default function InteractiveAuthBackground({ totalFrames = 220 }: InteractiveAuthBackgroundProps) {
+export default function InteractiveAuthBackground({ totalFrames = 220, splineSceneUrl }: InteractiveAuthBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -21,41 +23,34 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
     targetFrame: 0,
   });
 
-  // Preload frames
+  // Preload frames if no Spline URL
   useEffect(() => {
-    const loadedSet = new Set<number>();
+    if (splineSceneUrl) return;
+    let loadedCount = 0;
     const imgArray: HTMLImageElement[] = [];
 
+    const handleReady = () => {
+      loadedCount++;
+      if (loadedCount >= totalFrames) {
+        setImagesLoaded(true);
+      }
+    };
+
     for (let i = 1; i <= totalFrames; i++) {
-      const idx = i - 1;
       const img = new Image();
-      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.jpg`;
-      
-      const handleReady = () => {
-        if (loadedSet.has(idx)) return;
-        loadedSet.add(idx);
-
-        if (idx === 0 || loadedSet.size >= 1) {
-          setImagesLoaded(true);
-        }
-      };
-
+      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.webp`;
       img.onload = handleReady;
       img.onerror = handleReady;
       img.src = filename;
-
-      if ('decode' in img && typeof (img as any).decode === 'function') {
-        (img as any).decode().catch(() => {});
-      }
-
       imgArray.push(img);
     }
 
     setImages(imgArray);
-  }, [totalFrames]);
+  }, [totalFrames, splineSceneUrl]);
 
-  // Track mouse coordinates across the entire document
+  // Track mouse coordinates
   useEffect(() => {
+    if (splineSceneUrl) return;
     const handleMouseMove = (e: MouseEvent) => {
       const w = window.innerWidth || 1;
       const h = window.innerHeight || 1;
@@ -63,7 +58,6 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
       mouseRef.current.targetX = e.clientX;
       mouseRef.current.targetY = e.clientY;
 
-      // Map mouse position to frame index (scrubs forward and backward based on mouse position)
       const normX = e.clientX / w;
       const normY = e.clientY / h;
       const progress = (normX * 0.7 + normY * 0.3);
@@ -72,10 +66,11 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [totalFrames]);
+  }, [totalFrames, splineSceneUrl]);
 
-  // 120FPS Smooth Canvas Render Loop
+  // Canvas Render Loop if no Spline URL
   useEffect(() => {
+    if (splineSceneUrl) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -95,7 +90,6 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
     const render = () => {
       const m = mouseRef.current;
 
-      // Smooth Lerp lerping towards target
       m.x += (m.targetX - m.x) * 0.05;
       m.y += (m.targetY - m.y) * 0.05;
       m.frame += (m.targetFrame - m.frame) * 0.08;
@@ -116,7 +110,6 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
 
           ctx.clearRect(0, 0, w, h);
 
-          // Subtle Parallax offset shifting towards mouse cursor
           const shiftX = (m.x - w / 2) * 0.04;
           const shiftY = (m.y - h / 2) * 0.04;
 
@@ -138,7 +131,6 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
           offsetX += shiftX;
           offsetY += shiftY;
 
-          // CLEARLY VISIBLE OPACITY (0.25 for sharp, distinct video visibility while preserving card contrast)
           ctx.globalAlpha = 0.25;
           ctx.drawImage(img1, offsetX, offsetY, drawW, drawH);
 
@@ -147,7 +139,6 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
             ctx.drawImage(img2, offsetX, offsetY, drawW, drawH);
           }
 
-          // Interactive Cursor Spotlight Glow Effect where mouse moves
           ctx.globalAlpha = 1.0;
           const spotlight = ctx.createRadialGradient(m.x, m.y, 20, m.x, m.y, 550);
           spotlight.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
@@ -167,7 +158,15 @@ export default function InteractiveAuthBackground({ totalFrames = 220 }: Interac
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [imagesLoaded, images]);
+  }, [imagesLoaded, images, splineSceneUrl]);
+
+  if (splineSceneUrl) {
+    return (
+      <div className="fixed inset-0 w-full h-full pointer-events-auto z-0 opacity-40">
+        <SplineSceneContainer scene={splineSceneUrl} />
+      </div>
+    );
+  }
 
   return (
     <canvas

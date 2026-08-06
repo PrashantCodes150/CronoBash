@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { supabase, UserProfile, Wallet } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
+import LogoLoader from './LogoLoader';
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
@@ -21,10 +23,10 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   wallet: null,
   loading: true,
-  refreshWallet: async () => {},
-  refreshProfile: async () => {},
-  updateProfileLocally: () => {},
-  signOut: async () => {},
+  refreshWallet: async () => { },
+  refreshProfile: async () => { },
+  updateProfileLocally: () => { },
+  signOut: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -47,11 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined') {
       try {
         const userId = userObj?.id;
-        const raw = userId 
-          ? localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data')
-          : localStorage.getItem('cronobash_user_onboarding_data');
+        const raw = userId ? localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) : null;
         if (raw) savedLocalOnboarding = JSON.parse(raw);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const userMeta = userObj?.user_metadata || {};
@@ -72,12 +72,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const sound_effects = rawProfile?.sound_effects || userMeta?.sound_effects || savedLocalOnboarding?.sound_effects || 'Mechanical Key Clicks';
     const leaderboard_privacy = rawProfile?.leaderboard_privacy || userMeta?.leaderboard_privacy || savedLocalOnboarding?.leaderboard_privacy || 'Public Profile';
     const camera_verified = rawProfile?.camera_verified !== undefined ? rawProfile.camera_verified : (userMeta?.camera_verified !== undefined ? userMeta.camera_verified : (savedLocalOnboarding?.camera_verified !== undefined ? savedLocalOnboarding.camera_verified : true));
-    
-    // Crucial Fix: If ANY source indicates onboarding is completed, return true!
+
+    let isSeenLocal = false;
+    if (typeof window !== 'undefined') {
+      const uId = rawProfile?.id || userObj?.id;
+      if (uId) {
+        try {
+          isSeenLocal =
+            localStorage.getItem(`cronobash_has_seen_onboarding_${uId}`) === 'true' ||
+            localStorage.getItem(`onboarding_seen_${uId}`) === 'true';
+        } catch (e) {}
+      }
+    }
+
     const has_seen_onboarding = Boolean(
-      rawProfile?.has_seen_onboarding || 
-      userMeta?.has_seen_onboarding || 
-      savedLocalOnboarding?.has_seen_onboarding
+      rawProfile?.has_seen_onboarding === true ||
+      userMeta?.has_seen_onboarding === true ||
+      savedLocalOnboarding?.has_seen_onboarding === true ||
+      isSeenLocal === true
     );
 
     return {
@@ -117,9 +129,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let savedLocalOnboarding: any = null;
         if (typeof window !== 'undefined') {
           try {
-            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem('cronobash_user_onboarding_data');
+            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`);
             if (raw) savedLocalOnboarding = JSON.parse(raw);
-          } catch (e) {}
+          } catch (e) { }
         }
         const initialAvatar = savedLocalOnboarding?.avatar_url || activeUserObj?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
         const initialName = metaName || savedLocalOnboarding?.name || activeUserObj?.user_metadata?.name || 'Arena Fighter';
@@ -131,7 +143,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             name: initialName,
             full_name: initialName,
             email: email || '',
-            avatar_url: initialAvatar
+            avatar_url: initialAvatar,
+            has_seen_onboarding: false
           })
           .select()
           .single();
@@ -188,6 +201,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('cronobash_user_onboarding_data');
+        localStorage.removeItem('cronobash_has_seen_onboarding');
+      } catch (e) {}
+    }
     setUser(null);
     setProfile(null);
     setWallet(null);
@@ -238,12 +257,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
     const isPublicRoute = publicRoutes.includes(pathname);
 
+    const hasOAuthParams = typeof window !== 'undefined' && (
+      window.location.search.includes('code=') ||
+      window.location.hash.includes('access_token') ||
+      window.location.hash.includes('error=')
+    );
+
     if (!user && !isPublicRoute) {
-      router.push('/login');
-    } else if (user && (pathname === '/login' || pathname === '/signup')) {
-      router.push('/dashboard');
+      router.replace('/login');
+    } else if (user) {
+      if (pathname === '/login' || pathname === '/signup' || hasOAuthParams) {
+        if (hasOAuthParams && typeof window !== 'undefined') {
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+          } catch (e) { }
+        }
+        if (profile && !profile.has_seen_onboarding) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/dashboard');
+        }
+      }
     }
-  }, [user, pathname, loading, router]);
+  }, [user, profile, pathname, loading, router]);
 
   // Online status heartbeat
   useEffect(() => {
@@ -268,12 +304,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isPublicRoute = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'].includes(pathname);
   if (loading && !isPublicRoute) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-on-background">
-        <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-on-surface-variant font-label-mono text-xs mt-4 font-bold">INITIALIZING ARENA RIG...</p>
-      </div>
-    );
+    return <LogoLoader size="full" text="INITIALIZING ARENA RIG..." />;
   }
 
   return (

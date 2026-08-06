@@ -1,148 +1,196 @@
-# CronoBash - Cognitive Focus Scanner & Study Platform
+# ⚡ CronoBash — Cognitive Focus Scanner & Competitive Study Arena
 
-CronoBash is a production-ready, full-stack web application built to gamify academic and professional productivity. It merges the discipline of deep focus sprints with the high-stakes matching system of competitive gaming. 
-
-
-
----
-
-## 🛠 Tech Stack
-
-- **Frontend:** Next.js (App Router, dynamic routing, Client/Server component separations), React, TypeScript.
-- **Styling:** Tailwind CSS v4 configured with dark-mode theme layouts and neon green highlights.
-- **Animations:** Framer Motion for premium transition effects and component hover glows.
-- **Backend / Database:** Supabase (Postgres, Auth, Realtime listeners for room leaderboards).
-- **Data Visualizations:** Recharts daily focus stats, winnings trackers, and accumulation indices.
+> **Turn Study into a Sport.**  
+> CronoBash is a next-generation productivity platform combining **client-side AI gaze tracking**, **real-time squad study arenas**, **1v1 focus duels**, and **gamified 100-tier mastery progression**.
 
 ---
 
-## 🚀 Setup & Installation Instructions
+## 📖 Overview & Project Description
 
-Follow these step-by-step instructions to configure the database, connect credential environments, and launch the platform.
+**CronoBash** reimagines how students and professionals engage in deep focus work. Traditional study timers fail because they rely on honor systems, lead to isolation, and lack meaningful incentives. CronoBash addresses these challenges by merging **computer vision AI**, **peer accountability**, and **competitive gamification** into a sleek, liquid-glass web environment.
 
-### Step 1: Create a Supabase Project
-1. Log in to the [Supabase Dashboard](https://supabase.com).
-2. Click **New Project**, choose a name (e.g. `CronoBash`), set a secure Database Password, and select your preferred hosting region.
-3. Once the database instance is fully provisioned, navigate to **Project Settings** > **API** to locate your URL and Anon Key.
+### The Problem
+* **Procrastination & Distraction:** Static Pomodoro timers don't verify active engagement or eye contact.
+* **Textbook/Screen False-Positives:** Conventional eye-trackers penalize users when they look down at physical books or notes.
+* **Isolation & Lack of Motivation:** Studying alone lacks the energy and accountability of high-performance team environments.
 
-### Step 2: Deploy SQL Migrations
-1. Navigate to the **SQL Editor** tab in your Supabase Dashboard.
-2. Click **New query** and copy the contents of the local [schema.sql](file:///c:/Users/Sanjana/Desktop/FOCUS-ARENA/schema.sql) file into the editor.
-3. Click **Run**. This will generate:
-   - The Postgres tables: `users`, `wallets`, `transactions`, `rooms`, `room_members`, `study_sessions`, `tasks`, and `timetables`.
-   - Table constraints, automatic triggers to construct profiles/wallets upon auth signups, Row Level Security (RLS) policies, and the stored procedure (`settle_money_rooms`) to settle money stakes challenges at midnight.
-
-### Step 3: Setup Local Environment Variables
-1. Create a file named `.env.local` in the root of your project directory:
-   ```bash
-   touch .env.local
-   ```
-2. Open the file and configure your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   ```
-
-### Step 4: Run Locally
-1. Install project packages:
-   ```bash
-   npm install
-   ```
-2. Launch the local Next.js development server:
-   ```bash
-   npm run dev
-   ```
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+### The CronoBash Solution
+* **Client-Side AI Focus Engine:** Uses MediaPipe Face Mesh (WASM) to analyze gaze vector angles locally inside the browser. **No raw video is ever stored or transmitted to external servers.**
+* **Smart Mode Switching:** Includes dedicated **Paper/Textbook Mode** to credit focus time while reading physical books without false distraction penalties.
+* **Squad Arenas & 1v1 Duels:** Stake virtual Focus Tokens ($TKN) in head-to-head duels or squad lobbies with live WebRTC camera tiles and real-time leaderboards.
+* **100 Tier Mastery Progression:** Earn badges, level up through 100 achievement tiers, unlock custom avatars, soundscapes, and streak shields in the Marketplace.
 
 ---
 
-## ⚡ Deployment to Vercel
+## ✨ Key Features
 
-The application is structured for direct, non-interactive integration into Vercel.
+### 👁️ 1. Real-Time AI Gaze Scanner (MediaPipe WASM)
+* **On-Device Computer Vision:** Evaluates facial landmarks directly in browser memory.
+* **Interactive Calibration:** Quick pre-session gaze calibration ensuring high accuracy across different camera angles.
+* **Paper & Book Mode:** Pause facial gaze enforcement when working on physical notebooks or reading textbooks.
 
-1. Push your local repository to GitHub, GitLab, or Bitbucket.
-2. Log in to the [Vercel Dashboard](https://vercel.com) and click **Add New Project**.
-3. Select your CronoBash repository and choose **Next.js** as the framework template.
-4. Under **Environment Variables**, add the values from your `.env.local`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Click **Deploy**. Vercel will compile the pages and route endpoints statically.
+### 🏟️ 2. Squad Arenas & Multi-User Lobbies
+* **Peer Accountability:** Join public or password-protected private study rooms with peer WebRTC video streams.
+* **Live Leaderboards:** Real-time ranking based on session focus scores, study duration, and streak multipliers.
+* **Realtime Chat Drawer:** Powered by Supabase Realtime broadcast channels with spam filters and study invites.
+
+### ⚔️ 3. 1v1 Focus Duels & Token Stakes
+* **Head-to-Head Challenges:** Challenge study buddies or random opponents to timed focus duels.
+* **Token Pools:** Stake virtual Focus Tokens ($TKN). Automated database procedures (`settle_1v1_challenge`) award the winner upon session verification.
+
+### 🤖 4. AI Focus Coach
+* **Personalized Guidance:** Contextual study advice, session breakdown recommendations, and energy optimization tips.
+
+### 🏆 5. 100 Tier Mastery & Verified Badges
+* **Level Progression:** Gain XP from verified focus minutes to climb through 100 distinct mastery tiers.
+* **Verified Emblem Badges:** Display custom badges and level markers on your profile and leaderboards.
+
+### 🛍️ 6. Gamified Store & Wallet System
+* **Focus Wallet:** Deposit, earn, and manage virtual tokens. Fully integrated with Razorpay gateway for token top-ups.
+* **Marketplace:** Unlock ambient soundscapes, profile themes, animated avatars, and streak shields using earned focus tokens.
 
 ---
 
-## 📂 Project Directory Structure
+## 🛠️ Technology Stack
+
+| Domain | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | **Next.js 16 (App Router)** | Modern React 19 architecture with server/client components and Turbopack |
+| **Language** | **TypeScript 5** | End-to-end static typing and strict safety |
+| **Styling & UI** | **Tailwind CSS v4** | Custom liquid-glass aesthetic, dark modes, and dynamic theme tokens |
+| **Computer Vision** | **MediaPipe Tasks Vision** | WebAssembly (WASM) face mesh landmark and gaze vector tracking |
+| **3D & Graphics** | **Three.js / R3F / Spline** | Interactive 3D focus orbs, spatial graphics, and dynamic hero scenes |
+| **Backend & Database** | **Supabase (PostgreSQL)** | Authentication, Postgres database, Row Level Security (RLS), & Realtime |
+| **Animations** | **Framer Motion / GSAP** | Micro-interactions, page transitions, and smooth scrolling with Lenis |
+| **Visualizations** | **Recharts** | Focus score analytics, daily productivity distributions, and streak charts |
+| **Payments** | **Razorpay SDK** | Secure transaction engine for focus token purchases and balance top-ups |
+
+---
+
+## 📁 Repository Directory Structure
 
 ```text
-CRONOBASH/
-├── public/                 # Static asset resources
-├── schema.sql              # Supabase Postgres database structure
+FOCUS-ARENA/
+├── public/                 # Static assets, audio, Lottie animations, and 3D assets
+├── supabase/               # Database migrations & production schema definitions
+│   └── migrations/         # PostgreSQL table definitions, functions, and RLS policies
 ├── src/
-│   ├── app/                # Next.js App Router Pages
-│   │   ├── arena/          # Live streams & replays
-│   │   ├── dashboard/      # Daily stats & task CRUD
-│   │   ├── login/          # Auth entry console
-│   │   ├── onboarding/     # Initial setup preferences
-│   │   ├── profile/        # Lifetime logs & badges
-│   │   ├── rooms/          # Lobby search & dynamic Room pages
-│   │   │   └── [roomId]/   # Realtime leaderboard & Buy-ins
-│   │   ├── signup/         # Account creation
-│   │   ├── study/          # Active WebRTC webcam timer sprints
-│   │   ├── tasks/          # Timetable scheduling grids
-│   │   ├── wallet/         # Transaction ledger & deposit mocks
-│   │   ├── globals.css     # Global stylesheets and Tailwind v4 theme specs
-│   │   └── layout.tsx      # Root html & providers wrapper
-│   ├── components/         # Shared Components & React context
-│   │   ├── auth-context.tsx # Auth status, redirection guards, and wallet refreshers
-│   │   ├── layout-wrapper.tsx # Conditional sidebar/header routing wrapper
-│   │   ├── sidebar.tsx     # Navigation sidebar matching design spec
-│   │   └── header.tsx      # Top bar settings and wallet balances indicators
+│   ├── app/                # Next.js App Router Routes & Pages
+│   │   ├── (auth)/         # Auth pages (login, signup, onboarding)
+│   │   ├── admin/          # Admin stats & session monitoring
+│   │   ├── ai-coach/       # AI Focus Coach interface
+│   │   ├── analytics/      # Deep cognitive analytics & chart visualizers
+│   │   ├── arena/          # Global arena lobbies & live stream replays
+│   │   ├── buddies/        # Study buddy network & invitation system
+│   │   ├── challenges/     # Daily quests & milestone challenges
+│   │   ├── dashboard/      # Main user dashboard with 3D Focus Orb
+│   │   ├── leaderboard/    # Global focus rankings & top streaks
+│   │   ├── marketplace/    # Store for badges, soundscapes, & profile cosmetics
+│   │   ├── matchmaking/    # 1v1 duels matchmaking console
+│   │   ├── privacy/        # Privacy policy & DPDP Act disclosures
+│   │   ├── profile/        # User profile, 100 mastery tiers, & badges
+│   │   ├── refund/         # Refund policy & billing terms
+│   │   ├── rooms/          # Squad Arena lobbies & dynamic room detail page
+│   │   │   └── [roomId]/   # Real-time WebRTC room & live leaderboard
+│   │   ├── settings/       # Profile, security, & gaze calibration settings
+│   │   ├── study/          # Active AI Focus Sprint environment
+│   │   ├── tasks/          # Timetable scheduler & task management
+│   │   ├── terms/          # Terms of service & legal disclosures
+│   │   └── wallet/         # Virtual token balance & transaction ledger
+│   ├── components/         # Reusable UI Components
+│   │   ├── admin/          # Admin modal controllers
+│   │   ├── study/          # Camera tile, gaze calibration, badge display
+│   │   ├── widgets/        # Dashboard widgets (Focus Orb, Task, Notes, Calendar)
+│   │   ├── auth-context.tsx# Auth state provider & wallet synchronizer
+│   │   ├── header.tsx      # Top bar navigation & notification drawer
+│   │   ├── layout-wrapper.tsx # Global page wrapper & layout manager
+│   │   └── Footer.tsx      # Policy navigation footer
 │   └── lib/
-│       └── supabase.ts     # Supabase Client and TypeScript interface definitions
-├── package.json            # Scripts & packages dependencies
-├── tsconfig.json           # Compiler rules
-└── README.md               # Setup & deployment guidelines
+│       ├── badges.ts       # Mastery badges metadata definition
+│       ├── razorpay.ts     # Razorpay payment gateway client
+│       └── supabaseClient.ts # Supabase client initialization & types
+├── package.json            # Dependencies & project scripts
+├── tsconfig.json           # TypeScript configuration
+└── README.md               # Project documentation
 ```
 
 ---
 
-## 🌟 CronoBash 2.0 Feature Changelog
+## 🚀 Getting Started & Local Development
 
-CronoBash 2.0 introduces powerful new features designed to solve textbooks focus false-negatives, enable head-to-head stakes, and create a real-time lobby workspace.
-
-### 1. Client-Side Gaze Tracking (MediaPipe FaceMesh)
-- Focus is tracked via raw webcamera landmarks rather than static timers.
-- **Initial Calibration:** Interactive pre-session calibration guides the user to center their gaze coordinates.
-- **Paper/Textbook Mode:** Solves the screen-focus dilemma. Toggle to `Paper Mode` to study books; the app pauses gaze validation and credits focus time based on elapsed minutes.
-
-### 2. 1v1 Challenges Matchmaking
-- Host focus battles with custom buy-in stakes (TKN) and duration options.
-- The `settle_1v1_challenge` procedure compares focus logs at completion and distributes the stakes pool (90% to the winner, 10% platform commission).
-
-### 3. Real-Time Chat Channels
-- Fully integrated live chat drawer overlay inside room details.
-- Runs on **Supabase Realtime** changes listener for message insertions.
-- Basic profanity filter and rate-limiter prevents spamming.
+### Prerequisites
+* **Node.js**: `v18.x` or higher
+* **npm**: `v9.x` or higher
+* **Supabase Account**: A free or pro account at [supabase.com](https://supabase.com)
 
 ---
 
-## 📈 Post-Launch Monitoring Setup
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/PrashantCodes150/FocusArena.git
+cd FocusArena
+```
 
-To ensure 100% platform health and track metrics in production:
+---
 
-### 1. Error Tracking (Sentry)
-1. Initialize a project on [Sentry.io](https://sentry.io).
-2. Install the Next.js SDK:
-   ```bash
-   npx @sentry/wizard@latest -i nextjs
-   ```
-3. Configure `SENTRY_AUTH_TOKEN` in your deployment pipeline or environment variables to track source maps and build errors.
+### Step 2: Install Dependencies
+```bash
+npm install
+```
 
-### 2. User & Focus Analytics (PostHog)
-1. Sign up on [PostHog](https://posthog.com) and fetch your Project API Key.
-2. Add environment credentials:
-   ```env
-   NEXT_PUBLIC_POSTHOG_KEY=phc_your_key_here
-   NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-   ```
-3. Initialize the SDK in your root provider to track page routing, button interactions, average study session length, and stakes metrics.
+---
 
+### Step 3: Configure Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Razorpay Payment Gateway (Optional for token top-ups)
+NEXT_PUBLIC_RAZORPAY_KEY_ID=your-razorpay-key-id
+```
+
+---
+
+### Step 4: Setup Supabase Database
+1. Open your project on the [Supabase Dashboard](https://supabase.com/dashboard).
+2. Navigate to **SQL Editor** > **New Query**.
+3. Copy and execute the contents of the latest migration in `supabase/migrations/` (e.g. `20260731000019_master_production_full_database_schema.sql`).
+4. This provisions all necessary tables (`users`, `wallets`, `transactions`, `rooms`, `room_members`, `study_sessions`, `tasks`, `connections`, `notifications`), triggers, and Row Level Security (RLS) policies.
+
+---
+
+### Step 5: Launch Local Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to start using CronoBash.
+
+---
+
+## 🛡️ Privacy & Compliance (DPDP Act 2023)
+
+CronoBash is built with **privacy by design**:
+* **100% On-Device Facial Processing:** Optical landmarks are evaluated exclusively in the browser's local WebAssembly runtime environment. No video recordings, camera snapshots, or biometric facial templates are transmitted to or stored on any server.
+* **DPDP Act 2023 & IT Act 2000 Compliant:** Strict data minimization principles are followed. Only minimal numerical metrics (focus score percentages and session durations) are stored in the user's private database record.
+
+---
+
+## ⚡ Scripts & Commands
+
+| Command | Action |
+| :--- | :--- |
+| `npm run dev` | Starts Next.js development server with Turbopack |
+| `npm run build` | Compiles optimized production build |
+| `npm run start` | Launches production server |
+| `npm run lint` | Runs ESLint syntax and code quality checks |
+| `npx tsc --noEmit` | Performs TypeScript type checking |
+
+---
+
+## 📄 License & Contact
+
+* **Repository**: [CronoBash/CronoBash](https://github.com/CronoBash/CronoBash)
+* **Grievances & Support**: `support@cronobash.com` | `legal@cronobash.com`
+* **Copyright**: © CronoBash. All rights reserved.

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, AlertCircle, Eye, EyeOff, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import InteractiveAuthBackground from '@/components/InteractiveAuthBackground';
 
@@ -35,6 +36,8 @@ export default function SignupPage() {
     return { label: 'Strong', color: 'bg-emerald-500', text: 'text-emerald-600' };
   };
 
+  const strengthInfo = getStrengthLabel();
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -62,43 +65,35 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
-      } else if (data?.user) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(`cronobash_has_seen_onboarding_${data.user.id}`);
-          localStorage.removeItem('cronobash_has_seen_onboarding');
-          localStorage.removeItem('cronobash_user_onboarding_data');
-        }
-        router.push('/onboarding');
+        const msg = error.message && error.message !== '{}' ? error.message : 'Sign up failed. Please try again.';
+        setErrorMsg(msg);
+        setLoading(false);
+      } else {
+        router.replace('/onboarding');
       }
     } catch (e: any) {
-      const msg = e?.message || String(e);
-      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        setErrorMsg('Cannot reach the server. Check your internet connection.');
-      } else {
-        setErrorMsg('An unexpected error occurred: ' + msg);
-      }
-    } finally {
+      const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during sign up.';
+      setErrorMsg(msg);
       setLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://focus-arena-gamma.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/onboarding`
+          redirectTo: `${origin}/dashboard`
         }
       });
-      if (error) setErrorMsg(error.message);
+      if (error) {
+        setErrorMsg(error.message);
+      }
     } catch (e: any) {
       setErrorMsg(e.message || String(e));
     }
   };
-
-  const strengthInfo = getStrengthLabel();
 
   return (
     <div className="bg-[#FAFAFC] text-slate-900 min-h-screen flex flex-col justify-between font-sans selection:bg-slate-900 selection:text-white relative overflow-hidden">
@@ -108,13 +103,10 @@ export default function SignupPage() {
       
       {/* Top Header */}
       <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg">
-            C
-          </div>
+        <Link href="/" className="select-none">
           <span
-            className="text-xl font-extrabold text-slate-900 tracking-tight"
-            style={{ fontFamily: "'Syne', sans-serif" }}
+            className="text-[28px] text-black leading-none select-none"
+            style={{ fontFamily: '"Special Elite", serif', fontWeight: 400 }}
           >
             CronoBash
           </span>
@@ -124,8 +116,8 @@ export default function SignupPage() {
           href="/"
           className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Back to Home
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <span>Back to Home</span>
         </Link>
       </header>
 
@@ -145,7 +137,7 @@ export default function SignupPage() {
 
           {errorMsg && (
             <div className="bg-red-50/90 backdrop-blur-md border border-red-200 rounded-2xl p-3.5 text-xs text-red-600 mb-5 flex items-center gap-2 font-medium">
-              <span className="material-symbols-outlined text-base text-red-500">error</span>
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -243,9 +235,11 @@ export default function SignupPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors focus:outline-none"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-slate-400" />
+                  )}
                 </button>
               </div>
 
@@ -267,7 +261,7 @@ export default function SignupPage() {
               {password.length > 0 && !isStrongPassword && (
                 <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3 text-xs space-y-1.5 backdrop-blur-md animate-fadeIn">
                   <div className="flex items-center gap-1.5 font-bold text-amber-800">
-                    <span className="material-symbols-outlined text-[16px] text-amber-600">warning</span>
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Password too weak — Please do this:</span>
                   </div>
                   <div className="space-y-1 pl-1">
@@ -284,7 +278,7 @@ export default function SignupPage() {
               {/* Password Secure Badge */}
               {password.length > 0 && isStrongPassword && (
                 <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-2.5 text-xs text-emerald-800 font-bold flex items-center gap-2 backdrop-blur-md animate-fadeIn">
-                  <span className="material-symbols-outlined text-[16px] text-emerald-600">check_circle</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Strong & Secure Password!</span>
                 </div>
               )}
@@ -293,7 +287,7 @@ export default function SignupPage() {
             <div className="pt-2">
               <button
                 disabled={loading || !isStrongPassword}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl py-3.5 px-4 text-xs font-bold shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl py-3.5 px-4 text-xs font-bold shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 type="submit"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
