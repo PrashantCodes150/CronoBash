@@ -200,11 +200,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Sign out error:', e);
+    }
     if (typeof window !== 'undefined') {
       try {
+        const uId = user?.id;
+        if (uId) {
+          localStorage.removeItem(`cronobash_user_onboarding_data_${uId}`);
+          localStorage.removeItem(`cronobash_has_seen_onboarding_${uId}`);
+          localStorage.removeItem(`onboarding_seen_${uId}`);
+        }
         localStorage.removeItem('cronobash_user_onboarding_data');
         localStorage.removeItem('cronobash_has_seen_onboarding');
+        
+        // Clear all keys matching cronobash_
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('cronobash_') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
       } catch (e) {}
     }
     setUser(null);

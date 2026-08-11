@@ -38,6 +38,9 @@ export default function SignupPage() {
 
   const strengthInfo = getStrengthLabel();
 
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -54,12 +57,15 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${origin}/dashboard`,
           data: {
             name: fullName,
+            full_name: fullName,
           }
         }
       });
@@ -67,6 +73,11 @@ export default function SignupPage() {
       if (error) {
         const msg = error.message && error.message !== '{}' ? error.message : 'Sign up failed. Please try again.';
         setErrorMsg(msg);
+        setLoading(false);
+      } else if (data?.user && !data?.session) {
+        // Email confirmation is active on Supabase (SMTP required)
+        setSubmittedEmail(email);
+        setVerificationSent(true);
         setLoading(false);
       } else {
         router.replace('/onboarding');
@@ -125,15 +136,39 @@ export default function SignupPage() {
       <main className="relative z-10 flex-grow flex items-center justify-center px-3 py-6">
         <div className="w-full max-w-[330px] bg-white/75 backdrop-blur-2xl border border-white/80 rounded-3xl p-5 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)]">
           
-          <div className="mb-6 text-left">
-            <h1
-              className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1 tracking-tight"
-              style={{ fontFamily: "'Syne', sans-serif" }}
-            >
-              Create Account
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">Sign up to start your focus sprints.</p>
-          </div>
+          {verificationSent ? (
+            <div className="text-center py-4 space-y-4 animate-fadeIn">
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-xs">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  Verify Your Email
+                </h2>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  We sent a confirmation link to <span className="font-bold text-slate-900">{submittedEmail}</span>. Please check your inbox and click the link to activate your account.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  href="/login"
+                  className="block w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-4 text-xs font-semibold shadow-xs transition-all text-center"
+                >
+                  Proceed to Sign In
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-6 text-left">
+                <h1
+                  className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1 tracking-tight"
+                  style={{ fontFamily: "'Syne', sans-serif" }}
+                >
+                  Create Account
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium">Sign up to start your focus sprints.</p>
+              </div>
 
           {errorMsg && (
             <div className="bg-red-50/90 backdrop-blur-md border border-red-200 rounded-2xl p-3.5 text-xs text-red-600 mb-5 flex items-center gap-2 font-medium">
@@ -303,6 +338,8 @@ export default function SignupPage() {
               </Link>
             </p>
           </div>
+            </>
+          )}
         </div>
       </main>
 

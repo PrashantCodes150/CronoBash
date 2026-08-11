@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth-context";
 import LayoutWrapper from "@/components/layout-wrapper";
 import SmoothScroll from "@/components/SmoothScroll";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -60,6 +61,7 @@ export default function RootLayout({
             </LayoutWrapper>
           </SmoothScroll>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

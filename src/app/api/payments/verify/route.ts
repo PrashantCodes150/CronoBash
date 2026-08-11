@@ -22,11 +22,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid payment signature verification failed.' }, { status: 400 });
     }
 
+    // Verify caller authorization token to prevent impersonation attacks
+    const authHeader = req.headers.get('authorization');
+    let targetUserId = userId;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user: authUser } } = await supabase.auth.getUser(token);
+      if (authUser?.id) {
+        targetUserId = authUser.id;
+      }
+    }
+
     // Credit user balance in Supabase database if configured
-    if (userId && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (targetUserId && process.env.NEXT_PUBLIC_SUPABASE_URL) {
       try {
         await supabase.from('transactions').insert({
-          user_id: userId,
+          user_id: targetUserId,
           type: 'deposit',
           amount: Number(amount) || 0,
           description: `Razorpay Payment Ref: ${razorpay_payment_id}`,

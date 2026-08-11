@@ -13,7 +13,36 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
+
+  const handleForgotPassword = async () => {
+    setErrorMsg('');
+    setInfoMsg('');
+    if (!email.trim()) {
+      setErrorMsg('Please enter your email address above to receive a password reset link.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/login`,
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+      } else {
+        setInfoMsg(`Password reset link sent to ${email}. Please check your inbox!`);
+      }
+    } catch (e: any) {
+      setErrorMsg(e?.message || 'Failed to send password reset email.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +137,13 @@ export default function LoginPage() {
             </div>
           )}
 
+          {infoMsg && (
+            <div className="bg-emerald-50/90 backdrop-blur-md border border-emerald-200 rounded-2xl p-3.5 text-xs text-emerald-700 mb-5 flex items-center gap-2 font-medium">
+              <AlertCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{infoMsg}</span>
+            </div>
+          )}
+
           {/* Official Google OAuth Glass Button */}
           <div className="mb-5">
             <button
@@ -158,9 +194,14 @@ export default function LoginPage() {
                 <label className="text-xs font-bold text-slate-700" htmlFor="password">
                   Password
                 </label>
-                <Link className="text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors" href="/login">
-                  Forgot?
-                </Link>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
+                >
+                  {resetLoading ? 'Sending...' : 'Forgot?'}
+                </button>
               </div>
               <div className="relative">
                 <input
