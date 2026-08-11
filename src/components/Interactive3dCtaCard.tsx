@@ -11,7 +11,16 @@ interface Interactive3dCtaCardProps {
 
 export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
 
   // Scroll-triggered reveal
   useEffect(() => {
@@ -42,13 +51,16 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
     >
       {/* 100% Crystal Clear Background Video (Zero Blur) */}
       <video
-        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4"
+        ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+      >
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+      </video>
 
       {/* Subtle Overlay to ensure 100% Crisp Text Contrast over Sharp Video */}
       <div className="absolute inset-0 bg-black/35 z-[1] pointer-events-none" />

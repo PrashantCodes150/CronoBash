@@ -19,6 +19,18 @@ export default function Hero() {
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Ensure video plays programmatically to bypass browser autoplay restrictions
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch((err) => {
+        console.warn("Hero video autoplay prevented:", err);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,7 +44,7 @@ export default function Hero() {
       }
 
       // Apple-like hide on scroll down, show on scroll up
-      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+      if (currentScrollY > 80 && currentScrollY > lastScrollY.current) {
         setIsVisible(false); // Scrolling DOWN -> Hide Navbar
       } else {
         setIsVisible(true);  // Scrolling UP -> Show Navbar
@@ -101,13 +113,16 @@ export default function Hero() {
       >
         {/* Background video */}
         <video
-          src="/hero-bg.mp4"
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
           className="absolute inset-0 w-full h-full object-cover z-0"
-        />
+        >
+          <source src="/hero-bg.mp4" type="video/mp4" />
+        </video>
 
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/20 to-transparent z-10 pointer-events-none" />
