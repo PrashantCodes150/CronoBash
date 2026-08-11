@@ -114,6 +114,7 @@ export default function Hero() {
         {/* Background video */}
         <video
           ref={videoRef}
+          src="/hero-bg.mp4"
           autoPlay
           muted
           loop
@@ -124,9 +125,9 @@ export default function Hero() {
           <source src="/hero-bg.mp4" type="video/mp4" />
         </video>
 
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/20 to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-0 bg-black/10 z-10 pointer-events-none" />
+        {/* Subtle Gradient overlay (Ensures video is 100% visible while text remains high contrast) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-white/50 z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/15 z-10 pointer-events-none" />
 
         {/* Content */}
         <div suppressHydrationWarning={true} className="relative z-20 w-full max-w-[1200px] mx-auto px-6 md:px-16 flex flex-col items-center text-center pt-32 md:pt-36 reveal">
