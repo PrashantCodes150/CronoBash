@@ -15,11 +15,27 @@ export default function Interactive3dCtaCard({ user }: Interactive3dCtaCardProps
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = true;
-      videoRef.current.play().catch(() => {});
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.defaultMuted = true;
+    video.muted = true;
+
+    const playVideo = () => {
+      video.play().catch(() => {});
+    };
+
+    if (video.readyState >= 2) {
+      playVideo();
+    } else {
+      video.addEventListener('canplay', playVideo, { once: true });
+      video.addEventListener('loadedmetadata', playVideo, { once: true });
     }
+
+    return () => {
+      video.removeEventListener('canplay', playVideo);
+      video.removeEventListener('loadedmetadata', playVideo);
+    };
   }, []);
 
   // Scroll-triggered reveal

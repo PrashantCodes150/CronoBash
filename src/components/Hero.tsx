@@ -22,14 +22,27 @@ export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Ensure video plays programmatically to bypass browser autoplay restrictions
-    if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = true;
-      videoRef.current.play().catch((err) => {
-        console.warn("Hero video autoplay prevented:", err);
-      });
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.defaultMuted = true;
+    video.muted = true;
+
+    const playVideo = () => {
+      video.play().catch(() => {});
+    };
+
+    if (video.readyState >= 2) {
+      playVideo();
+    } else {
+      video.addEventListener('canplay', playVideo, { once: true });
+      video.addEventListener('loadedmetadata', playVideo, { once: true });
     }
+
+    return () => {
+      video.removeEventListener('canplay', playVideo);
+      video.removeEventListener('loadedmetadata', playVideo);
+    };
   }, []);
 
   useEffect(() => {
