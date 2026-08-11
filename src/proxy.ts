@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
     pathname === '/refund' ||
     pathname === '/legal';
 
-  // Allow static files, api routes, and Next.js internal assets
+  // Allow static files, api routes, media files, and Next.js internal assets
   const isStaticOrApi =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -28,13 +28,21 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/auth-frames') ||
     pathname.startsWith('/frames') ||
     pathname.startsWith('/backgrounds') ||
+    pathname.endsWith('.mp4') ||
+    pathname.endsWith('.webm') ||
+    pathname.endsWith('.ogv') ||
+    pathname.endsWith('.mp3') ||
+    pathname.endsWith('.wav') ||
+    pathname.endsWith('.ogg') ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||
     pathname.endsWith('.jpeg') ||
     pathname.endsWith('.svg') ||
     pathname.endsWith('.webp') ||
     pathname.endsWith('.ico') ||
-    pathname.endsWith('.json');
+    pathname.endsWith('.json') ||
+    pathname.endsWith('.css') ||
+    pathname.endsWith('.js');
 
   if (isStaticOrApi) {
     return NextResponse.next();
