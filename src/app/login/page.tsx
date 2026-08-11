@@ -17,25 +17,31 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg('');
     setInfoMsg('');
-    if (!email.trim()) {
-      setErrorMsg('Please enter your email address above to receive a password reset link.');
+
+    if (!email || !email.trim()) {
+      setErrorMsg('Please enter your email address in the Email field above first.');
       return;
     }
 
     setResetLoading(true);
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${origin}/login`,
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        let msg = error.message;
+        if (msg.toLowerCase().includes('rate limit')) {
+          msg = 'Too many requests. Please wait a few minutes before requesting another password reset email.';
+        }
+        setErrorMsg(msg);
       } else {
-        setInfoMsg(`Password reset link sent to ${email}. Please check your inbox!`);
+        setInfoMsg(`Password reset link sent to ${email.trim()}. Please check your email inbox!`);
       }
     } catch (e: any) {
       setErrorMsg(e?.message || 'Failed to send password reset email.');
@@ -207,7 +213,7 @@ export default function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
+                  onClick={(e) => handleForgotPassword(e)}
                   disabled={resetLoading}
                   className="text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
                 >

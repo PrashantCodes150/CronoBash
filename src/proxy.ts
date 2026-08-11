@@ -48,21 +48,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for Supabase Auth cookie or local session tokens
-  const authCookie = request.cookies.get('sb-antmqynpbnlironmvuab-auth-token') ||
-    request.cookies.get('supabase-auth-token') ||
-    Array.from(request.cookies.getAll()).find(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'));
-
-  // Also check generic auth session headers/cookies
-  const hasAuthToken = Boolean(authCookie?.value);
-
-  // If user is trying to access a protected route without any auth token cookie:
-  if (!hasAuthToken && !isPublicRoute) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+  // Pass through to client-side AuthContext for seamless session management
   return NextResponse.next();
 }
 
