@@ -115,15 +115,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfileAndWallet = async (userId: string, email?: string, metaName?: string, userObjParam?: User | null) => {
     const activeUserObj = userObjParam || user;
+    const fallbackProfile = getMergedProfile(null, activeUserObj);
+    
+    // Instantly set optimistic profile to unblock UI (<10ms)
+    setProfile(prev => prev || fallbackProfile);
+
     try {
-      // Parallel execution for zero latency load (<30ms)
-      const [profileRes, walletRes] = await Promise.all([
+      // 3.5s Timeout Promise to prevent slow DB queries from hanging signin
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Fetch timeout')), 3500)
+      );
+
+      const fetchPromise = Promise.all([
         supabase.from('users').select('*').eq('id', userId).maybeSingle(),
         supabase.from('wallets').select('*').eq('user_id', userId).maybeSingle()
       ]);
 
-      let activeProfile = profileRes.data;
-      let activeWallet = walletRes.data;
+      const [profileRes, walletRes] = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+      let activeProfile = profileRes?.data;
+      let activeWallet = walletRes?.data;
 
       if (!activeProfile) {
         let savedLocalOnboarding: any = null;
@@ -160,14 +171,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (insertedWallet) activeWallet = insertedWallet;
       }
 
-      const merged = getMergedProfile(activeProfile, activeUserObj);
+      const merged = getMergedProfile(activeProfile || fallbackProfile, activeUserObj);
       setProfile(merged);
 
       if (activeWallet) {
         setWallet(activeWallet as Wallet);
       }
     } catch (e) {
-      console.error('Error loading auth dependencies', e);
+      console.warn('Auth profile/wallet fetch background warning (using optimistic profile):', e);
+      setProfile(fallbackProfile);
     }
   };
 

@@ -50,17 +50,28 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        const msg = error.message && error.message !== '{}' ? error.message : 'Invalid email or password. Please check your credentials.';
+        let msg = error.message && error.message !== '{}' ? error.message : 'Invalid email or password. Please check your credentials.';
+        const lowerMsg = msg.toLowerCase();
+        
+        if (lowerMsg.includes('email not confirmed')) {
+          msg = 'Your email address is not verified yet. Please check your inbox for the confirmation email!';
+        } else if (lowerMsg.includes('invalid login credentials')) {
+          msg = 'Incorrect email or password. Please check your credentials and try again.';
+        }
+        
         setErrorMsg(msg);
         setLoading(false);
+      } else if (data?.session) {
+        // Instant navigation on valid auth session
+        router.push('/dashboard');
       } else {
-        router.replace('/dashboard');
+        setLoading(false);
       }
     } catch (e: any) {
       const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during sign in.';
