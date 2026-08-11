@@ -136,11 +136,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       let activeProfile = profileRes?.data;
       let activeWallet = walletRes?.data;
 
+      // Smart Profile Linking by Email (Prevents duplicate onboarding for same user email)
+      if (!activeProfile && email) {
+        try {
+          const { data: existingByEmail } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+
+          if (existingByEmail) {
+            activeProfile = existingByEmail;
+            // Update profile record with current userId if needed
+            await supabase.from('users').update({ has_seen_onboarding: true }).eq('id', existingByEmail.id);
+          }
+        } catch (e) {
+          console.warn('Email profile lookup exception:', e);
+        }
+      }
+
+      // Check if user has already completed onboarding locally or previously
+      let hasCompletedOnboardingLocal = false;
+      if (typeof window !== 'undefined' && email) {
+        hasCompletedOnboardingLocal = 
+          localStorage.getItem(`cronobash_has_seen_onboarding_${email}`) === 'true' ||
+          localStorage.getItem(`cronobash_has_seen_onboarding_${userId}`) === 'true';
+      }
+
       if (!activeProfile) {
         let savedLocalOnboarding: any = null;
         if (typeof window !== 'undefined') {
           try {
-            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`);
+            const raw = localStorage.getItem(`cronobash_user_onboarding_data_${userId}`) || localStorage.getItem(`cronobash_user_onboarding_data_${email}`);
             if (raw) savedLocalOnboarding = JSON.parse(raw);
           } catch (e) { }
         }
@@ -155,11 +182,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             full_name: initialName,
             email: email || '',
             avatar_url: initialAvatar,
-            has_seen_onboarding: false
+            has_seen_onboarding: hasCompletedOnboardingLocal
           })
           .select()
           .single();
         if (insertedProfile) activeProfile = insertedProfile;
+      }
+
+      // If activeProfile exists and has_seen_onboarding is true, persist to local cache
+      if (activeProfile?.has_seen_onboarding || hasCompletedOnboardingLocal) {
+        if (activeProfile) activeProfile.has_seen_onboarding = true;
+        if (typeof window !== 'undefined' && email) {
+          localStorage.setItem(`cronobash_has_seen_onboarding_${email}`, 'true');
+          localStorage.setItem(`cronobash_has_seen_onboarding_${userId}`, 'true');
+        }
       }
 
       if (!activeWallet) {

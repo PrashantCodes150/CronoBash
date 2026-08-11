@@ -82,6 +82,39 @@ export default function SettingsPage() {
 
   const [saving, setSaving] = useState(false);
 
+  const [newPassword, setNewPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword.trim()) {
+      toast.error('Please enter a new password.');
+      return;
+    }
+    if (newPassword.trim().length < 6) {
+      toast.error('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword.trim(),
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to update password.');
+      } else {
+        toast.success('Password set successfully! 🔐 You can now login with either Google or Email + Password.');
+        setNewPassword('');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'An unexpected error occurred.');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -263,6 +296,43 @@ export default function SettingsPage() {
               </button>
             </div>
 
+          </form>
+
+          {/* Security & Set Password Section */}
+          <form onSubmit={handleSetPassword} className="morphism-card bg-white p-6 md:p-8 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+            <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-100">
+              <Lock className="w-4 h-4 text-[#9333EA]" />
+              <span>Login Password &amp; Credentials</span>
+            </h3>
+
+            <p className="text-xs text-slate-500 font-medium">
+              Set a password below so you can sign in directly with Email + Password, even if you originally registered using Google OAuth.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end pt-1">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">New Account Password</label>
+                <input
+                  type="password"
+                  minLength={6}
+                  placeholder="Enter 6+ character password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#9333EA]"
+                />
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={updatingPassword || !newPassword}
+                  className="w-full bg-[#9333EA] hover:bg-[#7e22ce] text-white font-extrabold text-xs py-2.5 px-6 rounded-xl transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{updatingPassword ? 'Updating...' : 'Set Password'}</span>
+                </button>
+              </div>
+            </div>
           </form>
 
         </motion.div>
