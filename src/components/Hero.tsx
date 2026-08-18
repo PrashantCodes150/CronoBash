@@ -176,10 +176,10 @@ export default function Hero() {
               className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface text-[16px] leading-[24px] placeholder:text-outline-variant outline-none font-sans"
             />
             <Link
-              href="/dashboard"
+              href={user ? "/dashboard" : "/login"}
               className="bg-[#0a0a0a] text-white rounded-xl px-6 py-3 ml-4 text-[12px] font-semibold uppercase tracking-[0.05em] hover:opacity-55 active:scale-95 transition-all duration-200 whitespace-nowrap"
             >
-              Start Session
+              {user ? "Open Dashboard" : "Start Session"}
             </Link>
           </div>
         </div>

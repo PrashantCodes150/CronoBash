@@ -293,9 +293,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           setUser(session.user);
           fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setWallet(null);
         }
       } catch (e) {
         console.error("Session init error:", e);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -303,13 +308,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initSession();
 
-    // Fast Auth State listener - unblocks UI immediately on login
+    // Fast Auth State listener - unblocks UI immediately on login/logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(session.user);
         setLoading(false);
         fetchProfileAndWallet(session.user.id, session.user.email, session.user.user_metadata?.name, session.user);
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
         setWallet(null);
