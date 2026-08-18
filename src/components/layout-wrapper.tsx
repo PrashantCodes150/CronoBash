@@ -2,14 +2,32 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from './auth-context';
 import Header from './header';
 import Footer from './Footer';
+import LogoLoader from './LogoLoader';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
+
+  const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
+  const isPublicRoute = publicRoutes.includes(pathname);
 
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding'];
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study');
+
+  // Strict Security Guard: For any protected route, if session is loading or user is not logged in,
+  // NEVER render protected children components (prevents flash of protected content).
+  if (!isPublicRoute) {
+    if (loading || !user) {
+      return (
+        <div className="min-h-screen bg-[#fafaf9] flex flex-col items-center justify-center p-4">
+          <LogoLoader size="md" text="VERIFYING SECURE SESSION..." />
+        </div>
+      );
+    }
+  }
 
   if (hideLayout) {
     return <>{children}</>;
