@@ -23,29 +23,57 @@ export default function InteractiveAuthBackground({ totalFrames = 220, splineSce
     targetFrame: 0,
   });
 
-  // Preload frames if no Spline URL
+  // Progressive non-blocking preloading for frames (0ms initial delay)
   useEffect(() => {
     if (splineSceneUrl) return;
-    let loadedCount = 0;
-    const imgArray: HTMLImageElement[] = [];
+    let isCancelled = false;
+    const imgArray: HTMLImageElement[] = new Array(totalFrames);
 
-    const handleReady = () => {
-      loadedCount++;
-      if (loadedCount >= totalFrames) {
-        setImagesLoaded(true);
+    // 1. Immediately load frame 1 to render background instantly
+    const firstImg = new Image();
+    firstImg.src = `/auth-frames/frame_001.webp`;
+    firstImg.onload = () => {
+      if (isCancelled) return;
+      imgArray[0] = firstImg;
+      setImages([...imgArray]);
+      setImagesLoaded(true);
+    };
+
+    // 2. Load remaining frames progressively in background batches
+    const loadBatch = (startIndex: number, batchSize: number) => {
+      if (isCancelled || startIndex >= totalFrames) return;
+      const endIndex = Math.min(totalFrames, startIndex + batchSize);
+
+      let batchLoaded = 0;
+      for (let i = startIndex; i < endIndex; i++) {
+        const img = new Image();
+        img.src = `/auth-frames/frame_${String(i + 1).padStart(3, '0')}.webp`;
+        img.onload = img.onerror = () => {
+          if (isCancelled) return;
+          imgArray[i] = img;
+          batchLoaded++;
+          if (batchLoaded >= (endIndex - startIndex)) {
+            setImages([...imgArray]);
+            // Schedule next batch on idle frame
+            if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+              (window as any).requestIdleCallback(() => loadBatch(endIndex, batchSize));
+            } else {
+              setTimeout(() => loadBatch(endIndex, batchSize), 100);
+            }
+          }
+        };
       }
     };
 
-    for (let i = 1; i <= totalFrames; i++) {
-      const img = new Image();
-      const filename = `/auth-frames/frame_${String(i).padStart(3, '0')}.webp`;
-      img.onload = handleReady;
-      img.onerror = handleReady;
-      img.src = filename;
-      imgArray.push(img);
-    }
+    // Start background progressive load after initial render
+    const timer = setTimeout(() => {
+      loadBatch(1, 15);
+    }, 200);
 
-    setImages(imgArray);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [totalFrames, splineSceneUrl]);
 
   // Track mouse coordinates
@@ -101,8 +129,11 @@ export default function InteractiveAuthBackground({ totalFrames = 220, splineSce
         const idx2 = Math.min(total - 1, idx1 + 1);
         const blend = floatFrame - idx1;
 
-        const img1 = images[idx1];
-        const img2 = images[idx2];
+        let img1 = images[idx1];
+        let img2 = images[idx2];
+        if (!img1 || !img1.complete || !img1.naturalWidth) {
+          img1 = images[0];
+        }
 
         if (img1 && img1.complete && img1.naturalWidth > 0) {
           const w = canvas.width;

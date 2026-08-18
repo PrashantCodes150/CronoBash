@@ -92,11 +92,11 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.com';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/dashboard`
+          redirectTo: `${origin}/auth/callback?next=/dashboard`
         }
       });
       if (error) {

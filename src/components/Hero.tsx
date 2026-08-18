@@ -121,13 +121,21 @@ export default function Hero() {
 
       {/* Hero Section */}
       <section
-        className="relative w-full flex items-center justify-center overflow-hidden"
+        className="relative w-full flex items-center justify-center overflow-hidden bg-[#0a0a0a]"
         style={{ height: '100svh', minHeight: '600px' }}
       >
+        {/* Background Video Poster Placeholder (Loaded instantly in 0ms) */}
+        <div
+          className="absolute inset-0 w-full h-full bg-cover bg-center z-0 transition-opacity duration-700"
+          style={{
+            backgroundImage: "url('/hero-poster.webp')",
+          }}
+        />
+
         {/* Background video */}
         <video
           ref={videoRef}
-          src="/hero-bg.mp4"
+          poster="/hero-poster.webp"
           autoPlay
           muted
           loop
@@ -135,6 +143,7 @@ export default function Hero() {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover z-0"
         >
+          <source src="/hero-bg.webm" type="video/webm" />
           <source src="/hero-bg.mp4" type="video/mp4" />
         </video>
 
