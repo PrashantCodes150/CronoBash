@@ -81,8 +81,7 @@ export default function LoginPage() {
         setErrorMsg(msg);
         setLoading(false);
       } else if (data?.session) {
-        // Instant navigation on valid auth session
-        router.push('/dashboard');
+        // Fast auth context route guard will handle smart navigation to /onboarding or /dashboard
       } else {
         setLoading(false);
       }

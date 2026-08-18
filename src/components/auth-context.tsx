@@ -343,15 +343,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user && !isPublicRoute) {
       router.replace('/login');
     } else if (user) {
-      if (pathname === '/login' || pathname === '/signup' || pathname === '/' || hasOAuthParams) {
-        if (hasOAuthParams && typeof window !== 'undefined') {
-          try {
-            window.history.replaceState(null, '', window.location.pathname);
-          } catch (e) { }
-        }
-        if (profile && profile.has_seen_onboarding === false) {
+      if (hasOAuthParams && typeof window !== 'undefined') {
+        try {
+          window.history.replaceState(null, '', window.location.pathname);
+        } catch (e) { }
+      }
+
+      // Check if user has completed onboarding
+      const isNewUser = profile ? profile.has_seen_onboarding === false : false;
+
+      if (isNewUser) {
+        // New users must complete onboarding before accessing the rest of the app
+        if (pathname !== '/onboarding') {
           router.replace('/onboarding');
-        } else {
+        }
+      } else {
+        // Existing users shouldn't stay on auth/landing pages or onboarding
+        if (pathname === '/login' || pathname === '/signup' || pathname === '/' || pathname === '/onboarding') {
           router.replace('/dashboard');
         }
       }
