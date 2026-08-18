@@ -32,11 +32,11 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/icon.png', type: 'image/png' },
-      { url: '/cronobash-icon.png', type: 'image/png' },
+      { url: '/cronobash-icon.png?v=3', type: 'image/png' },
+      { url: '/icon.png?v=3', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
-    apple: '/icon.png',
+    shortcut: '/cronobash-icon.png?v=3',
+    apple: '/cronobash-icon.png?v=3',
   },
   authors: [{ name: "CronoBash Team", url: "https://cronobash.com" }],
   creator: "CronoBash Inc.",
@@ -91,12 +91,12 @@ export default function RootLayout({
     name: 'CronoBash',
     alternateName: 'CronoBash Focus Arena',
     url: 'https://cronobash.com',
-    description: 'Gamified focus arena where studying becomes a sport. 1v1 duels, study squads, and AI focus tracking.',
+    description: 'CronoBash is the high-stakes AI focus arena & deep work protocol.',
     publisher: {
       '@type': 'Organization',
       name: 'CronoBash Inc.',
       url: 'https://cronobash.com',
-      logo: 'https://cronobash.com/cronobash-logo-full.png',
+      logo: 'https://cronobash.com/cronobash-icon.png',
     },
   };
 
@@ -106,6 +106,9 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <head>
+        <link rel="icon" href="/cronobash-icon.png?v=3" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/cronobash-icon.png?v=3" type="image/png" />
+        <link rel="apple-touch-icon" href="/cronobash-icon.png?v=3" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
