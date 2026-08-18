@@ -386,7 +386,6 @@ export default function Header() {
                     <ul className="space-y-1 font-label-mono text-xs uppercase font-bold text-[#70706F] text-left">
                       {[
                         { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-                        { name: 'AI Study Bot 🤖', href: '/ai-coach', icon: 'smart_toy' },
                         { name: 'Buddies', href: '/buddies', icon: 'person_add' },
                         { name: 'Arenas', href: '/rooms', icon: 'groups' },
                         { name: 'Tasks', href: '/tasks', icon: 'checklist' },
