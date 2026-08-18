@@ -1776,20 +1776,27 @@ function StudySessionContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 select-none"
           >
             <div className="w-full max-w-xl text-center space-y-6">
-              <h2 className="font-display text-2xl font-black text-white uppercase tracking-tight">Gaze Calibration Portal</h2>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold tracking-widest uppercase">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                AI EYE TRACKING RIG
+              </div>
+
+              <h2 className="font-mono text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-tight drop-shadow-md">
+                Gaze Calibration Portal
+              </h2>
               
-              <div className="relative aspect-video w-full bg-surface-container border border-outline-variant rounded-xl overflow-hidden flex items-center justify-center">
+              <div className="relative aspect-video w-full bg-slate-900/90 border border-emerald-500/30 rounded-2xl overflow-hidden flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.8),inset_0_0_30px_rgba(0,255,163,0.05)]">
                 {calibrationStep === 0 && (
-                  <div className="space-y-4 max-w-sm">
-                    <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                      Calibrate eye mesh zone triggers. Look directly at the targets as they appear and click them.
+                  <div className="space-y-5 max-w-md px-6 text-center">
+                    <p className="font-sans text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      Calibrate eye mesh zone triggers. Look directly at the targets as they appear and click them to lock in your gaze baseline.
                     </p>
                     <button 
                       onClick={() => runCalibration(1)}
-                      className="bg-primary-container text-on-primary font-label-mono text-xs font-bold px-6 py-2.5 rounded-lg shadow-[0_0_15px_rgba(0,255,163,0.3)] cursor-pointer"
+                      className="bg-[#00ffa3] hover:bg-[#00e08f] text-slate-950 font-mono text-xs uppercase font-extrabold px-8 py-3.5 rounded-xl shadow-[0_0_25px_rgba(0,255,163,0.4)] transition-all active:scale-95 cursor-pointer"
                     >
                       Begin Calibration
                     </button>
@@ -1797,24 +1804,51 @@ function StudySessionContent() {
                 )}
 
                 {calibrationStep === 1 && (
-                  <button 
-                    onClick={() => runCalibration(2)}
-                    className="absolute top-4 left-4 w-6 h-6 rounded-full bg-primary-container border-2 border-white animate-pulse cursor-pointer"
-                  />
+                  <div className="relative w-full h-full">
+                    <p className="absolute top-3 left-1/2 -translate-x-1/2 text-[11px] font-mono text-emerald-400 uppercase font-bold tracking-widest bg-black/60 px-3 py-1 rounded-full border border-emerald-500/20">
+                      TARGET 1 OF 3: LOOK AT TOP-LEFT DOT & CLICK
+                    </p>
+                    <button 
+                      onClick={() => runCalibration(2)}
+                      className="absolute top-6 left-6 w-8 h-8 rounded-full bg-[#00ffa3] border-4 border-white animate-ping cursor-pointer shadow-[0_0_30px_#00ffa3]"
+                    />
+                    <button 
+                      onClick={() => runCalibration(2)}
+                      className="absolute top-6 left-6 w-8 h-8 rounded-full bg-[#00ffa3] border-4 border-white cursor-pointer shadow-[0_0_25px_#00ffa3]"
+                    />
+                  </div>
                 )}
 
                 {calibrationStep === 2 && (
-                  <button 
-                    onClick={() => runCalibration(3)}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-secondary-container border-2 border-white animate-pulse cursor-pointer"
-                  />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <p className="absolute top-3 left-1/2 -translate-x-1/2 text-[11px] font-mono text-cyan-400 uppercase font-bold tracking-widest bg-black/60 px-3 py-1 rounded-full border border-cyan-500/20">
+                      TARGET 2 OF 3: LOOK AT CENTER DOT & CLICK
+                    </p>
+                    <button 
+                      onClick={() => runCalibration(3)}
+                      className="absolute w-8 h-8 rounded-full bg-cyan-400 border-4 border-white animate-ping cursor-pointer shadow-[0_0_30px_#00d2ff]"
+                    />
+                    <button 
+                      onClick={() => runCalibration(3)}
+                      className="absolute w-8 h-8 rounded-full bg-cyan-400 border-4 border-white cursor-pointer shadow-[0_0_25px_#00d2ff]"
+                    />
+                  </div>
                 )}
 
                 {calibrationStep === 3 && (
-                  <button 
-                    onClick={() => runCalibration(4)}
-                    className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-error border-2 border-white animate-pulse cursor-pointer"
-                  />
+                  <div className="relative w-full h-full">
+                    <p className="absolute top-3 left-1/2 -translate-x-1/2 text-[11px] font-mono text-purple-400 uppercase font-bold tracking-widest bg-black/60 px-3 py-1 rounded-full border border-purple-500/20">
+                      TARGET 3 OF 3: LOOK AT BOTTOM-RIGHT DOT & CLICK
+                    </p>
+                    <button 
+                      onClick={() => runCalibration(4)}
+                      className="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-purple-500 border-4 border-white animate-ping cursor-pointer shadow-[0_0_30px_#a855f7]"
+                    />
+                    <button 
+                      onClick={() => runCalibration(4)}
+                      className="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-purple-500 border-4 border-white cursor-pointer shadow-[0_0_25px_#a855f7]"
+                    />
+                  </div>
                 )}
               </div>
             </div>
