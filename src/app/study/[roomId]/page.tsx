@@ -494,21 +494,24 @@ export default function StudyRoomPage() {
                   streamsMap.set(uid, stream);
                 });
               }
-              const formattedMembers = members.map(m => ({
-                id: m.user_id,
-                name: m.users?.name || 'Studier',
-                avatarUrl: m.users?.avatar_url || undefined,
-                isFocused: m.isFocused,
-                isMuted: m.user_id === user.id ? isSelfMuted : m.isMuted,
-                distractionCount: m.distractionCount,
-                focusScore: m.user_id === user.id ? focusScore : (m.focusScore !== undefined ? m.focusScore : Math.max(40, 100 - (m.distractionCount || 0) * 12)),
-                focusSeconds: m.user_id === user.id ? activeFocusSeconds : (m.total_focus_seconds_today || 300),
-                focusTimeline: m.user_id === user.id ? focusTimeline : [],
-                isSpectator: m.isSpectator,
-                gazeScore: m.user_id === user.id ? focusDetector.gazeScore : (m.gazeScore !== undefined ? m.gazeScore : 100),
-                poseStability: m.user_id === user.id ? focusDetector.poseStability : (m.poseStability !== undefined ? m.poseStability : 100),
-                level: profile?.level || 1
-              }));
+              const formattedMembers = members.map(m => {
+                const isMe = m.user_id === user.id;
+                return {
+                  id: m.user_id,
+                  name: isMe ? (profile?.name || m.users?.name || 'Studier') : (m.users?.name || 'Studier'),
+                  avatarUrl: isMe ? (profile?.avatar_url || m.users?.avatar_url || undefined) : (m.users?.avatar_url || undefined),
+                  isFocused: m.isFocused,
+                  isMuted: m.user_id === user.id ? isSelfMuted : m.isMuted,
+                  distractionCount: m.distractionCount,
+                  focusScore: m.user_id === user.id ? focusScore : (m.focusScore !== undefined ? m.focusScore : Math.max(40, 100 - (m.distractionCount || 0) * 12)),
+                  focusSeconds: m.user_id === user.id ? activeFocusSeconds : (m.total_focus_seconds_today || 300),
+                  focusTimeline: m.user_id === user.id ? focusTimeline : [],
+                  isSpectator: m.isSpectator,
+                  gazeScore: m.user_id === user.id ? focusDetector.gazeScore : (m.gazeScore !== undefined ? m.gazeScore : 100),
+                  poseStability: m.user_id === user.id ? focusDetector.poseStability : (m.poseStability !== undefined ? m.poseStability : 100),
+                  level: profile?.level || 1
+                };
+              });
               return (
                 <RoomGrid
                   members={formattedMembers}

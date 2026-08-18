@@ -975,8 +975,8 @@ export default function RoomDetail() {
                 <tbody className="text-xs font-semibold text-slate-900">
                   {members.map((mbr, idx) => {
                     const isCurrentUser = mbr.user_id === user?.id;
-                    const name = mbr.users?.name || 'Arena Fighter';
-                    const avatar = mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150';
+                    const name = isCurrentUser ? (profile?.name || mbr.users?.name || 'Arena Fighter') : (mbr.users?.name || 'Arena Fighter');
+                    const avatar = isCurrentUser ? (profile?.avatar_url || mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150') : (mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150');
                     const isReady = mbr.user_id === user?.id ? selfReady : !!readyMembers[mbr.user_id];
 
                     return (

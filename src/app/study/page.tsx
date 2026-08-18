@@ -1539,10 +1539,11 @@ function StudySessionContent() {
               }
             }
             
+            const isMe = opt.user_id === user?.id;
             return {
               userId: opt.user_id,
-              name: opt.users?.name || 'Arena Fighter',
-              avatarUrl: opt.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150',
+              name: isMe ? (profile?.name || opt.users?.name || 'Arena Fighter') : (opt.users?.name || 'Arena Fighter'),
+              avatarUrl: isMe ? (profile?.avatar_url || opt.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150') : (opt.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150'),
               focusScore: opt.focus_score,
               focusSeconds: opt.focus_seconds,
               isMuted: opt.is_muted,
