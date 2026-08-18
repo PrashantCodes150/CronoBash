@@ -19,6 +19,7 @@ function TekkenVsScreenIntro({
   concludedSessions: any[];
   onClose: () => void;
 }) {
+  const { user, profile } = useAuth();
   const leftTeam = members.slice(0, 1);
   const rightTeam = members.slice(1);
 
@@ -33,49 +34,53 @@ function TekkenVsScreenIntro({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/95 flex flex-col justify-between p-4 sm:p-8 animate-fadeIn select-none">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/30 via-slate-950 to-black pointer-events-none"></div>
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/95 flex flex-col justify-between p-4 sm:p-8 animate-fadeIn select-none font-sans">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-950 to-black pointer-events-none"></div>
 
-      <div className="w-full flex justify-between items-center z-10 border-b border-slate-800 pb-4">
+      <div className="w-full flex justify-between items-center z-10 border-b border-slate-800/80 pb-4">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#3B82F6] block">FOCUS ARENA MATCHMAKING</span>
-          <h1 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight">{room.name}</h1>
+          <span className="text-[11px] font-black uppercase tracking-widest text-[#3B82F6] block font-mono">CRONOBASH ARENA MATCHMAKING</span>
+          <h1 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight drop-shadow-md">{room.name}</h1>
         </div>
         <button
           onClick={onClose}
-          className="bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition cursor-pointer border border-white/20"
+          className="bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer border border-white/20 hover:scale-105"
         >
-          SKIP [SPACE]
+          SKIP INTRO [SPACE]
         </button>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 relative z-10 my-6">
         <div className="flex-1 flex items-center justify-end gap-4 text-right">
           {leftTeam.map((mbr, i) => {
-            const name = mbr.users?.name || 'Contestant 1';
-            const avatar = mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150';
+            const isMe = mbr.user_id === user?.id;
+            const name = isMe ? (profile?.name || mbr.users?.name || 'Contestant 1') : (mbr.users?.name || 'Contestant 1');
+            const avatar = isMe ? (profile?.avatar_url || mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150') : (mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150');
             const rankLabel = getRankingLabel(mbr.user_id);
             return (
               <div key={mbr.id || i} className="flex items-center gap-4">
                 <div>
-                  <span className="text-[10px] font-black text-[#3B82F6] uppercase tracking-widest block">PLAYER 1</span>
-                  <h2 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight">{name}</h2>
+                  <span className="text-[10px] font-black text-[#3B82F6] uppercase tracking-widest block font-mono">PLAYER 1</span>
+                  <h2 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight drop-shadow-md">{name}</h2>
                   {rankLabel && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-500/20 text-[#3B82F6] border border-blue-400/30 inline-block mt-1">
+                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-[#3B82F6] border border-blue-400/40 inline-block mt-1 font-mono">
                       {rankLabel}
                     </span>
                   )}
                 </div>
-                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-[#3B82F6] bg-slate-900 shrink-0 shadow-lg">
-                  <img src={avatar} className="w-full h-full object-cover" alt="" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-[#3B82F6] bg-slate-900 shrink-0 shadow-[0_0_30px_rgba(59,130,246,0.4)]">
+                  <img src={avatar} className="w-full h-full object-cover" alt={name} />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="relative flex items-center justify-center shrink-0 w-24 h-24">
-          <span className="text-6xl sm:text-8xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-400 to-indigo-600 drop-shadow-[0_0_35px_rgba(59,130,246,0.8)]">
+        <div className="relative flex items-center justify-center shrink-0 w-28 h-28 select-none">
+          <span 
+            className="text-7xl sm:text-9xl font-black italic bg-clip-text bg-gradient-to-br from-white via-blue-400 to-indigo-600 drop-shadow-[0_0_40px_rgba(59,130,246,0.9)]"
+            style={{ color: 'transparent', WebkitTextFillColor: 'transparent' }}
+          >
             VS
           </span>
         </div>
@@ -83,23 +88,24 @@ function TekkenVsScreenIntro({
         <div className="flex-1 flex items-center justify-start gap-4 text-left">
           {rightTeam.length === 0 ? (
             <div className="py-4">
-              <h2 className="text-lg font-black text-slate-600 italic uppercase animate-pulse">WAITING FOR OPPONENT...</h2>
+              <h2 className="text-lg font-black text-slate-500 italic uppercase animate-pulse font-mono">WAITING FOR OPPONENT...</h2>
             </div>
           ) : (
             rightTeam.map((mbr, i) => {
-              const name = mbr.users?.name || 'Contestant 2';
-              const avatar = mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150';
+              const isMe = mbr.user_id === user?.id;
+              const name = isMe ? (profile?.name || mbr.users?.name || 'Contestant 2') : (mbr.users?.name || 'Contestant 2');
+              const avatar = isMe ? (profile?.avatar_url || mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150') : (mbr.users?.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150');
               const rankLabel = getRankingLabel(mbr.user_id);
               return (
                 <div key={mbr.id || i} className="flex items-center gap-4">
-                  <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-[#8B5CF6] bg-slate-900 shrink-0 shadow-lg">
-                    <img src={avatar} className="w-full h-full object-cover" alt="" />
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-[#8B5CF6] bg-slate-900 shrink-0 shadow-[0_0_30px_rgba(139,92,246,0.4)]">
+                    <img src={avatar} className="w-full h-full object-cover" alt={name} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-[#8B5CF6] uppercase tracking-widest block">PLAYER {i + 2}</span>
-                    <h2 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight">{name}</h2>
+                    <span className="text-[10px] font-black text-[#8B5CF6] uppercase tracking-widest block font-mono">PLAYER {i + 2}</span>
+                    <h2 className="text-xl sm:text-3xl font-black text-white italic uppercase tracking-tight drop-shadow-md">{name}</h2>
                     {rankLabel && (
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-purple-500/20 text-[#8B5CF6] border border-purple-400/30 inline-block mt-1">
+                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-[#8B5CF6] border border-purple-400/40 inline-block mt-1 font-mono">
                         {rankLabel}
                       </span>
                     )}
@@ -111,9 +117,9 @@ function TekkenVsScreenIntro({
         </div>
       </div>
 
-      <div className="w-full text-center py-3 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500 font-extrabold">
+      <div className="w-full text-center py-3 border-t border-slate-800/80 flex justify-between items-center text-[10px] text-slate-400 font-mono font-extrabold">
         <span>FOCUS ARENA TELEMETRY SYSTEM</span>
-        <span>STATUS: READY</span>
+        <span className="text-emerald-400">STATUS: READY</span>
       </div>
     </div>
   );

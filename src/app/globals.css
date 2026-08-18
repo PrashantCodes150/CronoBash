@@ -74,6 +74,11 @@ p, span, label {
   color: inherit;
 }
 
+.text-transparent {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
 /* ─── GLASS UTILITY CLASSES ─────────────────────────────── */
 
 /* Strong glass — used for hero card, bento grid cells */
