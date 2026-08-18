@@ -15,21 +15,29 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "CronoBash — Gamified Study Arena & Focus Duels",
+    default: "CronoBash — High-Stakes Focus Arena & Deep Work Protocol",
     template: "%s | CronoBash",
   },
-  description: "CronoBash is the ultimate gamified focus arena. Challenge study squads in 1v1 duels, earn XP rewards, monitor AI focus telemetry, and build indestructible study habits.",
+  description: "CronoBash is the next-gen AI focus arena. Compete in 1v1 focus duels, track real-time eye-gaze telemetry, join squad study chambers, and build indestructible flow-state habits.",
   keywords: [
     "CronoBash",
     "cronobash.com",
     "focus arena",
-    "study gamification",
+    "deep work protocol",
     "1v1 focus duels",
-    "study timer",
-    "pomodoro duel",
+    "study gamification",
+    "gaze tracking timer",
     "squad study rooms",
     "AI focus coach",
   ],
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/cronobash-icon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/icon.png',
+  },
   authors: [{ name: "CronoBash Team", url: "https://cronobash.com" }],
   creator: "CronoBash Inc.",
   publisher: "CronoBash Inc.",
@@ -38,8 +46,8 @@ export const metadata: Metadata = {
     canonical: 'https://cronobash.com',
   },
   openGraph: {
-    title: "CronoBash — Gamified Study Arena & Focus Duels",
-    description: "Turn study into a sport. Compete in 1v1 focus duels, track AI distraction telemetry, and level up with your squad on cronobash.com.",
+    title: "CronoBash — High-Stakes Focus Arena & Deep Work Protocol",
+    description: "Turn deep work into a sport. Compete in 1v1 focus duels, track AI distraction telemetry, and level up with your squad on cronobash.com.",
     url: 'https://cronobash.com',
     siteName: 'CronoBash',
     images: [
@@ -47,7 +55,7 @@ export const metadata: Metadata = {
         url: '/hero-poster.webp',
         width: 1920,
         height: 1080,
-        alt: 'CronoBash Gamified Study Arena',
+        alt: 'CronoBash High-Stakes Focus Arena',
       },
     ],
     locale: 'en_US',
@@ -55,8 +63,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "CronoBash — Gamified Study Arena & Focus Duels",
-    description: "Turn study into a sport. Compete in 1v1 focus duels and level up on cronobash.com.",
+    title: "CronoBash — High-Stakes Focus Arena & Deep Work Protocol",
+    description: "Turn deep work into a sport. Compete in 1v1 focus duels and level up on cronobash.com.",
     images: ['/hero-poster.webp'],
   },
   robots: {
