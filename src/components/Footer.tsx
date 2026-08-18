@@ -25,7 +25,7 @@ export function Footer() {
             CronoBash
           </div>
           <p className="text-xs sm:text-sm text-on-surface-variant/80 font-normal">
-            ©CronoBash. All rights reserved.
+            ©2026cronobash. All rights reserved.
           </p>
         </div>
 
