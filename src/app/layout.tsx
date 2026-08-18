@@ -32,11 +32,11 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/cronobash-icon.png?v=3', type: 'image/png' },
-      { url: '/icon.png?v=3', type: 'image/png' },
+      { url: '/favicon.ico?v=4' },
+      { url: '/icon.png?v=4', type: 'image/png' },
     ],
-    shortcut: '/cronobash-icon.png?v=3',
-    apple: '/cronobash-icon.png?v=3',
+    shortcut: '/favicon.ico?v=4',
+    apple: '/favicon.ico?v=4',
   },
   authors: [{ name: "CronoBash Team", url: "https://cronobash.com" }],
   creator: "CronoBash Inc.",
@@ -96,7 +96,7 @@ export default function RootLayout({
       '@type': 'Organization',
       name: 'CronoBash Inc.',
       url: 'https://cronobash.com',
-      logo: 'https://cronobash.com/cronobash-icon.png',
+      logo: 'https://cronobash.com/favicon.ico',
     },
   };
 
@@ -106,9 +106,9 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <head>
-        <link rel="icon" href="/cronobash-icon.png?v=3" type="image/png" sizes="any" />
-        <link rel="shortcut icon" href="/cronobash-icon.png?v=3" type="image/png" />
-        <link rel="apple-touch-icon" href="/cronobash-icon.png?v=3" />
+        <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+        <link rel="shortcut icon" href="/favicon.ico?v=4" />
+        <link rel="apple-touch-icon" href="/favicon.ico?v=4" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
