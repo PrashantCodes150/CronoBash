@@ -17,6 +17,13 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
 
+  const getCanonicalOrigin = () => {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return window.location.origin;
+    }
+    return 'https://cronobash.com';
+  };
+
   const handleForgotPassword = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     setErrorMsg('');
@@ -29,7 +36,7 @@ export default function LoginPage() {
 
     setResetLoading(true);
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
+      const origin = getCanonicalOrigin();
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${origin}/login`,
       });
@@ -92,7 +99,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.com';
+      const origin = getCanonicalOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

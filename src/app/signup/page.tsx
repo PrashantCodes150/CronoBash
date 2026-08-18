@@ -41,6 +41,13 @@ export default function SignupPage() {
   const [verificationSent, setVerificationSent] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
 
+  const getCanonicalOrigin = () => {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return window.location.origin;
+    }
+    return 'https://cronobash.com';
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -57,7 +64,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.vercel.app';
+      const origin = getCanonicalOrigin();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -91,7 +98,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cronobash.com';
+      const origin = getCanonicalOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
