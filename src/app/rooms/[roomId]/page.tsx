@@ -219,6 +219,7 @@ export default function RoomDetail() {
           }
         });
         setReadyMembers(readyMap);
+        loadRoomMembers();
       })
       .on('broadcast', { event: 'countdown-start' }, (payload) => {
         const targetIso = payload.payload?.targetTime;
@@ -230,6 +231,12 @@ export default function RoomDetail() {
       .on('broadcast', { event: 'countdown-cancel' }, () => {
         setCountdownTime(null);
         setCountdownActive(false);
+      })
+      .on('broadcast', { event: 'member_joined' }, () => {
+        loadRoomMembers();
+      })
+      .on('broadcast', { event: 'member_left' }, () => {
+        loadRoomMembers();
       })
       .on('broadcast', { event: 'chat_message' }, (payload) => {
         const msg = payload.payload;
@@ -511,12 +518,36 @@ export default function RoomDetail() {
           }, 300);
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
+        async (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg && newMsg.user_id !== user?.id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name, avatar_url, is_pro')
+              .eq('id', newMsg.user_id)
+              .maybeSingle();
+
+            const fullMsg = {
+              ...newMsg,
+              users: userData || { name: 'Contestant', avatar_url: '', is_pro: false }
+            };
+
+            setMessages(prev => {
+              if (prev.some(m => m.id === fullMsg.id)) return prev;
+              return [...prev, fullMsg];
+            });
+          }
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(roomMembersChannel);
     };
-  }, [roomId]);
+  }, [roomId, user?.id]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -545,6 +576,14 @@ export default function RoomDetail() {
       if (!joinError || joinError.message.includes('duplicate key')) {
         toast.success('Joined Arena Lobby! 🚀');
         await loadRoomMembers();
+
+        if (matchChannelRef.current) {
+          matchChannelRef.current.send({
+            type: 'broadcast',
+            event: 'member_joined',
+            payload: { userId: user.id }
+          });
+        }
       }
     } catch (e) {
       console.error(e);
@@ -565,6 +604,14 @@ export default function RoomDetail() {
         await loadRoomMembers();
         await refreshWallet();
         await refreshProfile();
+
+        if (matchChannelRef.current) {
+          matchChannelRef.current.send({
+            type: 'broadcast',
+            event: 'member_left',
+            payload: { userId: user.id }
+          });
+        }
       }
     } catch (e) {
       console.error(e);
@@ -600,6 +647,14 @@ export default function RoomDetail() {
       if (!error) {
         toast.success('Contestant removed from room.');
         await loadRoomMembers();
+
+        if (matchChannelRef.current) {
+          matchChannelRef.current.send({
+            type: 'broadcast',
+            event: 'member_left',
+            payload: { userId: targetUserId }
+          });
+        }
       }
     } catch (err: any) {
       console.error(err);
