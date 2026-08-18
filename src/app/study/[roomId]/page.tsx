@@ -406,9 +406,9 @@ export default function StudyRoomPage() {
     <div
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="min-h-screen bg-[#B7B8B8] text-slate-900 font-sans p-3 sm:p-5 md:p-6 rounded-[32px] space-y-6 select-none outline-none"
+      className="min-h-screen w-full bg-[#090D16] text-white font-sans p-3 sm:p-5 md:p-6 space-y-6 select-none outline-none"
     >
-      <Toaster position="top-right" toastOptions={{ className: 'bg-white border border-slate-200 text-slate-900 font-bold text-xs shadow-lg' }} />
+      <Toaster position="top-right" toastOptions={{ className: 'bg-slate-900 border border-slate-800 text-white font-bold text-xs shadow-2xl' }} />
 
       {/* Hidden self-video feed */}
       <video ref={videoRef} className="hidden" muted playsInline />
@@ -445,25 +445,25 @@ export default function StudyRoomPage() {
       )}
 
       {/* ── TOP ARENA HEADER BAR ── */}
-      <header className="morphism-card bg-white p-5 rounded-[28px] border border-white/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="bg-slate-900/90 border border-slate-800 shadow-[0_0_30px_rgba(0,229,255,0.1)] p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#3B82F6] text-white flex items-center justify-center font-bold shadow-sm">
+          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)]">
             <span className="material-symbols-outlined text-xl">fit_screen</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-black text-slate-900">{room?.name || 'Live Focus Arena'}</h1>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <h1 className="text-base sm:text-lg font-black text-white">{room?.name || 'Live Focus Arena'}</h1>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
             </div>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Live Neural Study Arena</p>
+            <p className="text-[10px] text-cyan-400/80 font-mono font-bold uppercase tracking-wider">Live Neural Study Arena</p>
           </div>
         </div>
 
         {/* Timer Display */}
         <div className="flex items-center gap-3">
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-2 flex items-center gap-2.5 shadow-inner">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Time Remaining</span>
-            <span className="text-xl font-black font-mono text-[#3B82F6]">
+          <div className="bg-slate-950 border border-cyan-500/30 rounded-2xl px-5 py-2 flex items-center gap-2.5 shadow-inner">
+            <span className="text-[10px] font-mono font-extrabold text-slate-400 uppercase tracking-wider">Time Remaining</span>
+            <span className="text-xl font-black font-mono text-cyan-400">
               {formatTimer(secondsRemaining)}
             </span>
           </div>
@@ -471,7 +471,7 @@ export default function StudyRoomPage() {
           <button
             onClick={toggleAmbientSound}
             className={`w-10 h-10 rounded-2xl border transition-all flex items-center justify-center cursor-pointer shadow-sm ${
-              ambientAudio ? 'bg-[#10B981] text-white border-emerald-500' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+              ambientAudio ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
             }`}
             title="Toggle Ambient Audio Synth"
           >
@@ -485,7 +485,7 @@ export default function StudyRoomPage() {
         
         {/* Left Video Stream Grid (8 cols) */}
         <div className="lg:col-span-8 space-y-4 flex flex-col justify-between">
-          <div className="morphism-card bg-white p-4 rounded-[28px] border border-white/80 shadow-sm min-h-[440px]">
+          <div className="bg-slate-900/90 border border-slate-800 shadow-2xl p-4 rounded-3xl min-h-[440px]">
             {user && (() => {
               const streamsMap = new Map<string, MediaStream | null>();
               streamsMap.set(user.id, localStream);
@@ -523,13 +523,13 @@ export default function StudyRoomPage() {
           </div>
 
           {/* Quick Emotes Dock & Microphone Control */}
-          <div className="morphism-card bg-white p-4 rounded-[24px] border border-white/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-slate-900/90 border border-slate-800 shadow-2xl p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {['👍', '🔥', '💡', '👏', '🎯'].map(emote => (
                 <button
                   key={emote}
                   onClick={() => sendEmote(emote)}
-                  className="text-lg hover:scale-125 transition-transform p-2 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer shadow-sm"
+                  className="text-lg hover:scale-125 transition-transform p-2 bg-slate-800/80 hover:bg-slate-700 rounded-xl border border-slate-700 cursor-pointer shadow-sm"
                 >
                   {emote}
                 </button>
@@ -541,8 +541,8 @@ export default function StudyRoomPage() {
                 onClick={() => setIsSelfMuted(!isSelfMuted)}
                 className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
                   isSelfMuted 
-                    ? 'bg-red-50 text-red-600 border border-red-200' 
-                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/40' 
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                 }`}
               >
                 <span className="material-symbols-outlined text-sm">{isSelfMuted ? 'mic_off' : 'mic'}</span>
@@ -551,7 +551,7 @@ export default function StudyRoomPage() {
 
               <button
                 onClick={handleForfeitMatch}
-                className="px-4 py-2 rounded-xl text-xs font-extrabold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all cursor-pointer shadow-sm flex items-center gap-1"
+                className="px-4 py-2 rounded-xl text-xs font-extrabold bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 transition-all cursor-pointer shadow-sm flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-sm">flag</span>
                 <span>Forfeit Match</span>
@@ -564,16 +564,16 @@ export default function StudyRoomPage() {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Focus Timeline Chart */}
-          <div className="morphism-card bg-white p-5 rounded-[28px] border border-white/80 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <span className="material-symbols-outlined text-[#3B82F6] font-bold">show_chart</span>
-              <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Live Focus Index</h3>
+          <div className="bg-slate-900/90 border border-slate-800 shadow-2xl p-5 rounded-3xl space-y-3 text-white">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+              <span className="material-symbols-outlined text-cyan-400 font-bold">show_chart</span>
+              <h3 className="font-extrabold text-xs text-white uppercase tracking-wider font-mono">Live Focus Index</h3>
             </div>
             <FocusScoreChart data={focusTimeline} />
           </div>
 
           {/* AI Coach Settings Panel */}
-          <div className="morphism-card bg-white p-5 rounded-[28px] border border-white/80 shadow-sm">
+          <div className="bg-slate-900/90 border border-slate-800 shadow-2xl p-5 rounded-3xl text-white">
             <AICoachSettings
               coachEnabled={coachEnabled}
               setCoachEnabled={setCoachEnabled}
