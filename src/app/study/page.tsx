@@ -2968,148 +2968,34 @@ interface AnimatedBackgroundProps {
  * Renders hardware-accelerated CSS animations and gradients corresponding to the active theme.
  */
 export function AnimatedBackground({ theme, activeColors }: AnimatedBackgroundProps) {
-  // Looping background video URLs matching theme IDs (using open, hotlink-allowed sources)
-  const bgVideos: Record<string, string> = {
-    pink: 'https://assets.mixkit.co/videos/preview/mixkit-pink-petals-falling-from-a-cherry-blossom-tree-32111-large.mp4',
-    green: 'https://assets.mixkit.co/videos/preview/mixkit-trees-in-a-forest-swaying-in-the-wind-4752-large.mp4',
-    water: 'https://assets.mixkit.co/videos/preview/mixkit-water-flowing-between-rocks-in-a-river-42861-large.mp4',
-  };
-
   const bgImages: Record<string, string> = {
-    dark: '/backgrounds/dark_focus_bg.png',
-    pink: '/backgrounds/pink_petals_bg.png',
-    green: '/backgrounds/green_forest_bg.png',
-    water: '/backgrounds/water_flow_bg.png',
+    dark: '/backgrounds/dark_focus_bg.webp',
+    pink: '/backgrounds/pink_petals_bg.webp',
+    green: '/backgrounds/green_forest_bg.webp',
+    water: '/backgrounds/water_flow_bg.webp',
   };
 
-  const hasVideo = theme in bgVideos;
-  const currentVideo = bgVideos[theme];
   const currentBgImage = bgImages[theme] || bgImages.dark;
 
-  // Programmatic autoplay trigger on mount to handle browser security contexts
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.load(); // Force browser to reload the video source!
-      videoRef.current.play().catch(() => {
-        // Fallback for strict browser media autoplay blocking policies
-      });
-    }
-  }, [theme]);
-
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Fallback Static Backdrop for Dark Focus & loading state */}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 select-none">
+      {/* High-Resolution Aesthetic Theme Backdrop Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center transition-all duration-[1000ms] ease-in-out opacity-[0.4] select-none pointer-events-none"
+        className="absolute inset-0 bg-cover bg-center transition-all duration-700 ease-in-out opacity-45"
         style={{ backgroundImage: `url(${currentBgImage})` }}
       />
 
-      {/* Hardware-Accelerated Looping Video Background (with enhanced opacity) */}
-      {hasVideo && (
-        <video
-          ref={videoRef}
-          key={theme}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={(e) => {
-            e.currentTarget.play().catch(() => {});
-          }}
-          className="absolute inset-0 w-full h-full object-cover opacity-[0.55] transition-all duration-[1000ms] ease-in-out select-none pointer-events-none"
-        >
-          <source src={currentVideo} type="video/mp4" />
-        </video>
-      )}
+      {/* Sleek Ambient Color Accent Overlay */}
+      <div 
+        className="absolute inset-0 transition-all duration-700 ease-in-out opacity-60"
+        style={{
+          background: `radial-gradient(circle at 50% 20%, ${activeColors.b1} 0%, transparent 65%),
+                       radial-gradient(circle at 80% 80%, ${activeColors.b2} 0%, transparent 55%)`
+        }}
+      />
 
-      {/* Background animated fluid blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="fluid-blob blob-1 animate-aurora" style={{ backgroundColor: activeColors.b1 }}></div>
-        <div className="fluid-blob blob-2 animate-aurora" style={{ backgroundColor: activeColors.b2, animationDelay: '-5s' }}></div>
-        <div className="fluid-blob blob-3 animate-aurora" style={{ backgroundColor: activeColors.b3, animationDelay: '-10s' }}></div>
-      </div>
-
-      {/* Pink petals theme background animation */}
-      {theme === 'pink' && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          {[...Array(20)].map((_, i) => {
-            const delay = Math.random() * 8;
-            const left = Math.random() * 100;
-            const size = 8 + Math.random() * 12;
-            const duration = 6 + Math.random() * 6;
-            return (
-              <span
-                key={i}
-                className="absolute bg-pink-300/40 rounded-full animate-petal"
-                style={{
-                  left: `${left}%`,
-                  width: `${size}px`,
-                  height: `${size * 0.75}px`,
-                  borderRadius: '50% 0 50% 50%',
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                  top: '-5%',
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Green theme live plants / leaves background animation */}
-      {theme === 'green' && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          {[...Array(15)].map((_, i) => {
-            const delay = Math.random() * 8;
-            const left = Math.random() * 100;
-            const size = 10 + Math.random() * 14;
-            const duration = 7 + Math.random() * 7;
-            return (
-              <span
-                key={i}
-                className="absolute bg-green-500/20 animate-leaf"
-                style={{
-                  left: `${left}%`,
-                  width: `${size}px`,
-                  height: `${size * 0.6}px`,
-                  borderRadius: '100% 0 100% 0',
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                  top: '-5%',
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Water flow bubbles background animation */}
-      {theme === 'water' && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          {[...Array(25)].map((_, i) => {
-            const delay = Math.random() * 8;
-            const left = Math.random() * 100;
-            const size = 6 + Math.random() * 10;
-            const duration = 5 + Math.random() * 5;
-            return (
-              <span
-                key={i}
-                className="absolute rounded-full border border-cyan-400/25 bg-cyan-300/10 animate-bubble"
-                style={{
-                  left: `${left}%`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                  bottom: '-5%',
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
+      {/* Subtle Backdrop Darkening for Max Readability */}
+      <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px]" />
     </div>
   );
 }
