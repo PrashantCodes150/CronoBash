@@ -2694,11 +2694,14 @@ function StudySessionContent() {
             </div>
 
             <div className="lg:col-span-4 flex flex-col gap-4 h-full overflow-y-auto pr-1 custom-scrollbar">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 relative overflow-hidden flex flex-col min-h-[220px]">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-mono text-[10px] text-slate-300 uppercase tracking-wider text-left block font-bold">Gaze Tracking Feed</span>
-                  <div className={`px-2 py-0.5 rounded border text-[8px] font-mono uppercase flex items-center gap-1.5 ${
-                    isFocused ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300' : 'bg-rose-500/20 border-rose-500/60 text-rose-300'
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 relative overflow-hidden flex flex-col min-h-[320px] sm:min-h-[350px] shadow-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="font-mono text-xs text-slate-200 uppercase tracking-wider text-left block font-bold">Gaze Tracking Feed</span>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-full border text-[9px] font-mono uppercase font-bold flex items-center gap-1.5 ${
+                    isFocused ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 shadow-[0_0_10px_rgba(0,255,163,0.2)]' : 'bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-[0_0_10px_rgba(255,0,85,0.2)]'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${
                       isFocused ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500 animate-ping'
@@ -2707,7 +2710,7 @@ function StudySessionContent() {
                   </div>
                 </div>
 
-                <div className="relative flex-grow bg-slate-950 rounded-xl border border-white/10 overflow-hidden flex items-center justify-center min-h-[160px]">
+                <div className="relative flex-grow bg-slate-950 rounded-xl border border-white/10 overflow-hidden flex items-center justify-center min-h-[250px] sm:min-h-[270px] aspect-video">
                   <video 
                     ref={videoRef} 
                     autoPlay 
@@ -2719,22 +2722,22 @@ function StudySessionContent() {
                   {isFocused && isActive && (
                     <canvas 
                       ref={canvasRef}
-                      width={320}
-                      height={220}
+                      width={640}
+                      height={360}
                       className="absolute inset-0 w-full h-full pointer-events-none z-10"
                     />
                   )}
                   
                   {cameraActive && isActive && (
-                    <div className={`absolute inset-6 border rounded transition-all duration-300 pointer-events-none ${
+                    <div className={`absolute inset-4 sm:inset-5 border rounded-xl transition-all duration-300 pointer-events-none ${
                       isFocused ? 'border-emerald-400/40' : 'border-rose-500/50'
                     }`}>
-                      <div className={`absolute top-0 left-0 w-2.5 h-2.5 border-t border-l ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
-                      <div className={`absolute top-0 right-0 w-2.5 h-2.5 border-t border-r ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
-                      <div className={`absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
-                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
+                      <div className={`absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
+                      <div className={`absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
+                      <div className={`absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
+                      <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${isFocused ? 'border-emerald-400' : 'border-rose-500'}`}></div>
                       
-                      <div className="absolute bottom-1.5 left-1.5 bg-black/80 px-2 py-0.5 rounded font-mono text-[8px] text-slate-200 uppercase tracking-wider border border-white/10">
+                      <div className="absolute bottom-2 left-2 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-lg font-mono text-[9px] text-emerald-400 font-bold uppercase tracking-wider border border-emerald-500/30 shadow-md">
                         Gaze: {gazeDirection}
                       </div>
                     </div>
