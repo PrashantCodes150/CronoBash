@@ -19,14 +19,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.startsWith('/hero-frames') ||
-    pathname.startsWith('/mastery-frames') ||
-    pathname.startsWith('/workflow-frames') ||
-    pathname.startsWith('/momentum-frames') ||
-    pathname.startsWith('/momentum-loop-frames') ||
-    pathname.startsWith('/scroll-frames') ||
-    pathname.startsWith('/auth-frames') ||
-    pathname.startsWith('/frames') ||
+    pathname.startsWith('/squad-frames') ||
     pathname.startsWith('/backgrounds') ||
     pathname.endsWith('.mp4') ||
     pathname.endsWith('.webm') ||
