@@ -645,6 +645,9 @@ export default function ProfilePage() {
             ) : (
               leaderboard.map((item, index) => {
                 const isMe = item.id === user?.id;
+                const avatarToUse = isMe ? (activeAvatarUrl || item.avatar_url) : item.avatar_url;
+                const nameToUse = isMe ? (activeFullName || item.name) : item.name;
+
                 return (
                   <div
                     key={item.id}
@@ -662,14 +665,14 @@ export default function ProfilePage() {
                       </span>
                       
                       <AvatarWithBadge
-                        avatarUrl={item.avatar_url}
-                        name={item.name}
+                        avatarUrl={avatarToUse}
+                        name={nameToUse}
                         level={item.level || (index + 1)}
                         isVerified={item.is_verified}
                         size="sm"
                       />
 
-                      <span className="text-xs font-extrabold text-slate-900 truncate min-w-0">{item.name || 'User'}</span>
+                      <span className="text-xs font-extrabold text-slate-900 truncate min-w-0">{nameToUse || 'User'}</span>
                     </div>
 
                     <span className="text-xs font-black text-[#3B82F6] shrink-0">{item.points || 0} XP</span>

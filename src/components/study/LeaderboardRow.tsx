@@ -3,6 +3,7 @@
 import React from 'react';
 import { Award } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
+import { useAuth } from '@/components/auth-context';
 
 interface LeaderboardRowProps {
   rank: number;
@@ -22,13 +23,15 @@ interface LeaderboardRowProps {
 }
 
 export function LeaderboardRow({ rank, user, isCurrentUser = false }: LeaderboardRowProps) {
+  const { profile } = useAuth();
+  const avatarToDisplay = (isCurrentUser && profile?.avatar_url) ? profile.avatar_url : (user.avatar_url || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150');
+  const nameToDisplay = (isCurrentUser && profile?.name) ? profile.name : user.name;
+
   const avgFocusColor = user.avg_focus_percent >= 80 
     ? 'text-emerald-400' 
     : user.avg_focus_percent < 50 
       ? 'text-red-500' 
       : 'text-neutral-300';
-
-  const defaultAvatar = 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=150';
 
   return (
     <tr className={`border-b border-neutral-850 hover:bg-neutral-850/20 transition ${isCurrentUser ? 'bg-orange-500/10 border-l-4 border-l-orange-500' : ''}`}>
@@ -58,12 +61,12 @@ export function LeaderboardRow({ rank, user, isCurrentUser = false }: Leaderboar
       <td className="p-3">
         <div className="flex items-center gap-3">
           <img 
-            src={user.avatar_url || defaultAvatar}
-            alt={user.name}
+            src={avatarToDisplay}
+            alt={nameToDisplay}
             className="w-8 h-8 rounded-full border border-neutral-800 object-cover"
           />
           <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-white text-xs truncate max-w-[140px]">{user.name}</span>
+            <span className="font-semibold text-white text-xs truncate max-w-[140px]">{nameToDisplay}</span>
             <VerifiedBadge level={user.level || 1} followersCount={user.followers_count || 0} isVerified={user.verified_badge} size="sm" showLevelNumber={true} />
             {isCurrentUser && (
               <span className="bg-orange-500/20 text-orange-400 text-[9px] font-mono font-black uppercase px-1 rounded border border-orange-500/30">You</span>

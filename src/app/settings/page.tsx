@@ -130,6 +130,18 @@ export default function SettingsPage() {
         })
         .eq('id', user.id);
 
+      try {
+        await supabase
+          .from('leaderboard_cache')
+          .update({
+            name: name.trim(),
+            avatar_url: avatarUrl.trim() || null,
+          })
+          .eq('user_id', user.id);
+      } catch (lErr) {
+        console.warn('Leaderboard cache sync warning:', lErr);
+      }
+
       if (error) {
         toast.error('Failed to update settings parameters.');
       } else {
