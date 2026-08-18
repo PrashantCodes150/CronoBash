@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -216,6 +217,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       console.warn('Auth profile/wallet fetch background warning (using optimistic profile):', e);
       setProfile(fallbackProfile);
+    } finally {
+      setProfileLoaded(true);
     }
   };
 
@@ -275,6 +278,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setProfile(null);
     setWallet(null);
+    setProfileLoaded(false);
     router.push('/login');
   };
 
@@ -297,6 +301,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setProfile(null);
           setWallet(null);
+          setProfileLoaded(false);
         }
       } catch (e) {
         console.error("Session init error:", e);
@@ -318,6 +323,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setProfile(null);
         setWallet(null);
+        setProfileLoaded(false);
         setLoading(false);
       }
     });
@@ -343,6 +349,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user && !isPublicRoute) {
       router.replace('/login');
     } else if (user) {
+      // Defer route decisions until profile for active user is loaded
+      if (!profileLoaded) return;
+
       if (hasOAuthParams && typeof window !== 'undefined') {
         try {
           window.history.replaceState(null, '', window.location.pathname);
@@ -364,7 +373,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     }
-  }, [user, profile, pathname, loading, router]);
+  }, [user, profile, profileLoaded, pathname, loading, router]);
 
   // Online status heartbeat
   useEffect(() => {
