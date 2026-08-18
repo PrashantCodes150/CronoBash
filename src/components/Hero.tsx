@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
+import { useAuth } from '@/components/auth-context';
 
 function NavLink({ label, href }: { label: string; href: string }) {
   return (
@@ -16,6 +17,7 @@ function NavLink({ label, href }: { label: string; href: string }) {
 }
 
 export default function Hero() {
+  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
@@ -104,16 +106,16 @@ export default function Hero() {
           {/* Right Actions */}
           <div className="flex items-center gap-6">
             <Link
-              href="/login"
+              href={user ? "/dashboard" : "/login"}
               className="hidden md:block font-semibold uppercase tracking-[0.04em] text-[#1a1a1a] text-[14px] hover:opacity-55 transition-opacity"
             >
-              Login
+              {user ? "Dashboard" : "Login"}
             </Link>
             <Link
               href="/dashboard"
               className="bg-[#1a1a1a] text-white rounded-full px-5 py-2.5 font-medium text-[13px] uppercase tracking-[0.04em] hover:bg-[#333] active:scale-95 transition-all duration-200"
             >
-              Start Sprint
+              {user ? "Open Arena" : "Start Sprint"}
             </Link>
           </div>
         </div>

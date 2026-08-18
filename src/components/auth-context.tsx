@@ -331,13 +331,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user && !isPublicRoute) {
       router.replace('/login');
     } else if (user) {
-      if (pathname === '/login' || pathname === '/signup' || hasOAuthParams) {
+      if (pathname === '/login' || pathname === '/signup' || pathname === '/' || hasOAuthParams) {
         if (hasOAuthParams && typeof window !== 'undefined') {
           try {
             window.history.replaceState(null, '', window.location.pathname);
           } catch (e) { }
         }
-        if (profile && !profile.has_seen_onboarding) {
+        if (profile && profile.has_seen_onboarding === false) {
           router.replace('/onboarding');
         } else {
           router.replace('/dashboard');
