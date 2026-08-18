@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './auth-context';
 import Header from './header';
@@ -10,6 +10,11 @@ import LogoLoader from './LogoLoader';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -17,10 +22,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding'];
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study');
 
-  // Strict Security Guard: For any protected route, if session is loading or user is not logged in,
-  // NEVER render protected children components (prevents flash of protected content).
+  // Strict Zero-Leak Security Guard:
+  // For any protected route, BEFORE client mounts or WHILE session is loading or IF user is unauthenticated:
+  // NEVER render protected page HTML/DOM (prevents SSR pre-rendering leaks and hydration flashes).
   if (!isPublicRoute) {
-    if (loading || !user) {
+    if (!mounted || loading || !user) {
       return (
         <div className="min-h-screen bg-[#fafaf9] flex flex-col items-center justify-center p-4">
           <LogoLoader size="md" text="VERIFYING SECURE SESSION..." />
