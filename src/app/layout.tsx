@@ -14,9 +14,62 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CronoBash — Where focus becomes a game.",
-  description: "Join 1v1 focus duels, track AI distraction telemetry, climb global leaderboards, and build daily study habits with your squad.",
-  metadataBase: new URL('https://cronobash.vercel.app'),
+  title: {
+    default: "CronoBash — Gamified Study Arena & Focus Duels",
+    template: "%s | CronoBash",
+  },
+  description: "CronoBash is the ultimate gamified focus arena. Challenge study squads in 1v1 duels, earn XP rewards, monitor AI focus telemetry, and build indestructible study habits.",
+  keywords: [
+    "CronoBash",
+    "cronobash.com",
+    "focus arena",
+    "study gamification",
+    "1v1 focus duels",
+    "study timer",
+    "pomodoro duel",
+    "squad study rooms",
+    "AI focus coach",
+  ],
+  authors: [{ name: "CronoBash Team", url: "https://cronobash.com" }],
+  creator: "CronoBash Inc.",
+  publisher: "CronoBash Inc.",
+  metadataBase: new URL('https://cronobash.com'),
+  alternates: {
+    canonical: 'https://cronobash.com',
+  },
+  openGraph: {
+    title: "CronoBash — Gamified Study Arena & Focus Duels",
+    description: "Turn study into a sport. Compete in 1v1 focus duels, track AI distraction telemetry, and level up with your squad on cronobash.com.",
+    url: 'https://cronobash.com',
+    siteName: 'CronoBash',
+    images: [
+      {
+        url: '/hero-poster.webp',
+        width: 1920,
+        height: 1080,
+        alt: 'CronoBash Gamified Study Arena',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "CronoBash — Gamified Study Arena & Focus Duels",
+    description: "Turn study into a sport. Compete in 1v1 focus duels and level up on cronobash.com.",
+    images: ['/hero-poster.webp'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -24,6 +77,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CronoBash',
+    alternateName: 'CronoBash Focus Arena',
+    url: 'https://cronobash.com',
+    description: 'Gamified focus arena where studying becomes a sport. 1v1 duels, study squads, and AI focus tracking.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'CronoBash Inc.',
+      url: 'https://cronobash.com',
+      logo: 'https://cronobash.com/cronobash-logo-full.png',
+    },
+  };
+
   return (
     <html
       lang="en"
@@ -36,6 +104,10 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Special+Elite&family=Geist:wght@400;500;600;700&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <script
           dangerouslySetInnerHTML={{
