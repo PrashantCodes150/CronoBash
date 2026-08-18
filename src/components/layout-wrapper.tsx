@@ -9,7 +9,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   const hideLayoutRoutes = ['/', '/login', '/signup', '/onboarding'];
-  const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study/');
+  const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study');
 
   if (hideLayout) {
     return <>{children}</>;
