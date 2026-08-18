@@ -279,6 +279,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    // Immediate 0ms URL token hash scrubber (wipes access_token & code from address bar instantly)
+    if (typeof window !== 'undefined' && (window.location.hash.includes('access_token') || window.location.search.includes('code='))) {
+      try {
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch (e) {}
+    }
+
     // Initial session check
     const initSession = async () => {
       try {

@@ -7,7 +7,15 @@ const isConfigured = supabaseUrl && supabaseAnonKey;
 
 export const supabase = createClient(
   isConfigured ? supabaseUrl : 'https://abcdefghijklmnopqrst.supabase.co',
-  isConfigured ? supabaseAnonKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy'
+  isConfigured ? supabaseAnonKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy',
+  {
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
 );
 
 export interface UserProfile {
