@@ -76,7 +76,7 @@ export default function FounderNoteSection() {
             </a>
 
             <a
-              href="https://github.com/PrashantCodes150"
+              href="https://prashantsingh.indevs.in/"
               target="_blank"
               rel="noopener noreferrer"
               className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-[#2563EB] hover:bg-[#2563EB] hover:text-white hover:border-[#2563EB] transition-all hover:scale-110"
