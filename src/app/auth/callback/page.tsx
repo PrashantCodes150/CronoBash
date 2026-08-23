@@ -26,8 +26,6 @@ function CallbackHandler() {
           return;
         }
 
-        const code = searchParams.get('code');
-
         if (code) {
           const { data, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeErr) {
@@ -36,13 +34,29 @@ function CallbackHandler() {
             setTimeout(() => router.replace('/login'), 3000);
             return;
           }
-          router.replace('/dashboard');
+
+          const userId = data?.session?.user?.id;
+          if (userId) {
+            const { data: userProfile } = await supabase
+              .from('users')
+              .select('has_seen_onboarding')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (userProfile && userProfile.has_seen_onboarding === true) {
+              router.replace('/dashboard');
+            } else {
+              router.replace('/onboarding');
+            }
+          } else {
+            router.replace('/onboarding');
+          }
           return;
         }
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          router.replace('/dashboard');
+          router.replace('/onboarding');
         } else {
           router.replace('/login');
         }

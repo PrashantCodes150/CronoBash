@@ -155,19 +155,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const initialAvatar = savedLocalOnboarding?.avatar_url || activeUserObj?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=cyber-knight';
         const initialName = metaName || savedLocalOnboarding?.name || activeUserObj?.user_metadata?.name || 'Arena Fighter';
 
-        const { data: insertedProfile } = await supabase
-          .from('users')
-          .insert({
-            id: userId,
-            name: initialName,
-            full_name: initialName,
-            email: email || '',
-            avatar_url: initialAvatar,
-            has_seen_onboarding: hasCompletedOnboardingLocal
-          })
-          .select()
-          .single();
-        if (insertedProfile) activeProfile = insertedProfile;
+        try {
+          const { data: upsertedProfile } = await supabase
+            .from('users')
+            .upsert({
+              id: userId,
+              name: initialName,
+              full_name: initialName,
+              email: email || '',
+              avatar_url: initialAvatar,
+              has_seen_onboarding: hasCompletedOnboardingLocal
+            }, { onConflict: 'id' })
+            .select()
+            .maybeSingle();
+          if (upsertedProfile) activeProfile = upsertedProfile;
+        } catch (err) {
+          console.warn('Profile upsert notice:', err);
+        }
       }
 
       // If activeProfile exists and has_seen_onboarding is true, persist to local cache
@@ -179,12 +183,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (!activeWallet) {
-        const { data: insertedWallet } = await supabase
-          .from('wallets')
-          .insert({ user_id: userId, balance: 0 })
-          .select()
-          .single();
-        if (insertedWallet) activeWallet = insertedWallet;
+        try {
+          const { data: upsertedWallet } = await supabase
+            .from('wallets')
+            .upsert({ user_id: userId, balance: 0 }, { onConflict: 'user_id' })
+            .select()
+            .maybeSingle();
+          if (upsertedWallet) activeWallet = upsertedWallet;
+        } catch (err) {
+          console.warn('Wallet upsert notice:', err);
+        }
       }
 
       const merged = getMergedProfile(activeProfile || fallbackProfile, activeUserObj);
