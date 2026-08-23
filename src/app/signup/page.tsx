@@ -91,7 +91,7 @@ export default function SignupPage() {
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${origin}/dashboard`,
+          emailRedirectTo: `${origin}/auth/callback`,
           data: {
             name: fullName.trim(),
             full_name: fullName.trim(),
@@ -102,13 +102,15 @@ export default function SignupPage() {
       if (error) {
         console.error("Supabase signUp error:", error);
         let msg = error.message || '';
-        if (!msg || msg === '{}' || error.name === 'AuthRetryableFetchError') {
-          msg = 'Supabase server error (500). Please ensure Email Confirmation is disabled in Supabase or custom SMTP is configured, and run the fix_signup_trigger SQL migration.';
+        if (msg.toLowerCase().includes('user already registered')) {
+          msg = 'An account with this email already exists. Please Sign In.';
+        } else if (!msg || msg === '{}' || error.name === 'AuthRetryableFetchError') {
+          msg = 'Failed to send confirmation email. Please ensure your SMTP settings (Resend/SendGrid) are configured in Supabase Project Settings.';
         }
         setErrorMsg(msg);
         setLoading(false);
       } else if (data?.user && !data?.session) {
-        // Email confirmation is active on Supabase (SMTP required)
+        // Email confirmation is active on Supabase: Show verify email screen
         setSubmittedEmail(cleanEmail);
         setVerificationSent(true);
         setLoading(false);
