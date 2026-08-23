@@ -30,7 +30,7 @@ const STATS: StatConfig[] = [
   },
 ];
 
-function AnimatedNumber({ stat }: { stat: StatConfig }) {
+function AnimatedNumber({ stat, index }: { stat: StatConfig; index: number }) {
   const [value, setValue] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
@@ -69,11 +69,16 @@ function AnimatedNumber({ stat }: { stat: StatConfig }) {
   }, [stat.endValue]);
 
   return (
-    <div ref={ref} className="flex flex-col items-center md:items-start">
-      <p className="text-[12px] font-semibold leading-[16px] tracking-[0.08em] text-outline uppercase mb-1">
+    <div
+      ref={ref}
+      className={`flex flex-col items-center sm:items-start text-center sm:text-left ${
+        index > 0 ? 'border-l border-surface-variant/80 pl-2 sm:pl-0 sm:border-l-0' : ''
+      }`}
+    >
+      <p className="text-[10px] sm:text-[12px] font-semibold leading-[14px] sm:leading-[16px] tracking-[0.03em] sm:tracking-[0.08em] text-outline uppercase mb-0.5 sm:mb-1">
         {stat.label}
       </p>
-      <p className={`text-[32px] leading-[40px] tracking-[-0.02em] font-medium ${stat.color}`}>
+      <p className={`text-xl sm:text-2xl md:text-[32px] leading-tight sm:leading-[40px] tracking-[-0.02em] font-medium ${stat.color}`}>
         {stat.format(value)}
       </p>
     </div>
@@ -86,10 +91,13 @@ interface AnimatedStatsProps {
 
 export default function AnimatedStatsStrip({}: AnimatedStatsProps) {
   return (
-    <section className="w-full bg-surface border-y border-surface-variant py-8 sm:py-12 relative z-20">
-      <div suppressHydrationWarning={true} className="max-w-[1200px] mx-auto px-6 md:px-16 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 justify-items-center sm:justify-items-start reveal">
-        {STATS.map((s) => (
-          <AnimatedNumber key={s.label} stat={s} />
+    <section className="w-full bg-surface border-y border-surface-variant py-5 sm:py-12 relative z-20">
+      <div
+        suppressHydrationWarning={true}
+        className="max-w-[1200px] mx-auto px-3 sm:px-6 md:px-16 grid grid-cols-3 gap-1 sm:gap-8 items-center justify-between reveal"
+      >
+        {STATS.map((s, idx) => (
+          <AnimatedNumber key={s.label} stat={s} index={idx} />
         ))}
       </div>
     </section>
