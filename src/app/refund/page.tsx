@@ -101,8 +101,8 @@ export default function RefundPolicyPage() {
             </p>
             <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 text-xs font-mono">
               <p><strong className="text-white">Designation:</strong> Grievance &amp; Legal Compliance Officer, CronoBash Platform</p>
-              <p><strong className="text-white">Official Grievance &amp; Support Email:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
-              <p><strong className="text-white">Legal &amp; Billing Desk:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
+              <p><strong className="text-white">Official Grievance Email:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
+              <p><strong className="text-white">Legal &amp; Copyright Desk:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
             </div>
             <p className="text-xs text-zinc-400 font-mono">
               All formal communications must be sent via email. We commit to acknowledging digital grievance emails within 48 business hours and resolving legitimate issues within statutory timelines prescribed under Indian law.
