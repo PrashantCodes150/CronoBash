@@ -13,10 +13,29 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { userId, roomId } = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing authentication credentials." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim();
+    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token);
+
+    if (authErr || !callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid or expired session token." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const { userId, roomId } = await req.json();
 
     // Get room details
     const { data: room, error: roomError } = await supabase
@@ -27,6 +46,14 @@ Deno.serve(async (req: Request) => {
 
     if (roomError || !room) {
       throw new Error("Room not found");
+    }
+
+    // Verify caller is leaving for themselves or is the room host
+    if (callerUser.id !== userId && callerUser.id !== room.owner_id) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Cannot remove other members unless you are the room host." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
     }
 
     // Remove user from room members

@@ -13,6 +13,22 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const isAuthorized =
+      authHeader &&
+      ((cronSecret && authHeader.includes(cronSecret)) ||
+       (serviceRoleKey && authHeader.includes(serviceRoleKey)));
+
+    if (!isAuthorized) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Restricted administrative settlement service." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
     const { roomId, winnerId, totalPool, feeCollected, payoutDetails } = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

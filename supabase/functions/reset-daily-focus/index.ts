@@ -17,13 +17,18 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
     const cronSecret = Deno.env.get("CRON_SECRET");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    const isAuthorized =
+      authHeader &&
+      ((cronSecret && authHeader.includes(cronSecret)) ||
+       (supabaseServiceKey && authHeader.includes(supabaseServiceKey)));
+
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Restricted cron trigger endpoint." }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

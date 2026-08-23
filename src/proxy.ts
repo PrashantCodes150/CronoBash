@@ -4,7 +4,31 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // List of public routes accessible without login
+  // 1. Explicit Security Firewall: Block direct access to database files, env, internal docs & scripts
+  const lowerPath = pathname.toLowerCase();
+  if (
+    lowerPath.startsWith('/supabase') ||
+    lowerPath.includes('migration') ||
+    lowerPath.endsWith('.sql') ||
+    lowerPath.endsWith('.md') ||
+    lowerPath.endsWith('.py') ||
+    lowerPath.endsWith('.sh') ||
+    lowerPath.endsWith('.config.js') ||
+    lowerPath.endsWith('.config.mjs') ||
+    lowerPath.endsWith('.config.ts') ||
+    lowerPath.includes('.env') ||
+    lowerPath.startsWith('/.git') ||
+    lowerPath.startsWith('/.agents') ||
+    lowerPath.startsWith('/.vscode') ||
+    lowerPath.startsWith('/scripts') ||
+    lowerPath.startsWith('/tests') ||
+    lowerPath.includes('biggyplan') ||
+    lowerPath.includes('billion_future')
+  ) {
+    return new NextResponse('Access Forbidden: Security Policy Enforced.', { status: 403 });
+  }
+
+  // 2. List of public routes accessible without login
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/login' ||

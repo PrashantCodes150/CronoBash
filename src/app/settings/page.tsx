@@ -87,12 +87,17 @@ export default function SettingsPage() {
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword.trim()) {
+    const pwd = newPassword.trim();
+    if (!pwd) {
       toast.error('Please enter a new password.');
       return;
     }
-    if (newPassword.trim().length < 6) {
-      toast.error('Password must be at least 6 characters long.');
+    if (pwd.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
+      return;
+    }
+    if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+      toast.error('Password must include both letters and numbers for high security.');
       return;
     }
 

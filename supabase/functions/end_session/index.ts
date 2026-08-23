@@ -13,11 +13,54 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { roomId, winnerId, durationMinutes, participantsCount, focusSeconds, distractionCount } = await req.json();
-    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing authentication credentials." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim();
+    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token);
+
+    if (authErr || !callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid or expired session token." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const { roomId, winnerId, durationMinutes, participantsCount, focusSeconds, distractionCount } = await req.json();
+    if (!roomId) {
+      throw new Error("Missing roomId parameter");
+    }
+
+    // Verify caller is a member or host of the target room
+    const { data: membership, error: memErr } = await supabase
+      .from("room_members")
+      .select("id")
+      .eq("room_id", roomId)
+      .eq("user_id", callerUser.id)
+      .maybeSingle();
+
+    const { data: roomData } = await supabase
+      .from("rooms")
+      .select("owner_id")
+      .eq("id", roomId)
+      .maybeSingle();
+
+    const isHostOrMember = membership || roomData?.owner_id === callerUser.id;
+    if (!isHostOrMember) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Caller is not a participant in this room session." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
 
     // Call the PL/pgSQL secure transaction RPC
     const { data, error } = await supabase.rpc("process_room_settlement", {

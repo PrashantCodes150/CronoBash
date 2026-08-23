@@ -271,6 +271,17 @@ CREATE TABLE IF NOT EXISTS public.leaderboard_cache (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.matchmaking_queue (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  skill_level TEXT NOT NULL CHECK (skill_level IN ('beginner', 'intermediate', 'advanced')),
+  preferred_duration INTEGER NOT NULL DEFAULT 25,
+  status TEXT NOT NULL CHECK (status IN ('searching', 'paired')),
+  joined_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_matchmaking_queue_skill ON public.matchmaking_queue(skill_level, status);
+
 -- ------------------------------------------------------------------------------
 -- 7. ROW LEVEL SECURITY (RLS) POLICIES
 -- ------------------------------------------------------------------------------
@@ -294,6 +305,13 @@ ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.analytics_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leaderboard_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.matchmaking_queue ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view and manage their own matchmaking queue" ON public.matchmaking_queue;
+CREATE POLICY "Users can view and manage their own matchmaking queue"
+  ON public.matchmaking_queue FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- Helper macro for dropping and re-creating RLS policies
 DROP POLICY IF EXISTS "Public read users" ON public.users;
@@ -305,10 +323,12 @@ CREATE POLICY "Self insert users" ON public.users FOR INSERT WITH CHECK (auth.ui
 
 DROP POLICY IF EXISTS "Self read wallet" ON public.wallets;
 DROP POLICY IF EXISTS "Self update wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Users can update own wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Users can update their own wallet" ON public.wallets;
 CREATE POLICY "Self read wallet" ON public.wallets FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Self update wallet" ON public.wallets FOR UPDATE USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Self read transactions" ON public.transactions;
+DROP POLICY IF EXISTS "Self insert transactions" ON public.transactions;
 CREATE POLICY "Self read transactions" ON public.transactions FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Public read rooms" ON public.rooms;

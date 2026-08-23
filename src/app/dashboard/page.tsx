@@ -103,8 +103,8 @@ export default function Dashboard() {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('id, name, email, avatar_url')
-          .or(`name.ilike.%${challengeOpponent.trim()}%,email.ilike.%${challengeOpponent.trim()}%`)
+          .select('id, name, username, gamer_tag, avatar_url')
+          .or(`name.ilike.%${challengeOpponent.trim()}%,username.ilike.%${challengeOpponent.trim()}%,gamer_tag.ilike.%${challengeOpponent.trim()}%`)
           .neq('id', user?.id || '')
           .limit(5);
 
@@ -1316,7 +1316,7 @@ export default function Dashboard() {
                         key={u.id}
                         onClick={() => {
                           setSelectedOpponentUser(u);
-                          setChallengeOpponent(u.name || u.email);
+                          setChallengeOpponent(u.username ? `@${u.username}` : (u.name || 'Arena Fighter'));
                           setUserSearchResults([]);
                         }}
                         className="p-2.5 hover:bg-gray-50 cursor-pointer flex items-center justify-between border-b border-gray-100 last:border-0"
@@ -1327,7 +1327,7 @@ export default function Dashboard() {
                             alt=""
                             className="w-6 h-6 rounded-full object-cover"
                           />
-                          <span className="text-xs font-bold text-gray-800">{u.name || u.email}</span>
+                          <span className="text-xs font-bold text-gray-800">{u.name || (u.username ? `@${u.username}` : 'Arena Fighter')}</span>
                         </div>
                         <span className="text-[10px] font-black text-[#3B82F6]">Select</span>
                       </div>

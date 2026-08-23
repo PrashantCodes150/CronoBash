@@ -63,7 +63,7 @@ export default function BuddiesPage() {
       if (otherUserIds.length > 0) {
         const { data: profiles, error: profError } = await supabase
           .from('users')
-          .select('id, name, full_name, username, gamer_tag, avatar_url, email, level, points, last_seen_at')
+          .select('id, name, full_name, username, gamer_tag, avatar_url, level, points, last_seen_at')
           .in('id', otherUserIds);
         if (!profError && profiles) {
           profiles.forEach(p => {
@@ -112,8 +112,8 @@ export default function BuddiesPage() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, full_name, username, gamer_tag, avatar_url, email, level, points, last_seen_at')
-        .or(`username.ilike.%${cleanQ}%,gamer_tag.ilike.%${cleanQ}%,name.ilike.%${cleanQ}%,email.ilike.%${cleanQ}%`)
+        .select('id, name, full_name, username, gamer_tag, avatar_url, level, points, last_seen_at')
+        .or(`username.ilike.%${cleanQ}%,gamer_tag.ilike.%${cleanQ}%,name.ilike.%${cleanQ}%`)
         .neq('id', user.id)
         .limit(10);
 
@@ -195,7 +195,7 @@ export default function BuddiesPage() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, full_name, username, gamer_tag, avatar_url, email, level, points, last_seen_at')
+        .select('id, name, full_name, username, gamer_tag, avatar_url, level, points, last_seen_at')
         .neq('id', user.id)
         .order('last_seen_at', { ascending: false, nullsFirst: false })
         .limit(12);

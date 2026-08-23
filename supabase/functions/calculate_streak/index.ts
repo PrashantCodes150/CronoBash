@@ -18,16 +18,32 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
     )
 
+    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization')
+    let callerUserId: string | null = null
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '').trim()
+      const { data: { user } } = await supabase.auth.getUser(token)
+      callerUserId = user?.id ?? null
+    }
+
     const { userId } = await req.json()
-    if (!userId) {
-      throw new Error("Missing userId")
+    const targetUserId = callerUserId || userId
+    if (!targetUserId) {
+      throw new Error("Missing userId parameter")
+    }
+
+    if (callerUserId && userId && callerUserId !== userId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: You cannot calculate streaks on behalf of another user." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
     }
 
     // 1. Fetch study sessions of the user from past 30 days
     const { data: sessions, error } = await supabase
       .from('sessions')
       .select('created_at')
-      .eq('winner_id', userId) // Check active participations
+      .eq('winner_id', targetUserId) // Check active participations
       .order('created_at', { ascending: false })
 
     let streakDays = 0
@@ -60,36 +76,40 @@ serve(async (req: Request) => {
     }
 
     // 2. Update streaks table
+    const todayStr = new Date().toISOString().split('T')[0]
     const { data: existingStreak } = await supabase
       .from('streaks')
       .select('*')
-      .eq('user_id', userId)
-      .single()
+      .eq('user_id', targetUserId)
+      .maybeSingle()
 
+    const alreadyAwardedToday = existingStreak?.last_study_date === todayStr
     const maxStreak = Math.max(existingStreak?.max_streak_days || 0, streakDays)
 
     const { error: upsertErr } = await supabase
       .from('streaks')
       .upsert({
-        user_id: userId,
+        user_id: targetUserId,
         current_streak_days: streakDays,
         max_streak_days: maxStreak,
-        last_study_date: new Date().toISOString().split('T')[0],
+        last_study_date: todayStr,
         updated_at: new Date().toISOString()
       })
 
     if (upsertErr) throw upsertErr
 
-    // 3. Award streak bonuses (3-day: 10 coins, 7-day: 50 coins)
+    // 3. Award streak bonuses (3-day: 10 coins, 7-day: 50 coins) - only if not already awarded today
     let bonus = 0
-    if (streakDays === 3) bonus = 10
-    else if (streakDays === 7) bonus = 50
+    if (!alreadyAwardedToday) {
+      if (streakDays === 3) bonus = 10
+      else if (streakDays === 7) bonus = 50
 
-    if (bonus > 0) {
-      await supabase.rpc('deposit_tokens_secure', {
-        p_user_id: userId,
-        p_amount: bonus
-      })
+      if (bonus > 0) {
+        await supabase.rpc('deposit_tokens_secure', {
+          p_user_id: targetUserId,
+          p_amount: bonus
+        })
+      }
     }
 
     return new Response(

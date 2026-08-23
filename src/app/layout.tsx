@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/auth-context";
 import LayoutWrapper from "@/components/layout-wrapper";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/react";
+import { SecurityGuard } from "@/components/SecurityGuard";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -138,13 +139,14 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#ECEFF6] text-[#0F172A] font-sans antialiased">
         <AuthProvider>
+          <SecurityGuard />
           <SmoothScroll>
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
           </SmoothScroll>
         </AuthProvider>
-        <Analytics />
+        <Analytics debug={false} />
       </body>
     </html>
   );

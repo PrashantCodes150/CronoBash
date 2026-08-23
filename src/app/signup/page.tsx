@@ -48,12 +48,34 @@ export default function SignupPage() {
     return 'https://cronobash.com';
   };
 
+  const DISPOSABLE_EMAIL_DOMAINS = [
+    'tempmail.com', 'temp-mail.org', '10minutemail.com', 'mailinator.com',
+    'guerrillamail.com', 'throwawaymail.com', 'yopmail.com', 'sharklasers.com',
+    'getnada.com', 'dispostable.com', 'trashmail.com', 'fakemailgenerator.com',
+    'mohmal.com', 'crazymailing.com', 'generator.email', 'emailondeck.com',
+    'burnermail.io', 'dropmail.me', 'mytemp.email', 'inboxkitten.com',
+    'tempail.com', 'trashmail.net', 'mytempemail.com', 'mailcatch.com',
+  ];
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
     if (!fullName.trim()) {
       setErrorMsg('Please enter your full name.');
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid, authentic email address (e.g. name@gmail.com).');
+      return;
+    }
+
+    const emailDomain = cleanEmail.split('@')[1];
+    if (DISPOSABLE_EMAIL_DOMAINS.includes(emailDomain)) {
+      setErrorMsg('Temporary/disposable email addresses are not permitted. Please use a permanent email address (Gmail, Outlook, Yahoo, iCloud, or School/Work domain).');
       return;
     }
 
@@ -66,31 +88,33 @@ export default function SignupPage() {
     try {
       const origin = getCanonicalOrigin();
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           emailRedirectTo: `${origin}/dashboard`,
           data: {
-            name: fullName,
-            full_name: fullName,
+            name: fullName.trim(),
+            full_name: fullName.trim(),
           }
         }
       });
 
       if (error) {
-        const msg = error.message && error.message !== '{}' ? error.message : 'Sign up failed. Please try again.';
+        console.error("Supabase signUp error:", error);
+        const msg = error.message || error.toString() || 'Sign up failed. Please try again.';
         setErrorMsg(msg);
         setLoading(false);
       } else if (data?.user && !data?.session) {
         // Email confirmation is active on Supabase (SMTP required)
-        setSubmittedEmail(email);
+        setSubmittedEmail(cleanEmail);
         setVerificationSent(true);
         setLoading(false);
       } else {
         router.replace('/onboarding');
       }
     } catch (e: any) {
-      const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during sign up.';
+      console.error("Signup exception:", e);
+      const msg = e?.message || String(e) || 'An unexpected error occurred during sign up.';
       setErrorMsg(msg);
       setLoading(false);
     }
@@ -119,11 +143,22 @@ export default function SignupPage() {
   return (
     <div className="bg-[#FAFAFC] text-slate-900 min-h-screen flex flex-col justify-between font-sans selection:bg-slate-900 selection:text-white relative overflow-hidden">
       
-      {/* Interactive Subtle Background Video Animation reacting to mouse position */}
-      <InteractiveAuthBackground totalFrames={220} />
+      {/* Fixed Viewport-Locked Background Frame Image */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url('/squad-frames/frame_001.webp')`,
+            filter: 'blur(8px)',
+            opacity: 0.35,
+            transform: 'scale(1.05)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFC]/60 via-transparent to-[#FAFAFC]/70" />
+      </div>
       
-      {/* Top Header */}
-      <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
+      {/* Top Header - High Z-Index & Crystal Sharp */}
+      <header className="relative z-20 w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
         <Link href="/" className="select-none">
           <span
             className="text-[28px] text-black leading-none select-none"
@@ -354,7 +389,7 @@ export default function SignupPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-6 text-center border-t border-slate-200/50 mt-auto">
+      <footer className="relative z-20 py-6 px-6 text-center border-t border-slate-200/50 mt-auto">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 font-medium">
           <span>© CronoBash Inc. All rights reserved.</span>
           <div className="flex items-center gap-4 text-slate-400">

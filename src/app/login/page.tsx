@@ -64,7 +64,7 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -119,11 +119,22 @@ export default function LoginPage() {
   return (
     <div className="bg-[#FAFAFC] text-slate-900 min-h-screen flex flex-col justify-between font-sans selection:bg-slate-900 selection:text-white relative overflow-hidden">
       
-      {/* Interactive Subtle Background Video Animation reacting to mouse position */}
-      <InteractiveAuthBackground totalFrames={220} />
+      {/* Fixed Viewport-Locked Background Frame Image */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url('/squad-frames/frame_001.webp')`,
+            filter: 'blur(8px)',
+            opacity: 0.35,
+            transform: 'scale(1.05)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFC]/60 via-transparent to-[#FAFAFC]/70" />
+      </div>
       
-      {/* Top Header */}
-      <header className="w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
+      {/* Top Header - High Z-Index & Crystal Sharp */}
+      <header className="relative z-20 w-full flex justify-between items-center px-6 md:px-12 py-6 max-w-[1280px] mx-auto">
         <Link href="/" className="select-none">
           <span
             className="text-[28px] text-black leading-none select-none"
@@ -278,7 +289,7 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-6 text-center border-t border-slate-200/50 mt-auto">
+      <footer className="relative z-20 py-6 px-6 text-center border-t border-slate-200/50 mt-auto">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 font-medium">
           <span>© CronoBash Inc. All rights reserved.</span>
           <div className="flex items-center gap-4 text-slate-400">

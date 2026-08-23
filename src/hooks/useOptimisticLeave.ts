@@ -16,13 +16,18 @@ export function useOptimisticLeave({ roomId, userId, onOptimisticLeave }: UseOpt
     onOptimisticLeave();
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       // 2. Call Edge Function (or database RPC) in background
       await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/leave_room`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.getSession()}`
-        },
+        headers,
         body: JSON.stringify({ userId, roomId })
       });
     } catch (e) {

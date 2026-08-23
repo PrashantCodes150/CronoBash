@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -27,8 +31,16 @@ const nextConfig: NextConfig = {
             value: '1; mode=block',
           },
           {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none',
+          },
+          {
             key: 'Permissions-Policy',
-            value: 'camera=(self), microphone=(self), payment=(self)',
+            value: 'camera=(self), microphone=(self), payment=(self), geolocation=(), interest-cohort=()',
           },
         ],
       },

@@ -18,6 +18,24 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
     )
 
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing authentication credentials." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim();
+    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token);
+
+    if (authErr || !callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid or expired session token." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
     const { userId, title, body } = await req.json()
     if (!userId || !title || !body) {
       throw new Error("Missing parameters")

@@ -119,3 +119,56 @@ export function verifyRazorpayWebhookSignature({
 
   return expectedSignature === signature;
 }
+
+/**
+ * Server-Side Razorpay Payment Details Fetcher
+ * Queries Razorpay API directly to retrieve the authenticated payment object.
+ * Prevents client-side amount tampering.
+ */
+export async function fetchRazorpayPayment(paymentId: string): Promise<{
+  success: boolean;
+  payment?: {
+    id: string;
+    order_id: string;
+    status: string;
+    amount: number; // In paise (e.g. 1000 = ₹10.00)
+    currency: string;
+    email?: string;
+    contact?: string;
+  };
+  error?: string;
+}> {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return {
+      success: false,
+      error: 'Razorpay API credentials are not configured.',
+    };
+  }
+
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+    const response = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errData.error?.description || `Failed to fetch payment details with status ${response.status}`,
+      };
+    }
+
+    const payment = await response.json();
+    return { success: true, payment };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Network error fetching Razorpay payment details' };
+  }
+}
+

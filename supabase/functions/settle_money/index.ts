@@ -13,6 +13,22 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Require either valid CRON_SECRET or service role authorization
+    const isAuthorized = 
+      (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+      (serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`);
+
+    if (!isAuthorized) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Settlement execution requires administrative authorization." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { roomId, winnerId, totalPrize, platformFee } = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

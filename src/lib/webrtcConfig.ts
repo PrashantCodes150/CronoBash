@@ -1,40 +1,49 @@
 /**
  * WebRTC Configuration Utility
  * Assembles STUN + TURN servers dynamically for production connectivity.
- * Supports Jio/Airtel CGNAT & college/hostel Wi-Fi NAT environments.
+ * Fetches TURN credentials on demand from the server-side API to prevent
+ * leaking secret credentials in public client bundles.
  */
 
+const DEFAULT_STUN_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+];
+
+let cachedIceServers: RTCIceServer[] = DEFAULT_STUN_SERVERS;
+
+/**
+ * Synchronous getter for RTCConfiguration.
+ * Uses cached servers (defaults to reliable STUN servers until refreshed).
+ */
 export function getWebRTCConfig(): RTCConfiguration {
-  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
-  const turnUsername = process.env.NEXT_PUBLIC_TURN_USERNAME;
-  const turnCredential = process.env.NEXT_PUBLIC_TURN_CREDENTIAL;
-
-  const iceServers: RTCIceServer[] = [
-    // Standard STUN servers (Primary resolution)
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:global.stun.twilio.com:3478' },
-  ];
-
-  // If production TURN server credentials are provided in env, add TURN relays
-  if (turnUrl && turnUsername && turnCredential) {
-    iceServers.push(
-      {
-        urls: turnUrl.startsWith('turn:') ? turnUrl : `turn:${turnUrl}`,
-        username: turnUsername,
-        credential: turnCredential,
-      },
-      {
-        urls: turnUrl.startsWith('turns:') ? turnUrl : `turns:${turnUrl}`,
-        username: turnUsername,
-        credential: turnCredential,
-      }
-    );
-  }
-
   return {
-    iceServers,
+    iceServers: cachedIceServers,
     iceCandidatePoolSize: 10,
   };
 }
+
+/**
+ * Asynchronously fetches secure ICE/TURN servers from the backend route.
+ */
+export async function fetchWebRTCConfig(): Promise<RTCConfiguration> {
+  try {
+    const res = await fetch('/api/webrtc/ice-servers');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+        cachedIceServers = data.iceServers;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch remote ICE servers, falling back to default STUN:', err);
+  }
+
+  return {
+    iceServers: cachedIceServers,
+    iceCandidatePoolSize: 10,
+  };
+}
+

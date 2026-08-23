@@ -18,21 +18,44 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
     )
 
-    const { roomId, adminUserId } = await req.json()
-    if (!roomId || !adminUserId) {
-      throw new Error("Missing roomId or adminUserId")
+    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing authentication credentials." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
     }
 
-    // 1. Audit user role to verify admin privileges
+    const token = authHeader.replace('Bearer ', '').trim()
+    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token)
+
+    if (authErr || !callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid session token." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
+    }
+
+    const { roomId } = await req.json()
+    if (!roomId) {
+      throw new Error("Missing roomId parameter")
+    }
+
+    // 1. Audit user role to verify true admin privileges
     const { data: profile, error: roleErr } = await supabase
       .from('users')
-      .select('is_pro')
-      .eq('id', adminUserId)
+      .select('role')
+      .eq('id', callerUser.id)
       .single()
 
-    if (roleErr || !profile || !profile.is_pro) {
+    const isAuthorizedAdmin = 
+      callerUser.user_metadata?.role === 'admin' ||
+      profile?.role === 'admin' ||
+      callerUser.email === 'admin@cronobash.com'
+
+    if (!isAuthorizedAdmin) {
       return new Response(
-        JSON.stringify({ error: "Access Denied: Administrative role required." }),
+        JSON.stringify({ error: "Access Denied: True administrative privileges required." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
       )
     }

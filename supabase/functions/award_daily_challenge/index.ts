@@ -16,11 +16,26 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? "",
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
-    )
+    );
+    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization')
+    let callerUserId: string | null = null
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '').trim()
+      const { data: { user } } = await supabase.auth.getUser(token)
+      callerUserId = user?.id ?? null
+    }
 
     const { userId, challengeId } = await req.json()
-    if (!userId || !challengeId) {
+    const targetUserId = callerUserId || userId
+    if (!targetUserId || !challengeId) {
       throw new Error("Missing userId or challengeId")
+    }
+
+    if (callerUserId && userId && callerUserId !== userId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: You cannot claim challenge rewards for another user." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
     }
 
     // 1. Fetch challenge info

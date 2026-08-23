@@ -73,10 +73,19 @@ export default function DailyChallengesPage() {
   const claimChallenge = async (challengeId: string) => {
     if (!user) return;
     try {
+      // Fetch user session token for authenticated Edge Function invocation
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       // In production, invoke the award_daily_challenge Edge Function
       const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/award_daily_challenge`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ userId: user.id, challengeId })
       });
       

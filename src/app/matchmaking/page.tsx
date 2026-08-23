@@ -35,9 +35,15 @@ export default function MatchmakingPage() {
 
       // Call create_match edge function to trigger pairing
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
         await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create_match`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers
         });
       } catch (e) {
         console.debug("Edge function create_match call:", e);
@@ -60,9 +66,15 @@ export default function MatchmakingPage() {
 
       // Trigger create_match check periodically
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
         await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create_match`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers
         });
       } catch (e) {}
 

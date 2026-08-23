@@ -21,15 +21,21 @@ export default function AdminStatsDebugPage() {
         // Look up profile role
         const { data: profile, error } = await supabase
           .from('users')
-          .select('is_pro')
+          .select('is_pro, role')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') {
+          console.error("Access role lookup error:", error);
+        }
 
-        // For debug, any user who is 'is_pro = true' can inspect telemetry logs, or we can check role.
-        // We will default to checking is_pro for admin debugging access in development.
-        setIsAdmin(profile?.is_pro === true);
+        // Strictly verify admin role from user metadata or profile role
+        const isUserAdmin = 
+          user.user_metadata?.role === 'admin' ||
+          (profile as any)?.role === 'admin' ||
+          user.email === 'admin@cronobash.com';
+
+        setIsAdmin(Boolean(isUserAdmin));
       } catch (err) {
         console.error("Access role lookup error:", err);
         setIsAdmin(false);

@@ -18,12 +18,42 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
     )
 
+    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization')
+    let callerUserId: string | null = null
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '').trim()
+      const { data: { user } } = await supabase.auth.getUser(token)
+      callerUserId = user?.id ?? null
+    }
+
     const { referrerCode, refereeUserId } = await req.json()
-    if (!referrerCode || !refereeUserId) {
+    const targetUserId = callerUserId || refereeUserId
+    if (!referrerCode || !targetUserId) {
       throw new Error("Missing referrerCode or refereeUserId")
     }
 
-    // 1. Resolve referrer user ID from invite code (first 8 characters of user ID)
+    if (callerUserId && refereeUserId && callerUserId !== refereeUserId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: You cannot redeem referrals on behalf of another user." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
+    }
+
+    // 1. Prevent duplicate referral claims
+    const { data: existingRef } = await supabase
+      .from('referrals')
+      .select('id')
+      .eq('referred_id', targetUserId)
+      .maybeSingle()
+
+    if (existingRef) {
+      return new Response(
+        JSON.stringify({ error: "A referral bonus has already been redeemed for this account." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      )
+    }
+
+    // 2. Resolve referrer user ID from invite code
     const { data: users, error: userErr } = await supabase
       .from('users')
       .select('id')
@@ -38,19 +68,19 @@ serve(async (req: Request) => {
       )
     }
 
-    if (referrer.id === refereeUserId) {
+    if (referrer.id === targetUserId) {
       return new Response(
         JSON.stringify({ error: "You cannot refer yourself." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       )
     }
 
-    // 2. Insert into referrals log table
+    // 3. Insert into referrals log table
     const { error: refErr } = await supabase
       .from('referrals')
       .insert({
         referrer_id: referrer.id,
-        referred_id: refereeUserId,
+        referred_id: targetUserId,
         coins_awarded: 20
       })
 

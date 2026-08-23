@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { getWebRTCConfig } from '@/lib/webrtcConfig';
+import { getWebRTCConfig, fetchWebRTCConfig } from '@/lib/webrtcConfig';
 
 export function useCameraStream(
   roomId: string,
@@ -19,7 +19,8 @@ export function useCameraStream(
     if (!roomId || !userId) return;
     let channel: any;
 
-    const config: RTCConfiguration = getWebRTCConfig();
+    // Trigger async fetch of ICE servers in background
+    fetchWebRTCConfig().catch(() => {});
 
     const createPeerConnection = (peerId: string) => {
       // Close existing connection if present to prevent duplicate state
@@ -32,7 +33,7 @@ export function useCameraStream(
         pcsRef.current.delete(peerId);
       }
 
-      const pc = new RTCPeerConnection(config);
+      const pc = new RTCPeerConnection(getWebRTCConfig());
 
       // Add local stream tracks if available
       if (localStream) {
