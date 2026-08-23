@@ -20,6 +20,17 @@ function GitHubIcon({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
+// Globe Icon SVG (Portfolio)
+function GlobeIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="2" y1="12" x2="22" y2="12"></line>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </svg>
+  );
+}
+
 export default function FounderNoteSection() {
   return (
     <section className="py-24 sm:py-32 w-full max-w-[1200px] mx-auto px-6 md:px-16 border-t border-surface-variant relative z-20">
@@ -42,7 +53,7 @@ export default function FounderNoteSection() {
             </p>
           </div>
 
-          {/* Social Links (LinkedIn & GitHub) */}
+          {/* Social & Portfolio Links (LinkedIn, GitHub & Portfolio Website) */}
           <div className="flex items-center gap-3 pt-1">
             <a
               href="https://www.linkedin.com/in/prashant-singh-84a2a7332"
@@ -62,6 +73,16 @@ export default function FounderNoteSection() {
               title="Prashant Singh GitHub Profile"
             >
               <GitHubIcon className="w-5 h-5" />
+            </a>
+
+            <a
+              href="https://github.com/PrashantCodes150"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-[#2563EB] hover:bg-[#2563EB] hover:text-white hover:border-[#2563EB] transition-all hover:scale-110"
+              title="Prashant Singh Portfolio Website"
+            >
+              <GlobeIcon className="w-5 h-5" />
             </a>
           </div>
         </div>
