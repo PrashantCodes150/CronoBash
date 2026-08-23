@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { label: 'Terms of Service', href: '/terms' },
   { label: 'Refund Policy', href: '/refund' },
   { label: 'About Us', href: '/#mission' },
-  { label: 'Support', href: 'mailto:support@cronobash.com' },
+  { label: 'Support', href: 'mailto:cronobash@gmail.com' },
 ];
 
 export function Footer() {

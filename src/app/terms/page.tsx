@@ -159,7 +159,7 @@ export default function TermsPage() {
               7. Copyright Complaints &amp; Takedown Policy
             </h2>
             <p>
-              7.1 We respect intellectual property rights. If you believe any content on CronoBash infringes your copyright, please send a written takedown notice to legal@cronobash.com containing proof of ownership, exact material location, and your contact details.
+              7.1 We respect intellectual property rights. If you believe any content on CronoBash infringes your copyright, please send a written takedown notice to cronobash@gmail.com containing proof of ownership, exact material location, and your contact details.
             </p>
             <p>
               7.2 In accordance with Rule 3(1)(d) of the IT Intermediary Rules 2021, upon receiving a verified written notice, access to the reported infringing material will be disabled within 36 hours.
@@ -254,8 +254,8 @@ export default function TermsPage() {
             </p>
             <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 text-xs font-mono">
               <p><strong className="text-white">Designation:</strong> Grievance &amp; Legal Compliance Officer, CronoBash Platform</p>
-              <p><strong className="text-white">Official Grievance Email:</strong> <a href="mailto:grievance@cronobash.com" className="text-emerald-400 underline font-bold">grievance@cronobash.com</a></p>
-              <p><strong className="text-white">Legal &amp; Copyright Desk:</strong> <a href="mailto:legal@cronobash.com" className="text-emerald-400 underline font-bold">legal@cronobash.com</a></p>
+              <p><strong className="text-white">Official Grievance &amp; Support Email:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
+              <p><strong className="text-white">Legal Desk:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
             </div>
             <p className="text-xs text-zinc-400 font-mono">
               We acknowledge formal grievance emails within 48 business hours and resolve verified issues within statutory timelines under Indian law.

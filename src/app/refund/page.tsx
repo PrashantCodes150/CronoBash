@@ -85,7 +85,7 @@ export default function RefundPolicyPage() {
               If your bank account, UPI ID, or credit card is debited multiple times for a single transaction due to a network timeout between your bank and the payment gateway:
             </p>
             <ul className="list-disc pl-5 space-y-2 text-zinc-300">
-              <li>Submit a written discrepancy notice to <a href="mailto:support@cronobash.com" className="text-emerald-400 underline font-semibold">support@cronobash.com</a> within 7 days of the transaction date.</li>
+              <li>Submit a written discrepancy notice to <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-semibold">cronobash@gmail.com</a> within 7 days of the transaction date.</li>
               <li>Include your registered account email, official payment gateway reference/UTR ID, and bank debit proof.</li>
               <li>Verified duplicate transactions (where double payment was debited for a single digital delivery) will be reconciled or reversed to the original payment source within 5 to 7 business days, in compliance with Reserve Bank of India (RBI) payment settlement frameworks.</li>
             </ul>
@@ -101,8 +101,8 @@ export default function RefundPolicyPage() {
             </p>
             <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 text-xs font-mono">
               <p><strong className="text-white">Designation:</strong> Grievance &amp; Legal Compliance Officer, CronoBash Platform</p>
-              <p><strong className="text-white">Official Grievance Email:</strong> <a href="mailto:grievance@cronobash.com" className="text-emerald-400 underline font-bold">grievance@cronobash.com</a></p>
-              <p><strong className="text-white">Legal &amp; Billing Desk:</strong> <a href="mailto:legal@cronobash.com" className="text-emerald-400 underline font-bold">legal@cronobash.com</a> / <a href="mailto:support@cronobash.com" className="text-emerald-400 underline font-bold">support@cronobash.com</a></p>
+              <p><strong className="text-white">Official Grievance &amp; Support Email:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
+              <p><strong className="text-white">Legal &amp; Billing Desk:</strong> <a href="mailto:cronobash@gmail.com" className="text-emerald-400 underline font-bold">cronobash@gmail.com</a></p>
             </div>
             <p className="text-xs text-zinc-400 font-mono">
               All formal communications must be sent via email. We commit to acknowledging digital grievance emails within 48 business hours and resolving legitimate issues within statutory timelines prescribed under Indian law.
