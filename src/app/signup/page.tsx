@@ -100,12 +100,18 @@ export default function SignupPage() {
       });
 
       if (error) {
-        console.error("Supabase signUp error:", error);
+        console.error("Supabase signUp full error:", {
+          name: error.name,
+          message: error.message,
+          status: error.status,
+          code: (error as any).code,
+          error
+        });
         let msg = error.message || '';
         if (msg.toLowerCase().includes('user already registered')) {
           msg = 'An account with this email already exists. Please Sign In.';
         } else if (!msg || msg === '{}' || error.name === 'AuthRetryableFetchError') {
-          msg = 'Failed to send confirmation email. Please ensure your SMTP settings (Resend/SendGrid) are configured in Supabase Project Settings.';
+          msg = `Supabase 500 error: ${error.message || 'SMTP delivery failed or database trigger error. Check browser console (F12) for details.'}`;
         }
         setErrorMsg(msg);
         setLoading(false);
