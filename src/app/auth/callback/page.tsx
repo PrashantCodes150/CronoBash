@@ -26,6 +26,7 @@ function CallbackHandler() {
           return;
         }
 
+        const code = searchParams.get('code');
         if (code) {
           const { data, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeErr) {
