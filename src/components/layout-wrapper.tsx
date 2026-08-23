@@ -23,7 +23,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const hideLayout = hideLayoutRoutes.includes(pathname) || pathname.startsWith('/study');
 
   // Strict Zero-Leak Security Guard:
-  // 1. For any protected route, BEFORE client mounts or WHILE session is loading or IF user is unauthenticated:
+  // For any protected route, BEFORE client mounts or WHILE session is loading or IF user is unauthenticated:
   // NEVER render protected page HTML/DOM (prevents SSR pre-rendering leaks and hydration flashes).
   if (!isPublicRoute) {
     if (!mounted || loading || !user) {
@@ -33,16 +33,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </div>
       );
     }
-  }
-
-  // 2. Strict Onboarding Shield:
-  // If user is authenticated but HAS NOT COMPLETED ONBOARDING, NEVER render any non-onboarding page HTML/DOM.
-  if (user && profile && profile.has_seen_onboarding === false && pathname !== '/onboarding') {
-    return (
-      <div className="min-h-screen bg-[#fafaf9] flex flex-col items-center justify-center p-4">
-        <LogoLoader size="md" text="PREPARING YOUR ONBOARDING ARENA..." />
-      </div>
-    );
   }
 
   if (hideLayout) {

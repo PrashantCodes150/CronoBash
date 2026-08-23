@@ -349,17 +349,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (e) { }
       }
 
-      // Check if user has completed onboarding
-      const isNewUser = profile ? profile.has_seen_onboarding === false : false;
+      let hasSeenOnboarding = false;
+      if (typeof window !== 'undefined') {
+        hasSeenOnboarding = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true';
+      }
+      if (profile?.has_seen_onboarding === true) {
+        hasSeenOnboarding = true;
+      }
 
-      if (isNewUser) {
-        // New users must complete onboarding before accessing the rest of the app
+      // If user hasn't finished onboarding, route to /onboarding from public/auth pages or dashboard
+      if (!hasSeenOnboarding) {
         if (pathname !== '/onboarding' && !pathname.startsWith('/auth')) {
           router.replace('/onboarding');
         }
       } else {
-        // Existing users shouldn't stay on auth/landing pages or onboarding
-        if (pathname === '/login' || pathname === '/signup' || pathname === '/' || pathname === '/onboarding' || pathname.startsWith('/auth')) {
+        // If user already completed onboarding, route them off login/signup/landing to dashboard
+        if (pathname === '/login' || pathname === '/signup' || pathname === '/') {
           router.replace('/dashboard');
         }
       }

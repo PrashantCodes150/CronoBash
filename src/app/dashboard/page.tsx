@@ -30,19 +30,10 @@ export default function Dashboard() {
       const isUserSeen = localStorage.getItem(`cronobash_has_seen_onboarding_${user.id}`) === 'true';
       if (isUserSeen) return;
     }
-    if (profile && !profile.has_seen_onboarding) {
+    if (profile && profile.has_seen_onboarding === false) {
       router.replace('/onboarding');
     }
   }, [user, profile?.has_seen_onboarding, router]);
-
-  // Zero-Leak Guard for Dashboard: Never render Dashboard JSX for users who haven't finished onboarding
-  if (user && profile && profile.has_seen_onboarding === false) {
-    return (
-      <div className="min-h-screen bg-[#fafaf9] flex flex-col items-center justify-center p-4">
-        <LogoLoader size="md" text="PREPARING YOUR ONBOARDING ARENA..." />
-      </div>
-    );
-  }
 
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<'all' | 'focus' | 'productivity' | 'squads' | 'analytics'>('all');
