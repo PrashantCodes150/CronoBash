@@ -167,17 +167,17 @@ export default function Hero() {
           </p>
 
           {/* Liquid Glass Prompt / Search Card */}
-          <div className="liquid-glass rounded-2xl p-2 pl-6 flex items-center w-full max-w-2xl mx-auto shadow-xl">
-            <Search className="w-5 h-5 text-outline shrink-0 mr-3" />
+          <div className="liquid-glass rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-6 flex items-center w-full max-w-2xl mx-auto shadow-xl">
+            <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-outline shrink-0 mr-2 sm:mr-3" />
             <input
               type="text"
               placeholder="What are we focusing on today?..."
               suppressHydrationWarning={true}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface text-[16px] leading-[24px] placeholder:text-outline-variant outline-none font-sans"
+              className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 text-on-surface text-sm sm:text-[16px] leading-[24px] placeholder:text-outline-variant outline-none font-sans"
             />
             <Link
               href={user ? "/dashboard" : "/login"}
-              className="bg-[#0a0a0a] text-white rounded-xl px-6 py-3 ml-4 text-[12px] font-semibold uppercase tracking-[0.05em] hover:opacity-55 active:scale-95 transition-all duration-200 whitespace-nowrap"
+              className="bg-[#0a0a0a] text-white rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 ml-2 sm:ml-4 text-[11px] sm:text-[12px] font-semibold uppercase tracking-[0.05em] hover:opacity-55 active:scale-95 transition-all duration-200 shrink-0 whitespace-nowrap"
             >
               {user ? "Open Dashboard" : "Start Session"}
             </Link>

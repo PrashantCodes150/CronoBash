@@ -50,18 +50,18 @@ export default function Climb100TiersMasteryHero() {
         
         <div className="max-w-2xl space-y-2">
           <h2
-            className="text-[clamp(32px,4.5vw,50px)] font-black text-[#0a0a0a] tracking-tight leading-[1.04] font-sans drop-shadow-xs"
+            className="text-[clamp(28px,4.5vw,50px)] font-black text-[#0a0a0a] tracking-tight leading-[1.04] font-sans drop-shadow-xs"
             style={{ fontWeight: 900 }}
           >
             Progressive Mastery Tiers
           </h2>
-          <p className="text-base sm:text-lg text-on-surface-variant font-normal leading-relaxed font-sans">
+          <p className="text-sm sm:text-base md:text-lg text-on-surface-variant font-normal leading-relaxed font-sans">
             Climb the ranks through consistent, uninterrupted deep work. Each tier unlocks new arena aesthetics and higher base token yields.
           </p>
         </div>
 
         {/* Boxer Lottie Animation on the Same Plane */}
-        <div className="w-36 h-36 sm:w-48 sm:h-48 md:w-56 md:h-56 flex items-center justify-center shrink-0 self-start md:self-center -my-4">
+        <div className="w-28 h-28 sm:w-44 sm:h-44 md:w-56 md:h-56 flex items-center justify-center shrink-0 self-center md:self-center -my-2 sm:-my-4">
           <LottiePlayer
             src="/lottie/boxer.json"
             className="w-full h-full object-contain pointer-events-none drop-shadow-sm"
@@ -73,7 +73,7 @@ export default function Climb100TiersMasteryHero() {
       </div>
 
       {/* Animated Tier Cards with True Website SVG Vector Badges */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {TIERS.map((t) => (
           <motion.div
             key={t.title}
@@ -82,27 +82,27 @@ export default function Climb100TiersMasteryHero() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: t.delay }}
             whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
-            className="bg-surface-container-lowest/90 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center text-center border border-outline-variant/30 hover:border-prompt-brown/40 hover:shadow-lg transition-all duration-300 relative overflow-hidden group cursor-pointer"
+            className="bg-surface-container-lowest/90 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center border border-outline-variant/30 hover:border-prompt-brown/40 hover:shadow-lg transition-all duration-300 relative overflow-hidden group cursor-pointer"
           >
             {/* True Website Badge SVG Display */}
-            <div className="mb-4 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+            <div className="mb-3 sm:mb-4 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
               <BadgeDisplay badge={t.badgeObj} size="md" isUnlocked={true} />
             </div>
             
-            <h4 className="text-[20px] leading-[28px] font-medium text-[#0a0a0a] mb-1 relative z-10 font-sans group-hover:text-prompt-brown transition-colors">
+            <h4 className="text-lg sm:text-[20px] leading-[26px] sm:leading-[28px] font-medium text-[#0a0a0a] mb-1 relative z-10 font-sans group-hover:text-prompt-brown transition-colors">
               {t.title}
             </h4>
             
-            <p className="text-[12px] font-semibold tracking-[0.05em] text-outline mb-3 uppercase relative z-10 font-sans">
+            <p className="text-[11px] sm:text-[12px] font-semibold tracking-[0.05em] text-outline mb-2 sm:mb-3 uppercase relative z-10 font-sans">
               {t.level}
             </p>
 
             {/* True Website Badge Label */}
-            <span className="text-[11px] font-semibold text-prompt-brown mb-4 font-sans bg-surface-container-low px-3 py-1 rounded-full border border-outline-variant/20 group-hover:border-prompt-brown/30 relative z-10 transition-colors">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-prompt-brown mb-3 sm:mb-4 font-sans bg-surface-container-low px-2.5 sm:px-3 py-1 rounded-full border border-outline-variant/20 group-hover:border-prompt-brown/30 relative z-10 transition-colors">
               {t.badgeLabel}
             </span>
 
-            <p className="text-[15px] leading-[22px] text-on-surface-variant text-sm font-normal relative z-10 font-sans">
+            <p className="text-xs sm:text-[15px] leading-[20px] sm:leading-[22px] text-on-surface-variant font-normal relative z-10 font-sans">
               {t.desc}
             </p>
           </motion.div>

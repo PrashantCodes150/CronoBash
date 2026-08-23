@@ -144,20 +144,20 @@ export default function BentoFeaturesGrid() {
         {/* Subtle Top & Bottom Gradient Edge Blends (Matches page background color #fcf9f8) */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#fcf9f8]/90 via-transparent to-[#fcf9f8]/90 pointer-events-none z-1" />
 
-        {/* ── RIGHT-ALIGNED EDITORIAL CONTENT (THICK DARK TYPOGRAPHY) ── */}
-        <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 md:px-16 flex justify-end items-center h-full pointer-events-auto">
-          <div className="max-w-xl text-right space-y-5 ml-auto">
+        {/* ── EDITORIAL CONTENT (THICK DARK TYPOGRAPHY, RESPONSIVE ALIGNMENT) ── */}
+        <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 md:px-16 flex justify-center md:justify-end items-center h-full pointer-events-auto">
+          <div className="max-w-xl text-center md:text-right space-y-4 sm:space-y-5 mx-auto md:ml-auto">
 
             {/* Thick High-Contrast Headline Title */}
             <h2
-              className="text-[clamp(36px,5.5vw,58px)] font-black text-[#0a0a0a] tracking-tight leading-[1.04] font-sans drop-shadow-sm"
+              className="text-[clamp(28px,5.5vw,58px)] font-black text-[#0a0a0a] tracking-tight leading-[1.04] font-sans drop-shadow-sm"
               style={{ fontWeight: 900 }}
             >
               The Arena of Focus.
             </h2>
 
             {/* Thick High-Contrast Subtitle / Description */}
-            <p className="text-base sm:text-xl text-[#0a0a0a] font-extrabold leading-relaxed font-sans max-w-lg ml-auto drop-shadow-xs">
+            <p className="text-sm sm:text-base md:text-xl text-[#0a0a0a] font-extrabold leading-relaxed font-sans max-w-lg mx-auto md:ml-auto drop-shadow-xs">
               A curated suite of tools designed to elevate your cognitive endurance, synchronize squad focus, and reward deep work.
             </p>
 

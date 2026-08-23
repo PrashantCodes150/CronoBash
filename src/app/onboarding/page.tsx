@@ -326,9 +326,9 @@ export default function OnboardingPage() {
         </div>
       </header>
 
-      {/* Main Centered Onboarding Card - EXACT MAX-W-[340PX] AS LOGIN & SIGNUP */}
-      <main className="relative z-10 flex-grow flex items-center justify-center px-3 py-6">
-        <div className="w-full max-w-[340px] bg-white/75 backdrop-blur-2xl border border-white/80 rounded-3xl p-5 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)] relative">
+      {/* Main Centered Onboarding Card */}
+      <main className="relative z-10 flex-grow flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6">
+        <div className="w-full max-w-[350px] sm:max-w-[420px] bg-white/75 backdrop-blur-2xl border border-white/80 rounded-3xl p-4 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)] relative">
           
           <AnimatePresence mode="wait">
             

@@ -86,8 +86,8 @@ interface AnimatedStatsProps {
 
 export default function AnimatedStatsStrip({}: AnimatedStatsProps) {
   return (
-    <section className="w-full bg-surface border-y border-surface-variant py-12 relative z-20">
-      <div suppressHydrationWarning={true} className="max-w-[1200px] mx-auto px-6 md:px-16 flex flex-wrap justify-between items-center gap-8 reveal">
+    <section className="w-full bg-surface border-y border-surface-variant py-8 sm:py-12 relative z-20">
+      <div suppressHydrationWarning={true} className="max-w-[1200px] mx-auto px-6 md:px-16 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 justify-items-center sm:justify-items-start reveal">
         {STATS.map((s) => (
           <AnimatedNumber key={s.label} stat={s} />
         ))}

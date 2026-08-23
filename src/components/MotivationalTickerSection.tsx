@@ -52,11 +52,13 @@ export default function MotivationalTickerSection() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const ctx = gsap.context(() => {
+    const mm = gsap.matchMedia();
+
+    mm.add("(min-width: 1024px)", () => {
       const cards = cardsRef.current.filter(Boolean);
       if (!cards.length || !sectionRef.current) return;
 
-      // Pin main section for smooth Lenis scroll space
+      // Pin main section for smooth desktop scroll space
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -87,19 +89,27 @@ export default function MotivationalTickerSection() {
           `step-${i}`
         );
       });
-    }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    mm.add("(max-width: 1023px)", () => {
+      // Mobile: Render cards in natural flow without clipping
+      const cards = cardsRef.current.filter(Boolean);
+      cards.forEach((card) => {
+        gsap.set(card, { yPercent: 0, opacity: 1, scale: 1 });
+      });
+    });
+
+    return () => mm.revert();
   }, []);
 
   return (
-    <div id="features" ref={sectionRef} className="relative w-full h-screen bg-surface border-t border-surface-variant flex items-center overflow-hidden z-20">
+    <div id="features" ref={sectionRef} className="relative w-full py-16 sm:py-20 lg:py-0 lg:h-screen bg-surface border-t border-surface-variant flex items-center overflow-hidden z-20">
       <div className="max-w-[1200px] mx-auto px-6 md:px-16 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
         
-        {/* ── LEFT COLUMN: Clear Punchy Heading + Description + Main Lottie (GSAP Pinned) ── */}
+        {/* ── LEFT COLUMN: Clear Punchy Heading + Description + Main Lottie (GSAP Pinned on Desktop) ── */}
         <div className="lg:col-span-6 flex flex-col justify-center space-y-6">
           <div className="space-y-4">
-            <h2 className="text-[clamp(32px,5vw,50px)] font-medium text-[#0a0a0a] tracking-[-0.03em] leading-[1.08] font-sans">
+            <h2 className="text-[clamp(30px,5vw,50px)] font-medium text-[#0a0a0a] tracking-[-0.03em] leading-[1.08] font-sans">
               Study with focus. Win with your squad.
             </h2>
             <p className="text-base sm:text-lg text-on-surface-variant font-normal leading-relaxed font-sans max-w-xl">
@@ -108,7 +118,7 @@ export default function MotivationalTickerSection() {
           </div>
 
           {/* Hero Lottie Showcase Animation */}
-          <div className="relative w-full max-w-[340px] aspect-square flex items-center justify-center py-2">
+          <div className="relative w-full max-w-[260px] sm:max-w-[340px] aspect-square flex items-center justify-center py-2 mx-auto lg:mx-0">
             <div className="absolute inset-0 bg-gradient-to-tr from-prompt-brown/10 via-transparent to-transparent rounded-full blur-2xl pointer-events-none" />
             <LottiePlayer
               src="/lottie/student.json"
@@ -121,12 +131,12 @@ export default function MotivationalTickerSection() {
         </div>
 
         {/* ── RIGHT COLUMN: Cards with Individual Lottie Animations ── */}
-        <div className="lg:col-span-6 relative h-[450px] sm:h-[480px] w-full overflow-hidden">
+        <div className="lg:col-span-6 relative w-full lg:h-[480px] lg:overflow-hidden flex flex-col gap-6 lg:block">
           {PILLARS.map((pillar, i) => (
             <div
               key={pillar.id}
               ref={(el) => { cardsRef.current[i] = el; }}
-              className="absolute inset-0 w-full h-full p-8 sm:p-10 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm flex flex-col justify-between"
+              className="relative lg:absolute inset-0 w-full p-6 sm:p-8 lg:p-10 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm flex flex-col justify-between"
             >
               {/* Card Header */}
               <div className="space-y-4">
@@ -146,7 +156,7 @@ export default function MotivationalTickerSection() {
                   </span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-medium text-[#0a0a0a] tracking-[-0.02em] font-sans">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-medium text-[#0a0a0a] tracking-[-0.02em] font-sans">
                   {pillar.title}
                 </h3>
 
@@ -156,7 +166,7 @@ export default function MotivationalTickerSection() {
               </div>
 
               {/* Card Body Detail */}
-              <div className="pt-5 border-t border-outline-variant/30 space-y-4">
+              <div className="pt-5 border-t border-outline-variant/30 space-y-4 mt-6 lg:mt-0">
                 <div className="flex items-start gap-3 text-xs sm:text-sm text-[#0a0a0a] font-normal leading-relaxed font-sans">
                   <CheckCircle2 className="w-4.5 h-4.5 text-prompt-brown shrink-0 mt-0.5" />
                   <span>{pillar.detail}</span>
