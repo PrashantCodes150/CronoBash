@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface LottiePlayerProps {
   animationData?: any;
@@ -9,15 +9,18 @@ interface LottiePlayerProps {
   loop?: boolean;
   autoplay?: boolean;
   speed?: number;
+  priority?: boolean;
 }
 
-// Global module singleton cache so lottie-web engine is imported ONLY ONCE
-let lottieModulePromise: Promise<any> | null = null;
-const getLottieWeb = () => {
-  if (!lottieModulePromise) {
-    lottieModulePromise = import('lottie-web').then(m => m.default);
+// Global module singleton cache so lightweight SVG Lottie engine is imported ONLY ONCE
+let lottieLightPromise: Promise<any> | null = null;
+const getLottieLight = () => {
+  if (!lottieLightPromise) {
+    lottieLightPromise = import('lottie-web/build/player/lottie_light.min.js').then(
+      m => m.default || m
+    );
   }
-  return lottieModulePromise;
+  return lottieLightPromise;
 };
 
 // In-memory JSON cache so fetch() requests for .json files are executed only once and reused instantly
@@ -27,16 +30,11 @@ async function fetchLottieJson(url: string): Promise<any> {
   if (lottieJsonCache.has(url)) {
     return lottieJsonCache.get(url);
   }
-  const promise = fetch(url)
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      lottieJsonCache.set(url, data);
-      return data;
-    });
-  return promise;
+  const res = await fetch(url, { cache: 'force-cache' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  lottieJsonCache.set(url, data);
+  return data;
 }
 
 export default function LottiePlayer({
@@ -46,22 +44,73 @@ export default function LottiePlayer({
   loop = true,
   autoplay = true,
   speed = 1,
+  priority = false,
 }: LottiePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<any>(null);
+  const [isVisible, setIsVisible] = useState(priority);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Lazy loading via IntersectionObserver
   useEffect(() => {
+    if (priority || isVisible) return;
     if (!containerRef.current) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '250px 0px' }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [priority, isVisible]);
+
+  // Pause / resume when scrolling into / out of view to preserve 60FPS performance
+  useEffect(() => {
+    if (!containerRef.current || !animRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (animRef.current) {
+          if (entry.isIntersecting && autoplay) {
+            animRef.current.play();
+          } else {
+            animRef.current.pause();
+          }
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isLoaded, autoplay]);
+
+  // Main animation loader
+  useEffect(() => {
+    if (!isVisible || !containerRef.current) return;
 
     let isMounted = true;
 
     async function initLottie() {
       try {
-        const targetSrc = animationData ? null : (src || '/lottie/Education.json');
+        const targetSrc = animationData ? null : (src || '/lottie/student.json');
 
-        // Parallel fetch of Lottie Engine + Animation JSON
+        // Parallel fetch of lightweight Lottie Engine + Animation JSON
         const [lottie, data] = await Promise.all([
-          getLottieWeb(),
+          getLottieLight(),
           animationData ? Promise.resolve(animationData) : fetchLottieJson(targetSrc!)
         ]);
 
@@ -86,6 +135,10 @@ export default function LottiePlayer({
         if (speed && animRef.current) {
           animRef.current.setSpeed(speed);
         }
+
+        if (isMounted) {
+          setIsLoaded(true);
+        }
       } catch (err) {
         console.error('Failed to load Lottie animation:', err);
       }
@@ -100,7 +153,12 @@ export default function LottiePlayer({
         animRef.current = null;
       }
     };
-  }, [animationData, src, loop, autoplay, speed]);
+  }, [isVisible, animationData, src, loop, autoplay, speed]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`${className} transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+    />
+  );
 }

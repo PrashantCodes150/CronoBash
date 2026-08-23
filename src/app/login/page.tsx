@@ -18,10 +18,10 @@ export default function LoginPage() {
   const router = useRouter();
 
   const getCanonicalOrigin = () => {
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    if (typeof window !== 'undefined' && window.location.origin) {
       return window.location.origin;
     }
-    return 'https://cronobash.com';
+    return process.env.NEXT_PUBLIC_APP_URL || 'https://cronobash.com';
   };
 
   const handleForgotPassword = async (e?: React.MouseEvent) => {
@@ -42,8 +42,10 @@ export default function LoginPage() {
       });
 
       if (error) {
-        let msg = error.message;
-        if (msg.toLowerCase().includes('rate limit')) {
+        let msg = error.message || '';
+        if (msg === '{}' || !msg || error.name === 'AuthRetryableFetchError') {
+          msg = 'Unable to send reset email. Supabase built-in email limit reached or custom SMTP is required.';
+        } else if (msg.toLowerCase().includes('rate limit')) {
           msg = 'Too many requests. Please wait a few minutes before requesting another password reset email.';
         }
         setErrorMsg(msg);
@@ -69,35 +71,37 @@ export default function LoginPage() {
       });
 
       if (error) {
-        let msg = error.message && error.message !== '{}' ? error.message : 'Invalid email or password. Please check your credentials.';
+        let msg = error.message && error.message !== '{}' ? error.message : '';
         const lowerMsg = msg.toLowerCase();
         
         if (lowerMsg.includes('email not confirmed')) {
-          msg = 'Your email address is not verified yet. Please check your inbox for the confirmation email!';
+          msg = 'Your email address is not verified yet. Please check your inbox for the confirmation email, or disable "Confirm email" in Supabase Dashboard.';
         } else if (lowerMsg.includes('invalid login credentials')) {
           msg = 'Incorrect email or password. Please check your credentials and try again.';
+        } else if (!msg || msg === '{}' || error.name === 'AuthRetryableFetchError') {
+          msg = 'Incorrect email or password, or Supabase Auth service is currently unreachable.';
         }
         
         setErrorMsg(msg);
         setLoading(false);
       } else if (data?.session) {
-        // Fast auth context route guard will handle smart navigation to /onboarding or /dashboard
+        router.replace('/dashboard');
       } else {
         setLoading(false);
       }
     } catch (e: any) {
-      const msg = e?.message && e.message !== '{}' ? e.message : 'An unexpected error occurred during sign in.';
-      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        setErrorMsg('Cannot reach the server. Check your internet connection.');
-      } else {
-        setErrorMsg(msg);
+      let msg = e?.message && e.message !== '{}' ? e.message : '';
+      if (!msg || msg === '{}' || e?.name === 'AuthRetryableFetchError') {
+        msg = 'Cannot reach the authentication server. Please check your network or Supabase settings.';
       }
+      setErrorMsg(msg);
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      setErrorMsg('');
       const origin = getCanonicalOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -109,10 +113,16 @@ export default function LoginPage() {
         }
       });
       if (error) {
-        setErrorMsg(error.message);
+        let msg = error.message || '';
+        if (msg === '{}' || !msg || error.name === 'AuthRetryableFetchError') {
+          msg = 'Google Sign In is not enabled in your Supabase project. Please go to Supabase Dashboard -> Authentication -> Providers -> Google and turn it ON with your Client ID & Secret.';
+        } else if (msg.toLowerCase().includes('provider is not enabled') || msg.toLowerCase().includes('unsupported provider')) {
+          msg = 'Google Sign In is not enabled in your Supabase project. Please go to Supabase Dashboard -> Authentication -> Providers -> Google and turn it ON with your Client ID & Secret.';
+        }
+        setErrorMsg(msg);
       }
     } catch (e: any) {
-      setErrorMsg(e.message || String(e));
+      setErrorMsg(e?.message || 'Unexpected Google authentication error.');
     }
   };
 

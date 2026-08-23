@@ -42,10 +42,10 @@ export default function SignupPage() {
   const [submittedEmail, setSubmittedEmail] = useState('');
 
   const getCanonicalOrigin = () => {
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    if (typeof window !== 'undefined' && window.location.origin) {
       return window.location.origin;
     }
-    return 'https://cronobash.com';
+    return process.env.NEXT_PUBLIC_APP_URL || 'https://cronobash.com';
   };
 
   const DISPOSABLE_EMAIL_DOMAINS = [
@@ -101,7 +101,10 @@ export default function SignupPage() {
 
       if (error) {
         console.error("Supabase signUp error:", error);
-        const msg = error.message || error.toString() || 'Sign up failed. Please try again.';
+        let msg = error.message || '';
+        if (!msg || msg === '{}' || error.name === 'AuthRetryableFetchError') {
+          msg = 'Supabase server error (500). Please ensure Email Confirmation is disabled in Supabase or custom SMTP is configured, and run the fix_signup_trigger SQL migration.';
+        }
         setErrorMsg(msg);
         setLoading(false);
       } else if (data?.user && !data?.session) {
@@ -114,7 +117,10 @@ export default function SignupPage() {
       }
     } catch (e: any) {
       console.error("Signup exception:", e);
-      const msg = e?.message || String(e) || 'An unexpected error occurred during sign up.';
+      let msg = e?.message || '';
+      if (!msg || msg === '{}') {
+        msg = 'Connection or Supabase configuration error. Please check your Supabase Auth settings.';
+      }
       setErrorMsg(msg);
       setLoading(false);
     }
@@ -122,6 +128,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     try {
+      setErrorMsg('');
       const origin = getCanonicalOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -133,10 +140,16 @@ export default function SignupPage() {
         }
       });
       if (error) {
-        setErrorMsg(error.message);
+        let msg = error.message || '';
+        if (msg === '{}' || !msg || error.name === 'AuthRetryableFetchError') {
+          msg = 'Google Sign In is not enabled in your Supabase project. Please go to Supabase Dashboard -> Authentication -> Providers -> Google and turn it ON with your Client ID & Secret.';
+        } else if (msg.toLowerCase().includes('provider is not enabled') || msg.toLowerCase().includes('unsupported provider')) {
+          msg = 'Google Sign In is not enabled in your Supabase project. Please go to Supabase Dashboard -> Authentication -> Providers -> Google and turn it ON with your Client ID & Secret.';
+        }
+        setErrorMsg(msg);
       }
     } catch (e: any) {
-      setErrorMsg(e.message || String(e));
+      setErrorMsg(e?.message || 'Unexpected Google authentication error.');
     }
   };
 

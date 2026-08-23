@@ -36,7 +36,8 @@ export function proxy(request: NextRequest) {
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname === '/refund' ||
-    pathname === '/legal';
+    pathname === '/legal' ||
+    pathname.startsWith('/auth');
 
   // Allow static files, api routes, media files, and Next.js internal assets
   const isStaticOrApi =

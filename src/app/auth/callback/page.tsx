@@ -13,29 +13,43 @@ function CallbackHandler() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        const error = searchParams.get('error');
+        const errorDesc = searchParams.get('error_description');
+        if (error || errorDesc) {
+          const fullError = errorDesc || error || 'Authentication failed';
+          let friendlyMsg = fullError;
+          if (fullError.toLowerCase().includes('provider is not enabled') || fullError.toLowerCase().includes('unsupported provider')) {
+            friendlyMsg = 'Google Provider is not enabled in your Supabase Dashboard. Please go to Authentication -> Providers -> Google and turn it ON with your Google Client ID & Secret.';
+          }
+          setErrorMsg(friendlyMsg);
+          setTimeout(() => router.replace('/login'), 4000);
+          return;
+        }
+
         const code = searchParams.get('code');
 
         if (code) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.error('OAuth code exchange error:', error);
-            setErrorMsg(error.message);
-            setTimeout(() => router.replace('/login'), 2000);
+          const { data, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeErr) {
+            console.error('OAuth code exchange error:', exchangeErr);
+            setErrorMsg(exchangeErr.message || 'Failed to exchange authorization code for a session.');
+            setTimeout(() => router.replace('/login'), 3000);
             return;
           }
-          // Successfully authenticated & session saved in browser storage!
-          // AuthContext will detect session & route to /onboarding or /dashboard
+          router.replace('/dashboard');
           return;
         }
 
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        if (session) {
+          router.replace('/dashboard');
+        } else {
           router.replace('/login');
         }
       } catch (e: any) {
         console.error('Callback exception:', e);
-        setErrorMsg(e.message || String(e));
-        setTimeout(() => router.replace('/login'), 2000);
+        setErrorMsg(e?.message || 'Unexpected authentication callback error.');
+        setTimeout(() => router.replace('/login'), 3000);
       }
     };
 

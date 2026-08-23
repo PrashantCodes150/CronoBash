@@ -316,8 +316,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (loading) return;
 
-    const publicRoutes = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+    const isPublicRoute = 
+      pathname === '/' ||
+      pathname === '/login' ||
+      pathname === '/signup' ||
+      pathname === '/terms' ||
+      pathname === '/privacy' ||
+      pathname === '/refund' ||
+      pathname === '/legal' ||
+      pathname.startsWith('/auth');
 
     const hasOAuthParams = typeof window !== 'undefined' && (
       window.location.search.includes('code=') ||
@@ -325,12 +332,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.location.hash.includes('error=')
     );
 
-    if (!user && !isPublicRoute) {
+    if (!user && !isPublicRoute && !hasOAuthParams) {
       router.replace('/login');
     } else if (user) {
-      // Defer route decisions until profile for active user is loaded
-      if (!profileLoaded) return;
-
       if (hasOAuthParams && typeof window !== 'undefined') {
         try {
           window.history.replaceState(null, '', window.location.pathname);
@@ -342,12 +346,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (isNewUser) {
         // New users must complete onboarding before accessing the rest of the app
-        if (pathname !== '/onboarding') {
+        if (pathname !== '/onboarding' && !pathname.startsWith('/auth')) {
           router.replace('/onboarding');
         }
       } else {
         // Existing users shouldn't stay on auth/landing pages or onboarding
-        if (pathname === '/login' || pathname === '/signup' || pathname === '/' || pathname === '/onboarding') {
+        if (pathname === '/login' || pathname === '/signup' || pathname === '/' || pathname === '/onboarding' || pathname.startsWith('/auth')) {
           router.replace('/dashboard');
         }
       }
@@ -375,7 +379,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => clearInterval(heartbeat);
   }, [user]);
 
-  const isPublicRoute = ['/', '/login', '/signup', '/terms', '/privacy', '/refund', '/legal'].includes(pathname);
+  const isPublicRoute = 
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/terms' ||
+    pathname === '/privacy' ||
+    pathname === '/refund' ||
+    pathname === '/legal' ||
+    pathname.startsWith('/auth');
   if (loading && !isPublicRoute) {
     return <LogoLoader size="full" text="INITIALIZING ARENA RIG..." />;
   }

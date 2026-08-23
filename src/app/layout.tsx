@@ -112,6 +112,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon.ico?v=4" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" href="/lottie/student.json" as="fetch" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Special+Elite&family=Geist:wght@400;500;600;700&display=swap"
           rel="stylesheet"

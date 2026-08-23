@@ -115,6 +115,7 @@ export default function MotivationalTickerSection() {
               className="w-full h-full object-contain pointer-events-none relative z-10"
               loop={true}
               autoplay={true}
+              priority={true}
             />
           </div>
         </div>
@@ -137,6 +138,7 @@ export default function MotivationalTickerSection() {
                       className={`w-full h-full object-contain transform ${pillar.lottieScale}`}
                       loop={true}
                       autoplay={true}
+                      priority={i === 0}
                     />
                   </div>
                   <span className="text-xs font-semibold tracking-widest text-outline uppercase font-sans">
